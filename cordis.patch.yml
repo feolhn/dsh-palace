@@ -1,0 +1,4 @@
+# dsh bundle patch：把书架插件加入 profile
+- insert:
+    - id: dsh-shelf
+      name: 'dsh-shelf'

@@ -1,0 +1,9 @@
+node_modules/
+/lib/
+/client/
+.pnpm-store/
+*.log
+.DS_Store
+
+# 本地私人笔记
+*.local.md
