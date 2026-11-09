@@ -1,0 +1,28 @@
+/* DeepSeek Harness 配色（从官方主题导出，只保留常用的）。
+ * 原型里请尽量用这些变量，不要写死颜色。原型只做浅色，不用管深色模式。 */
+
+body {
+  --dsw-alias-bg-base: rgb(255, 255, 255); /* 背景（最底层） */
+  --dsw-alias-bg-layer-1: rgb(255, 255, 255); /* 背景（卡片、面板） */
+  --dsw-alias-bg-overlay: rgb(233, 236, 242); /* 浮层背景 */
+  --dsw-alias-label-primary: rgb(15, 17, 21); /* 主文字 */
+  --dsw-alias-label-secondary: rgb(97, 102, 107); /* 次要文字 */
+  --dsw-alias-label-tertiary: rgb(129, 133, 140); /* 弱化文字 */
+  --dsw-alias-label-caption: rgb(173, 178, 184); /* 说明文字 */
+  --dsw-alias-border-l1: rgba(0, 0, 0, 0.04); /* 细边框 */
+  --dsw-alias-border-l2: rgba(0, 0, 0, 0.1); /* 普通边框 */
+  --dsw-alias-border-l3: rgba(0, 0, 0, 0.12); /* 强调边框 */
+  --dsw-alias-interactive-bg-hover: rgba(38, 49, 72, 0.06); /* 悬停底色 */
+  --dsw-alias-interactive-bg-active: rgba(38, 49, 72, 0.1); /* 按下底色 */
+  --dsw-alias-button-primary-fill: rgb(15, 17, 21); /* 主按钮 */
+  --dsw-alias-label-primary-inverted: rgb(255, 255, 255); /* 主按钮文字 */
+  --dsw-alias-state-business-primary: rgb(65, 118, 230); /* 品牌蓝（链接、进度） */
+  --dsw-alias-link: rgb(65, 118, 230); /* 链接 */
+  --dsw-alias-state-error-primary: rgb(236, 19, 19); /* 错误红 */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+}

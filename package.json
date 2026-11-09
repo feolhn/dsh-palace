@@ -31,9 +31,11 @@
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
-    "prepublishOnly": "node scripts/build.mjs",
+    "prepublishOnly": "node scripts/build.mjs && node scripts/check-privacy.mjs --publish",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "check-privacy": "node scripts/check-privacy.mjs",
+    "setup": "git config core.hooksPath .githooks"
   },
   "dsh": {
     "bundle": {

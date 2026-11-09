@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "goals": [
+    { "id": "g_1", "name": "2027 考研", "examDate": "2027-12-20", "createdAt": "2026-11-01T08:00:00.000Z" }
+  ],
+  "subjects": [
+    { "id": "sub_1", "goalId": "g_1", "name": "数学" },
+    { "id": "sub_2", "goalId": "g_1", "name": "英语" }
+  ],
+  "materials": [
+    {
+      "id": "m_1", "subjectId": "sub_1", "kind": "book", "title": "高等数学（上册）",
+      "file": "/Users/你/Documents/高等数学.pdf", "pageCount": 412,
+      "targetDate": "2027-03-31", "outlineSource": "ai",
+      "chapters": [
+        { "id": "c_1", "title": "第一章 函数与极限", "sections": [
+          { "id": "s_1", "title": "1.1 映射与函数", "page": 12, "done": true, "doneAt": "2026-11-02T10:00:00.000Z" },
+          { "id": "s_2", "title": "1.2 数列的极限", "page": 26, "done": true, "doneAt": "2026-11-03T10:00:00.000Z" },
+          { "id": "s_3", "title": "1.3 函数的极限", "page": 35, "done": false }
+        ]},
+        { "id": "c_2", "title": "第二章 导数与微分", "sections": [
+          { "id": "s_4", "title": "2.1 导数概念", "page": 80, "done": false },
+          { "id": "s_5", "title": "2.2 求导法则", "page": 92, "done": false }
+        ]}
+      ],
+      "createdAt": "2026-11-01T08:10:00.000Z"
+    },
+    {
+      "id": "m_2", "subjectId": "sub_1", "kind": "video", "title": "高数基础 30 讲",
+      "url": "https://www.bilibili.com/video/BV1xxxxxxxxx",
+      "targetDate": "2027-02-28", "outlineSource": "video",
+      "chapters": [
+        { "id": "c_3", "title": "高数基础 30 讲", "sections": [
+          { "id": "s_6", "title": "P1 函数", "url": "https://www.bilibili.com/video/BV1xxxxxxxxx?p=1", "done": true, "doneAt": "2026-11-02T20:00:00.000Z" },
+          { "id": "s_7", "title": "P2 极限", "url": "https://www.bilibili.com/video/BV1xxxxxxxxx?p=2", "done": false }
+        ]}
+      ],
+      "createdAt": "2026-11-01T08:20:00.000Z"
+    }
+  ],
+  "mistakes": [
+    {
+      "id": "x_1", "materialId": "m_1", "sectionId": "s_2",
+      "question": "求极限 lim(n→∞) (1 + 1/n)^(2n)",
+      "answer": "e²", "note": "把指数拆成 (1+1/n)^n 的平方",
+      "image": "x_1.png", "status": "todo", "createdAt": "2026-11-03T11:00:00.000Z"
+    }
+  ]
+}
