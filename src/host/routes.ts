@@ -6,6 +6,7 @@ import { execFile, spawn } from 'node:child_process'
 import { createReadStream, existsSync, statSync } from 'node:fs'
 import { basename, extname, join, normalize, sep } from 'node:path'
 import { Readable } from 'node:stream'
+import { homedir } from 'node:os'
 import { findSection } from '../shared/model.ts'
 import * as ops from './ops.ts'
 import { pdfjsDistDir, readPageTexts, SCANNED_THRESHOLD } from './pdf.ts'
@@ -119,7 +120,7 @@ export function createRoutes(store: ShelfStore, active: ActiveMaterials): FetchR
   })
 
   return [
-    get('library', () => json({ ok: true, rev: store.rev, library: store.get(), dataDir: store.dir })),
+    get('library', () => json({ ok: true, rev: store.rev, library: store.get(), dataDir: displayPath(store.dir) })),
 
     get('rev', () => {
       store.get() // 顺便检查文件是否被手动修改
@@ -197,4 +198,10 @@ export function createRoutes(store: ShelfStore, active: ActiveMaterials): FetchR
       return json({ ok: true })
     }),
   ]
+}
+
+/** 界面上显示路径时把用户目录换成 ~，避免截图泄露本机用户名。 */
+function displayPath(path: string): string {
+  const home = homedir()
+  return path === home || path.startsWith(home + sep) ? '~' + path.slice(home.length) : path
 }
