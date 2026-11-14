@@ -1,6 +1,6 @@
 // v0.2 存储与业务操作测试：node --test test/core.test.mjs
 import assert from 'node:assert/strict'
-import { existsSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -159,4 +159,84 @@ test('并发修改串行执行，不丢数据；出错的修改不落盘', async
   // 重新打开同一个目录，数据都在
   const again = new PalaceStore(store.dir)
   assert.equal(again.getItem(n.id).cards.length, 20)
+})
+
+// ---------- #26 审查发现的问题（回归测试） ----------
+
+test('审查 1：JSON 合法但字段类型错了，当作改坏，拒绝写入', async () => {
+  const store = fresh()
+  const n = await ops.addCell(store, { kind: 'note', title: 'N' })
+  await ops.addCard(store, { id: n.id, type: 'thought', note: '原卡片' })
+  const itf = join(store.itemsDir, `${n.id}.json`)
+  const it = readJson(itf); it.cards = it.cards[0]; handEdit(itf, it)
+  const before = readFileSync(itf, 'utf8')
+  await assert.rejects(ops.updateItem(store, { id: n.id, targetDate: '2026-12-31' }), /格式有误/)
+  assert.equal(readFileSync(itf, 'utf8'), before)
+})
+
+test('审查 2：mutate 的回调必须是同步的', async () => {
+  const store = fresh()
+  await assert.rejects(store.mutate(async () => 1), /必须是同步的/)
+})
+
+test('审查 3：删掉改坏的文件就能恢复；删掉正常的 item 文件后按空内容读', async () => {
+  const store = fresh()
+  const n = await ops.addCell(store, { kind: 'note', title: 'N' })
+  await ops.addCard(store, { id: n.id, type: 'thought', note: 'x' })
+  const pf = join(store.dir, 'palace.json'), itf = join(store.itemsDir, `${n.id}.json`)
+  const good = readJson(pf)
+  handEdit(pf, '{ 坏了'); store.getPalace()
+  rmSync(pf)
+  await ops.addCell(store, { kind: 'note', title: '删掉后重新开始' })
+  assert.equal(store.getPalace().cells.length, 1)
+  handEdit(pf, good)
+  handEdit(itf, '[坏'); store.getItem(n.id)
+  rmSync(itf)
+  assert.equal(store.getItem(n.id).cards.length, 0)
+  await ops.addCard(store, { id: n.id, type: 'thought', note: 'y' })
+  assert.equal(readJson(itf).cards.length, 1)
+})
+
+test('审查 4：提交后的清理失败不影响结果，rev 照常增加', async () => {
+  const store = fresh()
+  const n = await ops.addCell(store, { kind: 'note', title: 'N' })
+  writeFileSync(join(store.imagesDir, 'k_1.png'), 'x')
+  const k = await ops.addCard(store, { id: n.id, type: 'excerpt', image: 'k_1.png' })
+  chmodSync(store.imagesDir, 0o555)
+  try {
+    const rev = store.rev
+    await ops.deleteCard(store, { id: n.id, cardId: k.id })
+    assert.equal(store.getItem(n.id).cards.length, 0)
+    assert.ok(store.rev > rev)
+  } finally {
+    chmodSync(store.imagesDir, 0o755)
+  }
+})
+
+test('审查 5：一张图片只能属于一张卡片', async () => {
+  const store = fresh()
+  const a = await ops.addCell(store, { kind: 'note', title: 'A' })
+  const b = await ops.addCell(store, { kind: 'note', title: 'B' })
+  await ops.addCard(store, { id: a.id, type: 'excerpt', image: 'k_1.png' })
+  await assert.rejects(ops.addCard(store, { id: b.id, type: 'excerpt', image: 'k_1.png' }), /另一张卡片/)
+  const k = await ops.addCard(store, { id: b.id, type: 'excerpt', quote: 'q' })
+  await assert.rejects(ops.updateCard(store, { id: b.id, cardId: k.id, image: 'k_1.png' }), /另一张卡片/)
+})
+
+test('审查 6：标题全是空白的目录不会清空原目录', async () => {
+  const store = fresh()
+  const b = await ops.addCell(store, { kind: 'book', title: 'B', source: pdf })
+  await ops.setOutline(store, { id: b.id, chapters: [{ title: '第一讲' }] })
+  await assert.rejects(ops.setOutline(store, { id: b.id, chapters: [{ title: '   ' }] }), /目录不能为空/)
+  assert.equal(store.getItem(b.id).chapters.length, 1)
+})
+
+test('审查 7：修改后也不能变成空卡片', async () => {
+  const store = fresh()
+  const n = await ops.addCell(store, { kind: 'note', title: 'N' })
+  const t = await ops.addCard(store, { id: n.id, type: 'thought', note: '内容' })
+  const e = await ops.addCard(store, { id: n.id, type: 'excerpt', quote: '原文' })
+  await assert.rejects(ops.updateCard(store, { id: n.id, cardId: t.id, note: null }), /想法不能为空/)
+  await assert.rejects(ops.updateCard(store, { id: n.id, cardId: e.id, quote: '' }), /需要原文或图片/)
+  assert.equal(store.getItem(n.id).cards[0].note, '内容')
 })

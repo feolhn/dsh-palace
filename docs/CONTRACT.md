@@ -110,7 +110,7 @@ book 和 note 格子各有一个；group 没有。
   "note": "我的想法 / 批注 / 错因",
   "answer": "正确答案",         // 只有 mistake
   "status": "todo",           // 只有 mistake：todo 待重做 | mastered 已掌握
-  "image": "k_….png",         // 原图，相对 images/，可选
+  "image": "k_….png",         // 原图，相对 images/，可选。一张图只属于一张卡片，删卡片时一起删
   "createdAt": "ISO",
   "share": { }                // 分享卡片的排版草稿，由 share 模块定义，core 原样保存
 }

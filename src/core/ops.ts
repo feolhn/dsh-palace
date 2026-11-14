@@ -256,7 +256,9 @@ export async function setOutline(store: PalaceStore, args: { id: unknown; chapte
     const keyOf = (c: Chapter, s: Section) => `${c.title}\u0000${s.title}`
     const oldKey = new Map<string, string>()
     for (const c of item.chapters) for (const s of c.sections) oldKey.set(s.id, keyOf(c, s))
-    item.chapters = buildChapters(input, item.chapters)
+    const chapters = buildChapters(input, item.chapters)
+    if (chapters.length === 0) throw new ShelfError('目录不能为空')
+    item.chapters = chapters
     const idByKey = new Map<string, string>()
     for (const c of item.chapters) for (const s of c.sections) if (!idByKey.has(keyOf(c, s))) idByKey.set(keyOf(c, s), s.id)
     for (const card of item.cards) {
@@ -319,6 +321,20 @@ export interface CardInput {
   share?: unknown
 }
 
+/** 一张图只属于一张卡片：删卡片时才能放心删图。 */
+function checkImageFree(tx: Tx, name: string, cardId: string): void {
+  for (const cell of tx.palace.cells) {
+    if (cell.kind === 'group') continue
+    if (tx.item(cell.id).cards.some(k => k.image === name && k.id !== cardId)) throw new ShelfError('这张图片已经属于另一张卡片')
+  }
+}
+
+/** 新增和修改之后都要满足：想法有内容，摘录 / 错题有原文或图片。 */
+function checkCardContent(card: Card): void {
+  if (card.type === 'thought' && card.note === undefined) throw new ShelfError('想法不能为空')
+  if (card.type !== 'thought' && card.quote === undefined && card.image === undefined) throw new ShelfError('摘录和错题需要原文或图片')
+}
+
 function cardFields(item: Item, input: CardInput, card: Partial<Card>): void {
   if (input.sectionId !== undefined && !isClear(input.sectionId) && findSection(item, input.sectionId as string) === undefined) throw new ShelfError('节不存在')
   if (input.status !== undefined && input.status !== 'todo' && input.status !== 'mastered') throw new ShelfError('状态应为 todo / mastered')
@@ -341,8 +357,8 @@ export async function addCard(store: PalaceStore, args: CardInput & { id: unknow
     const card: Card = { id: newId('k'), type, createdAt: nowIso() }
     cardFields(item, args, card)
     if (type === 'mistake' && card.status === undefined) card.status = 'todo'
-    if (type !== 'thought' && card.quote === undefined && card.image === undefined) throw new ShelfError('摘录和错题需要原文或图片')
-    if (type === 'thought' && card.note === undefined) throw new ShelfError('想法不能为空')
+    checkCardContent(card)
+    if (card.image !== undefined) checkImageFree(tx, card.image, card.id)
     item.cards.push(card)
     return card
   })
@@ -356,6 +372,8 @@ export async function updateCard(store: PalaceStore, args: CardInput & { id: unk
     if (args.type !== undefined) throw new ShelfError('卡片类型不能修改')
     const oldImage = card.image
     cardFields(item, args, card)
+    checkCardContent(card)
+    if (card.image !== undefined && card.image !== oldImage) checkImageFree(tx, card.image, card.id)
     if (oldImage !== undefined && oldImage !== card.image) tx.deleteImage(oldImage)
     return card
   })

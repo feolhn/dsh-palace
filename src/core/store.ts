@@ -1,7 +1,7 @@
 /**
  * v0.2 存储：palace.json（宫殿布局）+ items/<id>.json（每个格子的内容）+ images/。
  * 规则见 docs/CONTRACT.md §1：
- * - 所有修改走 mutate()，串行执行；每个文件原子写入（先写临时文件再改名）
+ * - 所有修改走 mutate()，同步执行（不会交错）；每个文件原子写入（先写临时文件再改名）
  * - 用户手改了文件：按修改时间和大小重新读；解析失败就继续用内存里的版本，并拒绝写入，不覆盖用户的文件
  * - 认不出的字段原样保留（读进来的对象直接修改，不重建）
  */
@@ -44,12 +44,17 @@ function parsePalace(raw: string): Palace {
 function parseItem(raw: string, id: string): Item {
   const data = JSON.parse(raw) as Partial<Item>
   if (data === null || typeof data !== 'object') throw new Error('不是 JSON 对象')
-  const base = emptyItem(id)
+  // 缺省可以补成空数组；但写了却不是数组，说明文件被改坏了，不能当成空内容写回去
+  for (const key of ['chapters', 'cards', 'inspirations'] as const) {
+    if (data[key] !== undefined && !Array.isArray(data[key])) throw new Error(`${key} 应为数组`)
+  }
+  for (const c of data.chapters ?? []) if (typeof c?.id !== 'string' || !Array.isArray(c.sections)) throw new Error('章格式有误')
+  for (const k of data.cards ?? []) if (typeof k?.id !== 'string' || typeof k.type !== 'string') throw new Error('卡片格式有误')
+  for (const i of data.inspirations ?? []) if (typeof i?.id !== 'string') throw new Error('灵感格式有误')
+  if (data.source !== undefined && data.source !== null && typeof data.source !== 'object') throw new Error('source 格式有误')
   return {
-    ...base, ...data, schema: SCHEMA, id,
-    chapters: Array.isArray(data.chapters) ? data.chapters : [],
-    cards: Array.isArray(data.cards) ? data.cards : [],
-    inspirations: Array.isArray(data.inspirations) ? data.inspirations : [],
+    ...emptyItem(id), ...data, schema: SCHEMA, id,
+    chapters: data.chapters ?? [], cards: data.cards ?? [], inspirations: data.inspirations ?? [],
   }
 }
 
@@ -94,7 +99,6 @@ export class PalaceStore {
   private readonly items = new Map<string, Cached<Item>>()
   /** 每次写入 +1，前端轮询它判断是否需要刷新。 */
   rev = 1
-  private queue: Promise<unknown> = Promise.resolve()
 
   constructor(dir: string) {
     this.dir = dir
@@ -109,7 +113,11 @@ export class PalaceStore {
   // ---------- 读 ----------
 
   private refreshPalace(): Cached<Palace> {
-    if (!existsSync(this.palaceFile)) return this.palace
+    if (!existsSync(this.palaceFile)) {
+      // 用户删掉了文件（包括改坏后按提示删掉）：按空宫殿处理
+      if (this.palace.stamp !== '') { this.palace = { value: emptyPalace(), stamp: '', broken: false }; this.rev += 1 }
+      return this.palace
+    }
     const mtime = stamp(this.palaceFile)
     if (mtime === this.palace.stamp) return this.palace
     try {
@@ -127,7 +135,8 @@ export class PalaceStore {
     const file = join(this.itemsDir, `${id}.json`)
     const cached = this.items.get(id)
     if (!existsSync(file)) {
-      if (cached !== undefined) return cached
+      // 文件不在：按空内容读（CONTRACT §1），丢掉旧缓存和 broken 状态
+      if (cached !== undefined) { this.items.delete(id); this.rev += 1 }
       return { value: emptyItem(id), stamp: '', broken: false }
     }
     const mtime = stamp(file)
@@ -165,64 +174,77 @@ export class PalaceStore {
   // ---------- 写 ----------
 
   /**
-   * 串行执行一次修改。fn 抛错则不落盘。
-   * 写入顺序：先写 item，再写 palace，最后删文件。中途失败时，最坏情况是多出没被引用的 item 文件，不会出现格子指向不存在的内容。
+   * 执行一次修改。fn 抛错则不落盘。
+   *
+   * fn 必须是同步的：从读取文件到写回之间不让出执行权，同一进程里的其他修改和外部手改都插不进这个窗口。
+   * 需要等待的事（读 PDF、联网）在调用 mutate 之前做完。
+   *
+   * 写入顺序见 CONTRACT §1：先写 item，再写 palace，最后删文件。删除失败只警告，不影响已经提交的结果。
    */
-  mutate<T>(fn: (tx: Tx) => T | Promise<T>): Promise<T> {
-    const run = async (): Promise<T> => {
-      const palaceState = this.refreshPalace()
-      if (palaceState.broken) throw new ShelfError('palace.json 格式有误：请先修好或删掉这个文件，再继续操作')
-      const palace = structuredClone(palaceState.value)
-      const touched = new Map<string, { item: Item | null; before: string }>()
-      const images: string[] = []
-      const tx: Tx = {
-        palace,
-        item: (id) => {
-          const hit = touched.get(id)
-          if (hit !== undefined) {
-            if (hit.item === null) throw new ShelfError('格子已删除')
-            return hit.item
-          }
-          const state = this.refreshItem(id)
-          if (state.broken) throw new ShelfError(`items/${id}.json 格式有误：请先修好或删掉这个文件`)
-          const item = structuredClone(state.value)
-          touched.set(id, { item, before: JSON.stringify(state.value) })
-          return item
-        },
-        createItem: (item) => {
-          assertCellId(item.id)
-          touched.set(item.id, { item, before: '' })
-        },
-        deleteItem: (id) => {
-          assertCellId(id)
-          touched.set(id, { item: null, before: '' })
-        },
-        deleteImage: (name) => { images.push(name) },
-      }
-      const result = await fn(tx)
-
-      for (const [id, { item, before }] of touched) {
-        if (item === null || JSON.stringify(item) === before) continue
-        const mtime = writeAtomic(join(this.itemsDir, `${id}.json`), item)
-        this.items.set(id, { value: item, stamp: mtime, broken: false })
-      }
-      if (JSON.stringify(palace) !== JSON.stringify(palaceState.value)) {
-        const mtime = writeAtomic(this.palaceFile, palace)
-        this.palace = { value: palace, stamp: mtime, broken: false }
-      }
-      for (const [id, { item }] of touched) {
-        if (item !== null) continue
-        rmSync(join(this.itemsDir, `${id}.json`), { force: true })
-        this.items.delete(id)
-      }
-      for (const name of images) {
-        if (/^[\w.-]+$/.test(name)) rmSync(join(this.imagesDir, name), { force: true })
-      }
-      this.rev += 1
-      return result
+  mutate<T>(fn: (tx: Tx) => T): Promise<T> {
+    try {
+      return Promise.resolve(this.commit(fn))
+    } catch (error) {
+      return Promise.reject(error)
     }
-    const next = this.queue.then(run, run)
-    this.queue = next.catch(() => undefined)
-    return next
+  }
+
+  private commit<T>(fn: (tx: Tx) => T): T {
+    const palaceState = this.refreshPalace()
+    if (palaceState.broken) throw new ShelfError('palace.json 格式有误：请先修好或删掉这个文件，再继续操作')
+    const palace = structuredClone(palaceState.value)
+    const touched = new Map<string, { item: Item | null; before: string }>()
+    const images: string[] = []
+    const tx: Tx = {
+      palace,
+      item: (id) => {
+        const hit = touched.get(id)
+        if (hit !== undefined) {
+          if (hit.item === null) throw new ShelfError('格子已删除')
+          return hit.item
+        }
+        const state = this.refreshItem(id)
+        if (state.broken) throw new ShelfError(`items/${id}.json 格式有误：请先修好或删掉这个文件`)
+        const item = structuredClone(state.value)
+        touched.set(id, { item, before: JSON.stringify(state.value) })
+        return item
+      },
+      createItem: (item) => {
+        assertCellId(item.id)
+        touched.set(item.id, { item, before: '' })
+      },
+      deleteItem: (id) => {
+        assertCellId(id)
+        touched.set(id, { item: null, before: '' })
+      },
+      deleteImage: (name) => { images.push(name) },
+    }
+    const result = fn(tx)
+    if (result instanceof Promise) throw new Error('mutate 的回调必须是同步的')
+
+    for (const [id, { item, before }] of touched) {
+      if (item === null || JSON.stringify(item) === before) continue
+      const st = writeAtomic(join(this.itemsDir, `${id}.json`), item)
+      this.items.set(id, { value: item, stamp: st, broken: false })
+    }
+    if (JSON.stringify(palace) !== JSON.stringify(palaceState.value)) {
+      const st = writeAtomic(this.palaceFile, palace)
+      this.palace = { value: palace, stamp: st, broken: false }
+    }
+    this.rev += 1
+
+    // 以下是提交后的清理：失败只多占空间，不能让已经成功的修改报错
+    const cleanup = (what: string, run: () => void) => {
+      try { run() } catch (error) { console.warn(`[dsh-shelf] 清理 ${what} 失败，已忽略`, error) }
+    }
+    for (const [id, { item }] of touched) {
+      if (item !== null) continue
+      this.items.delete(id)
+      cleanup(`items/${id}.json`, () => rmSync(join(this.itemsDir, `${id}.json`), { force: true }))
+    }
+    for (const name of images) {
+      if (/^[\w.-]+$/.test(name)) cleanup(`images/${name}`, () => rmSync(join(this.imagesDir, name), { force: true }))
+    }
+    return result
   }
 }
