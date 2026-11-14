@@ -240,3 +240,23 @@ test('审查 7：修改后也不能变成空卡片', async () => {
   await assert.rejects(ops.updateCard(store, { id: n.id, cardId: e.id, quote: '' }), /需要原文或图片/)
   assert.equal(store.getItem(n.id).cards[0].note, '内容')
 })
+
+test('复核 1：读取之后文件被外部改过，拒绝提交，不覆盖', async () => {
+  const store = fresh()
+  const n = await ops.addCell(store, { kind: 'note', title: 'N' })
+  const itf = join(store.itemsDir, `${n.id}.json`)
+  await assert.rejects(store.mutate((tx) => {
+    tx.item(n.id).targetDate = '2026-12-31'
+    const it = readJson(itf); it.cards.push({ id: 'k_ext', type: 'thought', note: '外部', createdAt: 'x' }); handEdit(itf, it)
+  }), /被其他程序修改过/)
+  assert.equal(readJson(itf).cards[0].id, 'k_ext')
+})
+
+test('复核 2：节数据损坏当作改坏，沿用上一次的好版本', async () => {
+  const store = fresh()
+  const b = await ops.addCell(store, { kind: 'book', title: 'B', source: pdf })
+  await ops.setOutline(store, { id: b.id, chapters: [{ title: '第一讲' }] })
+  const itf = join(store.itemsDir, `${b.id}.json`)
+  const it = readJson(itf); it.chapters[0].sections = [null]; handEdit(itf, it)
+  assert.equal(store.summaries()[b.id].total, 1)
+})

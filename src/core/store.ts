@@ -48,7 +48,10 @@ function parseItem(raw: string, id: string): Item {
   for (const key of ['chapters', 'cards', 'inspirations'] as const) {
     if (data[key] !== undefined && !Array.isArray(data[key])) throw new Error(`${key} 应为数组`)
   }
-  for (const c of data.chapters ?? []) if (typeof c?.id !== 'string' || !Array.isArray(c.sections)) throw new Error('章格式有误')
+  for (const c of data.chapters ?? []) {
+    if (typeof c?.id !== 'string' || !Array.isArray(c.sections)) throw new Error('章格式有误')
+    for (const sec of c.sections) if (typeof sec?.id !== 'string' || typeof sec.done !== 'boolean') throw new Error('节格式有误')
+  }
   for (const k of data.cards ?? []) if (typeof k?.id !== 'string' || typeof k.type !== 'string') throw new Error('卡片格式有误')
   for (const i of data.inspirations ?? []) if (typeof i?.id !== 'string') throw new Error('灵感格式有误')
   if (data.source !== undefined && data.source !== null && typeof data.source !== 'object') throw new Error('source 格式有误')
@@ -176,8 +179,8 @@ export class PalaceStore {
   /**
    * 执行一次修改。fn 抛错则不落盘。
    *
-   * fn 必须是同步的：从读取文件到写回之间不让出执行权，同一进程里的其他修改和外部手改都插不进这个窗口。
-   * 需要等待的事（读 PDF、联网）在调用 mutate 之前做完。
+   * fn 必须是同步的：同一进程里的其他修改不会交错。需要等待的事（读 PDF、联网）在调用 mutate 之前做完。
+   * 外部程序（编辑器、另一个进程）的写入挡不住，所以写回前再核对一次文件版本，变了就拒绝，不覆盖。
    *
    * 写入顺序见 CONTRACT §1：先写 item，再写 palace，最后删文件。删除失败只警告，不影响已经提交的结果。
    */
@@ -193,7 +196,7 @@ export class PalaceStore {
     const palaceState = this.refreshPalace()
     if (palaceState.broken) throw new ShelfError('palace.json 格式有误：请先修好或删掉这个文件，再继续操作')
     const palace = structuredClone(palaceState.value)
-    const touched = new Map<string, { item: Item | null; before: string }>()
+    const touched = new Map<string, { item: Item | null; before: string; stamp: string }>()
     const images: string[] = []
     const tx: Tx = {
       palace,
@@ -206,28 +209,36 @@ export class PalaceStore {
         const state = this.refreshItem(id)
         if (state.broken) throw new ShelfError(`items/${id}.json 格式有误：请先修好或删掉这个文件`)
         const item = structuredClone(state.value)
-        touched.set(id, { item, before: JSON.stringify(state.value) })
+        touched.set(id, { item, before: JSON.stringify(state.value), stamp: state.stamp })
         return item
       },
       createItem: (item) => {
         assertCellId(item.id)
-        touched.set(item.id, { item, before: '' })
+        touched.set(item.id, { item, before: '', stamp: '' })
       },
       deleteItem: (id) => {
         assertCellId(id)
-        touched.set(id, { item: null, before: '' })
+        touched.set(id, { item: null, before: '', stamp: '' })
       },
       deleteImage: (name) => { images.push(name) },
     }
     const result = fn(tx)
     if (result instanceof Promise) throw new Error('mutate 的回调必须是同步的')
 
+    // 写之前核对：读取之后文件被外部改过，就拒绝提交，不覆盖别人的改动
+    const changed = (file: string, was: string) => (existsSync(file) ? stamp(file) : '') !== was
+    const palaceChanged = JSON.stringify(palace) !== JSON.stringify(palaceState.value)
+    if (palaceChanged && changed(this.palaceFile, palaceState.stamp)) throw new ShelfError('palace.json 刚被其他程序修改过，请重试')
+    for (const [id, t] of touched) {
+      if (t.before !== '' && changed(join(this.itemsDir, `${id}.json`), t.stamp)) throw new ShelfError(`items/${id}.json 刚被其他程序修改过，请重试`)
+    }
+
     for (const [id, { item, before }] of touched) {
       if (item === null || JSON.stringify(item) === before) continue
       const st = writeAtomic(join(this.itemsDir, `${id}.json`), item)
       this.items.set(id, { value: item, stamp: st, broken: false })
     }
-    if (JSON.stringify(palace) !== JSON.stringify(palaceState.value)) {
+    if (palaceChanged) {
       const st = writeAtomic(this.palaceFile, palace)
       this.palace = { value: palace, stamp: st, broken: false }
     }
