@@ -3,9 +3,11 @@
  * 1. 右侧栏页面「学习书架」（主要工作区，和对话并排）
  * 2. 右侧栏引导页里的入口卡片
  * 3. 对话标题栏右侧的 📚 按钮
- * 4. 左侧导航「学习」→ 全屏书架（浏览、打勾；AI 操作需在对话里）
+ * 4. 左侧导航「学习」→ 全屏宫殿（v0.2，Memory Palace）
  */
 import css from './styles.css?raw'
+import palaceCss from './palace/palace.css?raw'
+import { Palace } from './palace/Palace.tsx'
 import { bindChat } from './chat.ts'
 import { App } from './ui/App.tsx'
 
@@ -44,7 +46,7 @@ function ShelfTab(props: { sessionId?: string }) {
 function MainPanel() {
   return (
     <div style={{ height: '100%', overflow: 'hidden' }}>
-      <App wide />
+      <Palace />
     </div>
   )
 }
@@ -78,7 +80,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = 'dsh-shelf'
-    style.textContent = css
+    style.textContent = css + '\n' + palaceCss
     document.head.appendChild(style)
     return () => style.remove()
   }, 'dsh-shelf: styles')
@@ -106,6 +108,6 @@ export function apply(ctx: ClientContext): void {
     name: 'sidebar.panellist',
     id: PANEL_ID,
     order: 30,
-    label: '学习',
+    label: 'Memory Palace',
   }, PanelIcon))
 }
