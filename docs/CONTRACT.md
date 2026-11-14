@@ -23,6 +23,16 @@ dsh-shelf-data/
 - 时间：`createdAt` 等用 ISO 时间戳；日期用本地 `YYYY-MM-DD`。
 - id：`<前缀>_<10 位十六进制>`，前缀见下文。
 
+**跨文件的修改**（新建 / 删除格子同时动 `palace.json`、`items/<id>.json` 和图片）没有事务，靠固定顺序保证「最坏情况也不坏」：
+1. 先写所有要新建或修改的 `items/<id>.json`；
+2. 再写 `palace.json`；
+3. 最后删除要删的 item 文件和图片。
+
+任何一步失败或进程退出，可能出现的只有两种情况，都按下面处理：
+- **有 item 文件、但 palace 里没有这个格子**（第 2 步前失败）：孤儿文件，忽略；以后可以清理。
+- **palace 里有书 / 笔记格子、但没有 item 文件**（用户手删，或旧版本数据）：当作空内容读出（没有原文、目录、卡片），下次修改时再写出文件。不报错。
+- 图片没删掉只会多占空间，不影响数据。
+
 ## 2. palace.json
 
 ```jsonc
@@ -127,13 +137,15 @@ book 和 note 格子各有一个；group 没有。
 interface Source {
   type: 'pdf' | 'epub' | 'video'
   /** 校验并补全用户给的原文信息（如读 PDF 页数）。 */
-  inspect(input: unknown): Promise<SourceRef>
+  inspect(input: unknown, opts?: { signal?: AbortSignal }): Promise<SourceRef>
   /** 读目录。没有（如扫描版 PDF 没书签）返回 null，交给 AI 生成。 */
-  outline(src: SourceRef): Promise<OutlineInput[] | null>
+  outline(src: SourceRef, opts?: { signal?: AbortSignal }): Promise<OutlineInput[] | null>
   /** 给 AI 读原文。locs 由各 source 自己解释；扫描页等读不出文字的单独列出。 */
-  readText?(src: SourceRef, locs: string[]): Promise<{ texts: { loc: string; text: string }[]; unreadable: string[] }>
+  readText?(src: SourceRef, locs: string[], opts?: { signal?: AbortSignal }): Promise<{ texts: { loc: string; text: string }[]; unreadable: string[] }>
 }
 ```
+
+**取消**：三个方法都接收调用方的 `signal`（来自 AI 工具或 HTTP 请求）。实现必须把它继续传给网络请求（`fetch`）、PDF 解析等内部任务；收到取消后尽快以 `AbortError` 结束，不写入任何数据。Harness 取消工具时只会等工具自己结束，不会强制中断，所以不传 signal 的实现会在用户点「停止」后继续跑完。
 
 ### 4.2 reader（前端，每种原文一个，用到时才加载）
 
