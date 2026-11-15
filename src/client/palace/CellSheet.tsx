@@ -27,12 +27,14 @@ export function CellSheet({ palace, cellId, summary, onRead, onClose }: { palace
     if (title.trim() === cell.title && subtitle.trim() === (cell.subtitle ?? '')) return
     void run('updateCell', { title, subtitle: subtitle.trim() === '' ? null : subtitle }).catch(() => setTitle(cell.title))
   }
+  // 关闭前先把还没失焦的标题 / 作者存下（输入框卸载时来不及触发 onBlur）
+  const close = () => { saveText(); onClose() }
   return (
-    <div className="mp-room" onPointerDown={(e) => { e.stopPropagation(); if (e.target === e.currentTarget) onClose() }}>
+    <div className="mp-room" onPointerDown={(e) => { e.stopPropagation(); if (e.target === e.currentTarget) close() }}>
     <aside className="mp-sheet">
       <div className="mp-sheet-head">
         <span className="mp-eyebrow">{cell.kind === 'book' ? 'READING ROOM' : 'NOTEBOOK'}</span>
-        <button type="button" className="mp-sheet-close" aria-label="关闭" onClick={onClose}>×</button>
+        <button type="button" className="mp-sheet-close" aria-label="关闭" onClick={close}>×</button>
       </div>
       {summary?.source !== undefined && <div className="mp-sheet-moon"><Moon percent={summary.percent} title={cell.title} onOpen={onRead} /></div>}
       <input className="mp-sheet-title" value={title} onChange={e => setTitle(e.target.value)} onBlur={saveText}
