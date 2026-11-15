@@ -25,12 +25,18 @@ export interface FetchRoute {
   fetch: (request: Request) => Promise<Response>
 }
 
-type Op = (store: PalaceStore, args: never) => Promise<unknown>
+type Op = (store: PalaceStore, args: never, signal?: AbortSignal) => Promise<unknown>
+
+/** HTTP 只能新建分组和笔记；书要走 addBook，经过原文校验（不信任前端传来的 source）。 */
+function addCell(store: PalaceStore, args: Record<string, unknown>): Promise<unknown> {
+  if (args.kind === 'book' || args.source !== undefined) throw new ShelfError('添加书请用 addBook')
+  return core.addCell(store, { ...args, outline: undefined, outlineSource: undefined } as never)
+}
 
 /** 前端可调用的写操作白名单。 */
 const OPS: Record<string, Op> = {
   addBook,
-  addCell: core.addCell,
+  addCell,
   updateCell: core.updateCell,
   moveCell: core.moveCell,
   deleteCell: core.deleteCell,
@@ -111,14 +117,14 @@ function itemOf(store: PalaceStore, id: unknown): Item {
 }
 
 export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRoute[] {
-  const route = (method: 'GET' | 'POST', path: string, handler: (input: { url: URL; body: Record<string, unknown> }) => Promise<Response> | Response): FetchRoute => ({
+  const route = (method: 'GET' | 'POST', path: string, handler: (input: { url: URL; body: Record<string, unknown>; signal: AbortSignal }) => Promise<Response> | Response): FetchRoute => ({
     path: `${API}/${path}`,
     methods: [method],
     requestBody: 'buffered',
     fetch: async (request) => {
       try {
         const body = method === 'POST' ? (await request.json().catch(() => ({})) as Record<string, unknown>) ?? {} : {}
-        return await handler({ url: new URL(request.url), body })
+        return await handler({ url: new URL(request.url), body, signal: request.signal })
       } catch (error) {
         return fail(error)
       }
@@ -132,16 +138,13 @@ export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRout
 
     route('GET', 'item', ({ url }) => json({ ok: true, rev: store.rev, item: itemOf(store, url.searchParams.get('id')) })),
 
-    route('GET', 'rev', () => {
-      store.getPalace() // 顺便检查文件是否被手动修改
-      return json({ ok: true, rev: store.rev })
-    }),
+    route('GET', 'rev', () => json({ ok: true, rev: store.checkDisk() })),
 
-    route('POST', 'op', async ({ body }) => {
+    route('POST', 'op', async ({ body, signal }) => {
       const name = String(body.op)
       const handler = Object.hasOwn(OPS, name) ? OPS[name] : undefined
       if (handler === undefined) return json({ ok: false, error: `未知操作 ${name}` }, 400)
-      const result = await handler(store, (body.args ?? {}) as never)
+      const result = await handler(store, (body.args ?? {}) as never, signal)
       return json({ ok: true, rev: store.rev, result: result ?? null })
     }),
 

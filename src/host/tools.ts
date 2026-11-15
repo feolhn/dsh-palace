@@ -114,13 +114,13 @@ export function createTools(store: PalaceStore, active: ActiveItems) {
         target_date: { type: 'string' },
       },
       output: stringOut,
-      async execute(args) {
+      async execute(args, exec) {
         return guard(async () => {
           if (args.kind !== 'book') {
             const c = await core.addCell(store, { kind: args.kind, title: args.title, subtitle: args.subtitle, parentId: args.parent_id })
             return `已新建${KIND_LABEL[c.kind]}「${c.title}」 id=${c.id}`
           }
-          const c = await addBook(store, { file: args.path, url: args.url, title: args.title, subtitle: args.subtitle, parentId: args.parent_id, targetDate: args.target_date })
+          const c = await addBook(store, { file: args.path, url: args.url, title: args.title, subtitle: args.subtitle, parentId: args.parent_id, targetDate: args.target_date }, exec.signal)
           const item = store.getItem(c.id)
           const total = progressOf(item).total
           if (item.source?.type === 'video') return `已添加视频课《${c.title}》 id=${c.id}，共 ${total} 集。`

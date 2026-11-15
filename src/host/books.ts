@@ -17,15 +17,16 @@ export function expandHome(path: string): string {
 
 /**
  * 添加一本书：先读原文（PDF 页数和书签、B 站分 P），再一次性建格子。
- * 读原文要等待，所以放在 mutate 之外。
+ * 读原文要等待，所以放在 mutate 之外。取消（signal）后不写入任何数据（CONTRACT §4.1）。
  */
-export async function addBook(store: PalaceStore, args: { file?: unknown; url?: unknown; title?: unknown; subtitle?: unknown; parentId?: unknown; targetDate?: unknown }) {
+export async function addBook(store: PalaceStore, args: { file?: unknown; url?: unknown; title?: unknown; subtitle?: unknown; parentId?: unknown; targetDate?: unknown }, signal?: AbortSignal) {
+  const cancelled = () => { if (signal?.aborted) throw new ShelfError('已取消') }
   let source: SourceRef
   let title: string
   let outline: core.OutlineInput[] = []
   let outlineSource: 'bookmarks' | 'video' | undefined
   if (typeof args.url === 'string' && args.url.trim() !== '') {
-    const course = await readVideoCourse(args.url.trim()).catch((error: Error) => { throw new ShelfError(error.message) })
+    const course = await readVideoCourse(args.url.trim(), signal).catch((error: Error) => { cancelled(); throw new ShelfError(error.message) })
     source = { type: 'video', url: course.url }
     title = course.title
     outline = course.chapters.map(c => ({ title: c.title, sections: c.episodes.map(e => ({ title: e.title, loc: e.url })) }))
@@ -48,6 +49,7 @@ export async function addBook(store: PalaceStore, args: { file?: unknown; url?: 
     throw new ShelfError('请选择 PDF 文件，或粘贴视频链接')
   }
   if (typeof args.title === 'string' && args.title.trim() !== '') title = args.title.trim()
+  cancelled()
   return core.addCell(store, { kind: 'book', title, subtitle: args.subtitle, source, parentId: args.parentId, targetDate: args.targetDate, outline, outlineSource })
 }
 

@@ -22,9 +22,10 @@ export function useAction() {
   return { busy, error, setError, run }
 }
 
-/** 写操作的简写：出错时交给 onError。 */
+/** 写操作的简写：出错时交给 onError。返回是否成功，调用方只在成功后清空输入。 */
 export function useOp(onError: (message: string) => void) {
-  return (op: string, args: Record<string, unknown>) => palaceOp(op, args).catch((e: Error) => { onError(e.message) })
+  return (op: string, args: Record<string, unknown>): Promise<boolean> =>
+    palaceOp(op, args).then(() => true, (e: Error) => { onError(e.message); return false })
 }
 
 /** 需要点两次的危险按钮（Electron 里不用 window.confirm）。 */

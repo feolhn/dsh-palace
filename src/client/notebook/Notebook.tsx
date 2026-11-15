@@ -195,7 +195,7 @@ function CardsTab({ item, onError }: { item: Item; onError: (m: string) => void 
 
   const addThought = () => {
     if (draft.trim() === '') return
-    void run('addCard', { id: item.id, type: 'thought', note: draft, sectionId: progressOf(item).current?.section.id }).then(() => setDraft(''))
+    void run('addCard', { id: item.id, type: 'thought', note: draft, sectionId: progressOf(item).current?.section.id }).then(ok => { if (ok) setDraft('') })
   }
 
   return (
@@ -206,10 +206,10 @@ function CardsTab({ item, onError }: { item: Item; onError: (m: string) => void 
         {draft.trim() !== '' && <button type="button" className="nb-btn nb-primary" onClick={addThought}>保存</button>}
       </div>
 
-      {types.length > 1 && (
+      {(types.length > 1 || todo.length > 1) && (
         <div className="nb-chips">
           <button type="button" className={filter === 'all' ? 'nb-on' : ''} onClick={() => setFilter('all')}>全部</button>
-          {types.map(t => <button key={t} type="button" className={filter === t ? 'nb-on' : ''} onClick={() => setFilter(t)}>{TYPE_LABEL[t]}</button>)}
+          {types.length > 1 && types.map(t => <button key={t} type="button" className={filter === t ? 'nb-on' : ''} onClick={() => setFilter(t)}>{TYPE_LABEL[t]}</button>)}
           {todo.length > 1 && <button type="button" className={filter === 'random' ? 'nb-on' : ''} onClick={() => { setSeed(seed + 1); setFilter('random') }}>随机抽 {Math.min(5, todo.length)} 道错题</button>}
         </div>
       )}
@@ -235,7 +235,7 @@ function CardView({ item, card: k, onError }: { item: Item; card: Card; onError:
   const sections = item.chapters.flatMap(c => c.sections.map(s => ({ id: s.id, label: c.title === s.title ? s.title : `${c.title} › ${s.title}` })))
   const saveNote = () => {
     if (editing === undefined) return
-    void run('updateCard', { id: item.id, cardId: k.id, note: editing.trim() === '' ? null : editing }).then(() => setEditing(undefined))
+    void run('updateCard', { id: item.id, cardId: k.id, note: editing.trim() === '' ? null : editing }).then(ok => { if (ok) setEditing(undefined) })
   }
 
   return (

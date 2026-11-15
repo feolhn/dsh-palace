@@ -164,6 +164,12 @@ export class PalaceStore {
     return this.refreshItem(id).value
   }
 
+  /** 检查 palace.json 和所有格子的 item 文件有没有被手动改过（改了 rev 会变）。前端轮询 rev 时调用。 */
+  checkDisk(): number {
+    for (const cell of this.getPalace().cells) if (cell.kind !== 'group') this.refreshItem(cell.id)
+    return this.rev
+  }
+
   /** 每个书 / 笔记格子的进度摘要。 */
   summaries(): Record<string, CellSummary> {
     const out: Record<string, CellSummary> = {}

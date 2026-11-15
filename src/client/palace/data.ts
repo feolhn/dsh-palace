@@ -62,9 +62,10 @@ export function usePalace(): State {
 }
 
 /** 执行一个写操作（白名单见 host/routes.ts），成功后刷新。 */
-export async function palaceOp<T = unknown>(op: string, args: Record<string, unknown>): Promise<T> {
+export async function palaceOp<T = unknown>(op: string, args: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   const response = await fetch(apiUrl('op'), {
     method: 'POST',
+    signal,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ op, args }),
   })

@@ -2,7 +2,7 @@
 declare module '@deepseek-ai/dsh-tools' {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Args = Record<string, any>
-  interface Exec { agent?: { id: string } }
+  interface Exec { agent?: { id: string }; signal?: AbortSignal }
   export function defineTool(definition: {
     name: string
     description: string
