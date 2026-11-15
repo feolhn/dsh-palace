@@ -260,3 +260,14 @@ test('复核 2：节数据损坏当作改坏，沿用上一次的好版本', asy
   const it = readJson(itf); it.chapters[0].sections = [null]; handEdit(itf, it)
   assert.equal(store.summaries()[b.id].total, 1)
 })
+
+test('新建书时带初始目录；不给坐标的移动放到目标层第一个空位', async () => {
+  const store = fresh()
+  const g = await ops.addCell(store, { kind: 'group', title: 'G' })
+  const b = await ops.addCell(store, { kind: 'book', title: 'B', source: pdf, outline: [{ title: '第一章', sections: ['一', '二'] }], outlineSource: 'bookmarks' })
+  assert.equal(progressOf(store.getItem(b.id)).total, 2)
+  assert.equal(store.getItem(b.id).outlineSource, 'bookmarks')
+  await ops.addCell(store, { kind: 'note', title: 'x', parentId: g.id })
+  const moved = await ops.moveCell(store, { id: b.id, parentId: g.id })
+  assert.deepEqual([moved.parentId, moved.col, moved.row], [g.id, 1, 0])
+})

@@ -3,9 +3,12 @@
  * 1. 右侧栏页面「学习书架」（主要工作区，和对话并排）
  * 2. 右侧栏引导页里的入口卡片
  * 3. 对话标题栏右侧的 📚 按钮
- * 4. 左侧导航「学习」→ 全屏书架（浏览、打勾；AI 操作需在对话里）
+ * 4. 左侧导航「学习」→ 全屏宫殿（v0.2，Memory Palace）
  */
 import css from './styles.css?raw'
+import palaceCss from './palace/palace.css?raw'
+import { Palace } from './palace/Palace.tsx'
+import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
 import { App } from './ui/App.tsx'
 
@@ -37,6 +40,22 @@ function BookIcon({ size = 16 }: { size?: number }) {
   )
 }
 
+/** 界面出错时显示提示和「重新加载」，而不是整页空白。 */
+class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
+  state: { error?: Error } = {}
+  static getDerivedStateFromError(error: Error) { return { error } }
+  componentDidCatch(error: Error) { console.error('[dsh-shelf]', error) }
+  render() {
+    if (this.state.error === undefined) return this.props.children
+    return (
+      <div style={{ padding: 32, fontSize: 13, lineHeight: 1.8 }}>
+        <p>界面出错了：{this.state.error.message}</p>
+        <button type="button" onClick={() => this.setState({ error: undefined })}>重新加载</button>
+      </div>
+    )
+  }
+}
+
 function ShelfTab(props: { sessionId?: string }) {
   return <App sessionId={props.sessionId} />
 }
@@ -44,7 +63,7 @@ function ShelfTab(props: { sessionId?: string }) {
 function MainPanel() {
   return (
     <div style={{ height: '100%', overflow: 'hidden' }}>
-      <App wide />
+      <Guard><Palace /></Guard>
     </div>
   )
 }
@@ -78,7 +97,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = 'dsh-shelf'
-    style.textContent = css
+    style.textContent = css + '\n' + palaceCss
     document.head.appendChild(style)
     return () => style.remove()
   }, 'dsh-shelf: styles')
@@ -106,6 +125,6 @@ export function apply(ctx: ClientContext): void {
     name: 'sidebar.panellist',
     id: PANEL_ID,
     order: 30,
-    label: '学习',
+    label: 'Memory Palace',
   }, PanelIcon))
 }

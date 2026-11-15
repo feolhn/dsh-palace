@@ -9,3 +9,6 @@ node_modules/
 *.local.md
 privacy.local.txt
 design/screenshots.local/
+
+# 本地预览配置
+.claude/

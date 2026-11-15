@@ -19,6 +19,9 @@
   },
   "include": [
     "src/shared/palace.ts",
-    "src/core"
+    "src/core",
+    "src/client/palace",
+    "src/client/raw.d.ts",
+    "src/host/palace-routes.ts"
   ]
 }

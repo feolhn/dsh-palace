@@ -31,7 +31,7 @@ async function open(file: string): Promise<{ doc: PdfDocument; close: () => Prom
     cMapUrl: join(dist, 'cmaps') + sep, // Node 端要普通路径，不能是 file:// URL
     cMapPacked: true,
     standardFontDataUrl: join(dist, 'standard_fonts') + sep,
-    isEvalSupported: false,
+    ...({ isEvalSupported: false } as object), // pdf.js 6 的类型里去掉了这个选项；旧版本仍然认，保留
     disableFontFace: true,
     verbosity: 0,
   })

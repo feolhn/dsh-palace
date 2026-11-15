@@ -4,6 +4,8 @@
  */
 import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { PalaceStore } from '../core/store.ts'
+import { createPalaceRoutes } from './palace-routes.ts'
 import { createRoutes } from './routes.ts'
 import { ShelfStore } from './store.ts'
 import { createTools, type ActiveMaterials } from './tools.ts'
@@ -25,6 +27,8 @@ interface HostContext {
 export function apply(ctx: HostContext, config: Config = {}): void {
   const dir = config.dataDir ?? join(homedir(), 'Documents', 'dsh-shelf-data')
   const store = new ShelfStore(dir)
+  // v0.2：同一个数据目录，新格式（palace.json + items/），和 v0.1 的 library.json 互不影响
+  const palace = new PalaceStore(dir)
   const active: ActiveMaterials = new Map()
 
   ctx.inject(['tools'], (scope) => {
@@ -33,7 +37,7 @@ export function apply(ctx: HostContext, config: Config = {}): void {
   })
 
   ctx.inject(['connection'], (scope) => {
-    for (const route of createRoutes(store, active)) {
+    for (const route of [...createRoutes(store, active), ...createPalaceRoutes(palace)]) {
       scope.effect(() => scope.connection.fetch.register(route), `dsh-shelf: ${route.path}`)
     }
   })

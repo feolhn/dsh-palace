@@ -1,0 +1,109 @@
+/* 宫殿画布。视觉参考设计负责人的原型；字体先用系统字体（官方字体包以后再做）。 */
+.mp-root {
+  --mp-ink: #294c60;
+  --mp-quiet: #4c6d7e;
+  --mp-line: rgba(255, 255, 250, .7);
+  --mp-serif: "EB Garamond", "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", Georgia, serif;
+  --mp-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  position: relative; width: 100%; height: 100%; overflow: clip; /* clip：输入框自动聚焦也不会把画布滚走 */
+  color: var(--mp-ink); font-family: var(--mp-sans);
+  touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none;
+  background: #abc9d7;
+}
+.mp-root.mp-panning { cursor: grabbing; }
+.mp-root button, .mp-root input { font: inherit; color: inherit; }
+.mp-root button { cursor: pointer; border: 0; background: none; padding: 0; }
+.mp-root button:disabled { opacity: .35; cursor: default; }
+
+/* 蓝纸：上深下浅的渐变 + 很淡的颗粒（SVG 噪点，代码生成） */
+.mp-paper {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #93b8cf 0%, #a3c3d5 45%, #bcd3de 100%);
+}
+
+.mp-grid { position: absolute; left: 0; top: 0; pointer-events: none; }
+.mp-lines line { stroke: var(--mp-line); stroke-width: .8; }
+.mp-dots circle { fill: rgba(255, 255, 250, .94); }
+
+/* 格子：去封面，标准排版。字号随缩放（font-size 由 JS 按 scale 设置，下面用 em） */
+.mp-cell { position: absolute; cursor: pointer; transition: background .25s; }
+.mp-cell:hover { background: rgba(255, 255, 255, .08); }
+.mp-cell.mp-selected { background: rgba(255, 255, 255, .14); }
+.mp-cell.mp-lifted { z-index: 6; cursor: grabbing; background: #abc8d7dd; box-shadow: 0 14px 35px #36536328, 0 0 0 1px #ffffffe0; transition: none; }
+.mp-cell-title {
+  position: absolute; left: 1.55em; right: 2.4em; bottom: 1.5em;
+  font-family: var(--mp-serif); font-size: 1.85em; line-height: 1.12; letter-spacing: -.02em;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
+.mp-cell-sub { display: block; font-size: .55em; line-height: 1.4; letter-spacing: .06em; margin-bottom: .4em; opacity: .85; }
+.mp-cell-meta { position: absolute; left: 2em; top: 1.7em; font-size: .8em; letter-spacing: .08em; color: var(--mp-quiet); }
+.mp-group .mp-cell-title::before { content: ""; display: block; width: 1.1em; height: 1px; background: currentColor; opacity: .5; margin-bottom: .5em; }
+
+/* 分组展开 */
+.mp-dim { position: absolute; inset: 0; background: rgba(87, 120, 138, .16); pointer-events: none; }
+.mp-group-frame { position: absolute; background: rgba(255, 253, 241, .42); box-shadow: 0 0 0 1px #fffef3, 0 20px 60px #294c6020; pointer-events: none; }
+.mp-drop { position: absolute; border: 1px solid #fffef3; background: #ffffed21; pointer-events: none; z-index: 5; }
+
+/* 顶部、底部 */
+.mp-masthead { position: absolute; z-index: 7; left: 32px; top: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.mp-wordmark { font-family: var(--mp-serif); font-size: 28px; letter-spacing: -.02em; }
+.mp-groupbar { display: flex; align-items: center; gap: 14px; pointer-events: auto; font-size: 12px; }
+.mp-groupbar input { width: 12em; background: transparent; border: 0; border-bottom: 1px solid #ffffff90; padding: 3px 0; font-size: 14px; }
+.mp-text-btn { font-size: 12px; letter-spacing: .04em; white-space: nowrap; }
+.mp-text-btn:hover:not(:disabled) { color: #142e40; text-decoration: underline; text-underline-offset: 4px; }
+.mp-danger { color: #934b39; }
+.mp-primary { border-bottom: 1px solid #5f7c8a77 !important; padding: 5px 0 !important; font-size: 13px; }
+
+.mp-footer { position: absolute; z-index: 7; right: 28px; bottom: 22px; display: flex; gap: 11px; align-items: center; cursor: default; }
+.mp-round { width: 35px; height: 35px; border: 1px solid #fffffa85 !important; border-radius: 50%; font-size: 17px; }
+.mp-round:hover { background: #ffffff20 !important; }
+.mp-zoom { display: flex; align-items: center; height: 35px; border: 1px solid #fffffa85; border-radius: 30px; background: #c5dae338; }
+.mp-zoom button { height: 33px; min-width: 35px; font-family: var(--mp-serif); font-size: 16px; border-radius: 30px; }
+.mp-zoom button:hover:not(:disabled) { background: #ffffff21; }
+.mp-zoom .mp-zoom-reset { min-width: 52px; font-family: var(--mp-sans); font-size: 11px; }
+
+.mp-empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 14px; letter-spacing: .04em; color: var(--mp-quiet); pointer-events: none; text-align: center; }
+.mp-toast { position: absolute; z-index: 9; left: 50%; bottom: 72px; transform: translateX(-50%); background: #f4f0e4; color: #934b39; font-size: 12px; padding: 8px 14px; box-shadow: 0 6px 24px #294c6020; }
+.mp-error { color: #934b39; font-size: 12px; line-height: 1.7; }
+.mp-hint { font-size: 11px; line-height: 1.8; color: var(--mp-quiet); }
+.mp-eyebrow { font-size: 10px; letter-spacing: .2em; color: var(--mp-quiet); }
+
+/* 详情 */
+.mp-sheet {
+  position: absolute; z-index: 8; top: 16px; right: 16px; bottom: 76px; width: min(340px, calc(100% - 32px));
+  padding: 22px 26px; overflow: auto; cursor: default; user-select: text; -webkit-user-select: text;
+  background: #e0e9e8f2; border: 1px solid #fffffbbf; box-shadow: 0 20px 70px #294c602b;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.mp-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.mp-sheet input { background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 3px 0; width: 100%; }
+.mp-sheet input:hover, .mp-sheet input:focus { border-bottom-color: #7a99a455; outline: none; }
+.mp-sheet-title { font-family: var(--mp-serif) !important; font-size: 26px !important; line-height: 1.2; }
+.mp-sheet-sub { font-size: 13px !important; }
+.mp-facts { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 22px 0 8px; font-size: 13px; }
+.mp-facts dt { color: var(--mp-quiet); font-size: 12px; }
+.mp-facts dd { margin: 0; }
+.mp-facts input[type=date] { border-bottom-color: #7a99a455; width: auto; }
+.mp-sheet-actions { margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #fffffa7a; }
+
+/* 添加 */
+.mp-dialog-backdrop { position: absolute; inset: 0; z-index: 10; background: #57788a33; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; cursor: default; }
+.mp-dialog {
+  width: min(470px, calc(100% - 36px)); max-height: calc(100% - 48px); overflow: auto; padding: 26px 30px;
+  background: #e0e9e8; border: 1px solid #fffffbbf; box-shadow: 0 20px 90px #294c602b; user-select: text; -webkit-user-select: text;
+}
+.mp-dialog-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+.mp-dialog h2 { margin: 0; font-family: var(--mp-serif); font-weight: 400; font-size: 22px; }
+.mp-dialog label { display: block; font-size: 12px; margin: 16px 0 6px; }
+.mp-dialog label small { opacity: .65; font-size: 10px; margin-left: 6px; }
+.mp-dialog input { width: 100%; background: #ffffff28; border: 0; border-bottom: 1px solid #7a99a455; padding: 8px 10px; font-size: 14px; outline: none; }
+.mp-dialog input:focus { border-bottom-color: var(--mp-ink); }
+.mp-row { display: flex; gap: 12px; align-items: center; }
+.mp-kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mp-kinds button { text-align: left; padding: 10px 12px !important; border: 1px solid #fffffa85 !important; display: flex; flex-direction: column; gap: 4px; }
+.mp-kinds button span { font-size: 14px; }
+.mp-kinds button small { font-size: 10px; line-height: 1.5; opacity: .7; }
+.mp-kinds button.mp-on { background: #ffffff55 !important; border-color: var(--mp-ink) !important; }
+.mp-dialog-actions { display: flex; justify-content: flex-end; margin-top: 22px; }

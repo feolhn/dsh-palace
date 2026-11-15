@@ -73,10 +73,10 @@ function occupant(palace: Palace, parentId: string | null, col: number, row: num
   return palace.cells.find(c => c.parentId === parentId && c.col === col && c.row === row)
 }
 
-/** 新格子的默认位置：按行从左到右找第一个空位。最外层每行 4 格；分组至少 2 列，满了再变宽。 */
+/** 新格子的默认位置：按行从左到右找第一个空位。最外层每行 3 格；分组至少 2 列，满了再变宽。 */
 export function firstEmptySlot(palace: Palace, parentId: string | null): { col: number; row: number } {
   const siblings = palace.cells.filter(c => c.parentId === parentId).length
-  const width = parentId === null ? 4 : Math.max(2, Math.ceil(Math.sqrt(siblings + 1)))
+  const width = parentId === null ? 3 : Math.max(2, Math.ceil(Math.sqrt(siblings + 1)))
   for (let i = 0; ; i++) {
     const col = i % width
     const row = Math.floor(i / width)
@@ -108,6 +108,9 @@ export interface AddCellArgs {
   /** 只有 book：已经由 sources 模块校验过的原文信息。 */
   source?: unknown
   targetDate?: unknown
+  /** 只有 book：初始目录（PDF 书签、视频分 P）。 */
+  outline?: OutlineInput[]
+  outlineSource?: Item['outlineSource']
 }
 
 export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Cell> {
@@ -131,7 +134,10 @@ export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Ce
     if (kind !== 'group') {
       const item = emptyItem(cell.id, source)
       if (targetDate !== undefined) item.targetDate = targetDate
-      if (source?.type === 'video') item.outlineSource = 'video'
+      if (kind === 'book' && args.outline !== undefined) {
+        item.chapters = buildChapters(args.outline)
+        if (item.chapters.length > 0 && args.outlineSource !== undefined) item.outlineSource = args.outlineSource
+      }
       tx.createItem(item)
     }
     return cell
@@ -151,14 +157,20 @@ export async function updateCell(store: PalaceStore, args: { id: unknown; title?
 
 /**
  * 移动格子。目标位置有别的格子时两者互换：对方移到这个格子原来的位置（可能跨层），一次写入完成。
+ * 不给 col / row：放到目标层的第一个空位（比如拖进分组）。
  */
-export async function moveCell(store: PalaceStore, args: { id: unknown; parentId?: unknown; col: unknown; row: unknown }): Promise<Cell> {
-  const col = int(args.col, '列')
-  const row = int(args.row, '行')
+export async function moveCell(store: PalaceStore, args: { id: unknown; parentId?: unknown; col?: unknown; row?: unknown }): Promise<Cell> {
+  const auto = args.col === undefined && args.row === undefined
+  let col = auto ? 0 : int(args.col, '列')
+  let row = auto ? 0 : int(args.row, '行')
   return store.mutate((tx) => {
     const cell = cellOf(tx.palace, args.id)
     const parentId = checkParent(tx.palace, args.parentId, cell.kind)
     if (parentId === cell.id) throw new ShelfError('不能放进自己里面')
+    if (auto) {
+      if (cell.parentId === parentId) return cell
+      ;({ col, row } = firstEmptySlot(tx.palace, parentId))
+    }
     checkPosition(parentId, col, row)
     const other = occupant(tx.palace, parentId, col, row)
     if (other !== undefined && other.id !== cell.id) {
