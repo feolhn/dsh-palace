@@ -13,6 +13,7 @@ import { useItem } from '../palace/data.ts'
 import { ConfirmButton, Overlay, useOp } from './common.tsx'
 import { PagePicker } from './PagePicker.tsx'
 import { ShareEditor } from '../share/ShareEditor.tsx'
+import { EpubReader } from '../readers/EpubReader.tsx'
 
 export type NotebookTab = 'progress' | 'cards' | 'inspirations'
 
@@ -50,7 +51,7 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
         ))}
       </div>
       {opError && <div className="nb-error" onClick={() => setOpError(undefined)}>{opError}</div>}
-      {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} onPick={() => setPicking(true)} onError={setOpError} />}
+      {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} title={title} onPick={() => setPicking(true)} onError={setOpError} />}
       {current === 'cards' && <CardsTab item={item} title={title} subtitle={subtitle} onError={setOpError} />}
       {current === 'inspirations' && <InspirationsTab item={item} title={title} sessionId={sessionId} onError={setOpError} />}
     </div>
@@ -59,8 +60,9 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
 
 // ---------- 进度 ----------
 
-function ProgressTab({ item, onPick, onError }: { item: Item; onPick: () => void; onError: (m: string) => void }) {
+function ProgressTab({ item, title, onPick, onError }: { item: Item; title: string; onPick: () => void; onError: (m: string) => void }) {
   const run = useOp(onError)
+  const [reading, setReading] = useState(false)
   const p = progressOf(item)
   const pace = paceOf(item)
   const video = item.source?.type === 'video'
@@ -95,7 +97,14 @@ function ProgressTab({ item, onPick, onError }: { item: Item; onPick: () => void
           <div>{p.current.chapter.title === p.current.section.title ? p.current.section.title : `${p.current.chapter.title} › ${p.current.section.title}`}</div>
         </div>
       )}
-      {item.source !== null && (
+      {item.source?.type === 'epub' && (
+        <div className="nb-row">
+          <button type="button" className="nb-btn nb-primary" onClick={() => setReading(true)}>{item.position ? '继续读' : '开始读'}</button>
+          {item.position && <span className="nb-small nb-muted">读到 {Math.round(item.position.percent * 100)}%</span>}
+        </div>
+      )}
+      {reading && <EpubReader item={item} title={title} onClose={() => setReading(false)} />}
+      {item.source !== null && item.source.type !== 'epub' && (
         <button type="button" className="nb-btn" onClick={() => void openSource(item.id, video ? p.current?.section.id : undefined).catch((e: Error) => onError(e.message))}>
           {video ? (p.current ? '继续看' : '打开视频') : item.source.type === 'pdf' ? '打开 PDF' : '打开原文'}
         </button>
@@ -105,6 +114,7 @@ function ProgressTab({ item, onPick, onError }: { item: Item; onPick: () => void
         ? (
           <div className="nb-empty">
             <p>还没有目录。</p>
+            {item.source?.type === 'epub' && <p className="nb-small nb-muted">第一次打开阅读时，会自动读出书里的目录。</p>}
             {item.source?.type === 'pdf' && (
               <>
                 <p className="nb-small nb-muted">这本 PDF 没有书签。勾选目录所在的页面，AI 会读出章节结构。</p>

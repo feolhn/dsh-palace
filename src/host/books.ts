@@ -35,7 +35,16 @@ export async function addBook(store: PalaceStore, args: { file?: unknown; url?: 
     const file = expandHome(args.file.trim().replace(/^['"]|['"]$/g, ''))
     if (!isAbsolute(file)) throw new ShelfError('请提供 PDF 的完整路径（以 / 开头）')
     if (!existsSync(file) || !statSync(file).isFile()) throw new ShelfError(`找不到文件：${file}`)
-    if (extname(file).toLowerCase() !== '.pdf') throw new ShelfError('目前只支持 PDF 文件（EPUB 在做了）')
+    const ext = extname(file).toLowerCase()
+    if (ext !== '.pdf' && ext !== '.epub') throw new ShelfError('目前只支持 PDF 和 EPUB 文件')
+    if (ext === '.epub') {
+      // EPUB 的目录在第一次打开阅读器时由前端读出（epub.js 解析导航最可靠）
+      source = { type: 'epub', path: file }
+      title = basename(file, ext)
+      if (typeof args.title === 'string' && args.title.trim() !== '') title = args.title.trim()
+      cancelled()
+      return core.addCell(store, { kind: 'book', title, subtitle: args.subtitle, source, parentId: args.parentId, targetDate: args.targetDate })
+    }
     const info = await readPdfInfo(file).catch((error: Error) => { throw new ShelfError(`PDF 打不开：${error.message}`) })
     source = { type: 'pdf', path: file, pageCount: info.pageCount }
     title = basename(file, extname(file))

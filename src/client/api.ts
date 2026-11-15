@@ -22,7 +22,7 @@ export async function post<T>(path: string, body: unknown): Promise<T> {
   }))
 }
 
-export async function pickPdf(): Promise<string | null | undefined> {
+export async function pickBook(): Promise<string | null | undefined> {
   return (await post<{ path: string | null | undefined }>('pick-file', {})).path
 }
 
