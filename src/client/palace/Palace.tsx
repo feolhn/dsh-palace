@@ -8,6 +8,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEven
 import type { Cell, CellSummary } from '../../shared/palace.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { CellSheet } from './CellSheet.tsx'
+import { Moon } from './Moon.tsx'
+import { ReadBook } from './ReadBook.tsx'
 import { palaceOp, usePalace } from './data.ts'
 
 /** 格子边长（scale = 1 时的像素）。 */
@@ -58,6 +60,8 @@ export function Palace() {
   const rootRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<Size>({ w: 0, h: 0 })
   const [cam, setCam] = useState<Camera>()
+  /** 正在阅读的格子（点月亮进入）。 */
+  const [reading, setReading] = useState<string>()
   const [openGroup, setOpenGroup] = useState<string>()
   const [selected, setSelected] = useState<string>()
   const [adding, setAdding] = useState(false)
@@ -213,7 +217,7 @@ export function Palace() {
       <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''} ${selected === c.id ? 'mp-selected' : ''}`}
         style={{ ...shifted, fontSize: 16 * (cam?.scale ?? 1) }}
         onPointerDown={e => onCellDown(e, c)}>
-        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} />
+        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} onRead={() => setReading(c.id)} />
       </div>
     )
   }
@@ -258,8 +262,12 @@ export function Palace() {
       </footer>
 
       {selected !== undefined && palace !== undefined && palace.cells.some(c => c.id === selected) && (
-        <CellSheet palace={palace} cellId={selected} onClose={() => setSelected(undefined)} />
+        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]} onRead={() => setReading(selected)} onClose={() => setSelected(undefined)} />
       )}
+      {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {
+        const c = palace.cells.find(x => x.id === reading) as Cell
+        return <ReadBook key={c.id} id={c.id} title={c.title} subtitle={c.subtitle} onClose={() => setReading(undefined)} onError={setOpError} />
+      })()}
       {adding && <AddDialog parentId={group?.id} onClose={() => setAdding(false)} />}
     </div>
   )
@@ -295,7 +303,7 @@ function dropTarget(cells: Cell[], cam: Camera, openGroup: string | undefined, p
   return { parentId: null, col, row }
 }
 
-function CellFace({ cell, summary, count }: { cell: Cell; summary?: CellSummary; count: number }) {
+function CellFace({ cell, summary, count, onRead }: { cell: Cell; summary?: CellSummary; count: number; onRead: () => void }) {
   let meta: string | undefined
   if (cell.kind === 'group') meta = `${count} 项`
   else if (summary !== undefined) {
@@ -305,6 +313,7 @@ function CellFace({ cell, summary, count }: { cell: Cell; summary?: CellSummary;
   }
   return (
     <>
+      {summary?.source !== undefined && <Moon percent={summary.percent} title={cell.title} onOpen={onRead} />}
       {meta !== undefined && <span className="mp-cell-meta">{meta}</span>}
       <span className="mp-cell-title">
         {cell.subtitle !== undefined && <span className="mp-cell-sub">{cell.subtitle}</span>}
