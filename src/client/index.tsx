@@ -59,12 +59,13 @@ class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
 }
 
 function ShelfTab(props: { sessionId?: string }) {
-  return <Guard><Sidebar sessionId={props.sessionId} /></Guard>
+  // data-mp-host：阅读器盖在这个容器上，不盖住 Harness 的界面
+  return <div data-mp-host style={{ position: 'relative', height: '100%' }}><Guard><Sidebar sessionId={props.sessionId} /></Guard></div>
 }
 
 function MainPanel() {
   return (
-    <div style={{ height: '100%', overflow: 'hidden' }}>
+    <div data-mp-host style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
       <Guard><Palace /></Guard>
     </div>
   )

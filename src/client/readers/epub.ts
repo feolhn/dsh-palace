@@ -60,6 +60,7 @@ export interface EpubHandle {
   next(): void
   goTo(loc: string): void
   highlight(cfi: string): void
+  unhighlight(cfi: string): void
   clearSelection(): void
   setFontSize(px: number): void
   destroy(): void
@@ -86,6 +87,8 @@ export async function mountEpub(el: HTMLElement, opts: {
   /** 选中一段文字（划线）；取消选择时不回调。 */
   onSelect(sel: { quote: string; loc: string }): void
   onToc(outline: OutlineInput[]): void
+  /** 点了书里的一处高亮。 */
+  onHighlight(cfi: string): void
 }): Promise<EpubHandle> {
   const ePub = await loadEpub()
   const book = ePub(opts.data)
@@ -125,7 +128,7 @@ export async function mountEpub(el: HTMLElement, opts: {
   void book.locations.generate(1600).then(() => { locationsReady = true }).catch(() => undefined)
 
   function highlight(cfi: string) {
-    try { rendition.annotations.highlight(cfi, {}, undefined, 'mp-hl', { fill: '#f4dfa0', 'fill-opacity': '0.45' }) } catch { /* 旧位置在新版本书里不存在 */ }
+    try { rendition.annotations.highlight(cfi, {}, () => opts.onHighlight(cfi), 'mp-hl', { fill: '#f4dfa0', 'fill-opacity': '0.45' }) } catch { /* 旧位置在新版本书里不存在 */ }
   }
 
   return {
@@ -133,6 +136,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     next: () => void rendition.next(),
     goTo: loc => void rendition.display(loc).catch(() => undefined),
     highlight,
+    unhighlight: (cfi) => { try { rendition.annotations.remove(cfi, 'highlight') } catch { /* 已经没有了 */ } },
     clearSelection: () => { for (const c of rendition.getContents()) c.window.getSelection()?.removeAllRanges() },
     setFontSize: px => rendition.themes.override('font-size', `${px}px`, true),
     destroy: () => {

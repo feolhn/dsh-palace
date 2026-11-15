@@ -1,12 +1,13 @@
 /**
- * EPUB 阅读界面：盖在整个窗口上。翻页（← → 或两侧按钮）、按目录跳转、记住位置；
+ * EPUB 阅读界面：盖在当前面板上（全屏宫殿里盖住宫殿，右侧栏里盖住右侧栏），不遮 Harness 自己的界面。翻页（← → 或两侧按钮）、按目录跳转、记住位置；
  * 选中一段文字可以记成摘录卡片，记到当前这一节下，书里会留下高亮。
  */
 import { useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import type { Item, Section } from '../../shared/palace.ts'
+import { PanelOverlay } from '../host.tsx'
+import type { Card, Item, Section } from '../../shared/palace.ts'
 import { apiUrl } from '../api.ts'
 import { palaceOp } from '../palace/data.ts'
+import { ShareEditor } from '../share/ShareEditor.tsx'
 import { mountEpub, type EpubHandle } from './epub.ts'
 
 const FONT_KEY = 'dsh-shelf:epub-font-size'
@@ -19,8 +20,9 @@ function sameFile(a: string, b: string): boolean {
   return x !== '' && y !== '' && (x === y || x.endsWith('/' + y) || y.endsWith('/' + x))
 }
 
-export function EpubReader({ item, title, onClose }: { item: Item; title: string; onClose: () => void }) {
-  const stage = useRef<HTMLDivElement>(null)
+export function EpubReader({ item, title, subtitle, onClose }: { item: Item; title: string; subtitle?: string; onClose: () => void }) {
+  // 浮层第一次渲染时容器还不在，用 state 记住挂载点，出现后再打开书
+  const [stage, setStage] = useState<HTMLDivElement | null>(null)
   const handle = useRef<EpubHandle>()
   const latest = useRef(item)
   latest.current = item
@@ -29,6 +31,9 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
   const [percent, setPercent] = useState(item.position?.percent ?? 0)
   const [href, setHref] = useState('')
   const [selection, setSelection] = useState<{ quote: string; loc: string }>()
+  const [picked, setPicked] = useState<string>() // 点中的高亮（摘录卡片的 loc）
+  const [sharing, setSharing] = useState<Card>()
+  const lastIndex = useRef<number>()
   const [status, setStatus] = useState('')
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem(FONT_KEY)) || 18)
   const pendingPos = useRef<{ loc: string; percent: number }>()
@@ -43,7 +48,7 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
   }
 
   useEffect(() => {
-    const el = stage.current
+    const el = stage
     if (!el) return
     let destroyed = false
     void (async () => {
@@ -67,7 +72,8 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
           clearTimeout(posTimer.current)
           posTimer.current = setTimeout(savePosition, 1000)
         },
-        onSelect: sel => setSelection(sel),
+        onSelect: (sel) => { setPicked(undefined); setSelection(sel) },
+        onHighlight: (cfi) => { setSelection(undefined); setPicked(cfi) },
         onToc: (outline) => {
           // 第一次打开：用书自带的目录建「进度」里的章节
           if (latest.current.chapters.length === 0 && outline.length > 0) {
@@ -85,7 +91,7 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
       handle.current?.destroy()
       handle.current = undefined
     }
-  }, [item.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [item.id, stage]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -95,6 +101,28 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
 
   const sections = item.chapters.flatMap(c => c.sections.map(s => ({ s, label: c.title === s.title ? s.title : `${c.title} › ${s.title}` })))
   const current: Section | undefined = href === '' ? undefined : [...sections].reverse().find(x => x.s.loc && sameFile(x.s.loc, href))?.s
+
+  // 顺着往后读、从一节翻进下一节时，把读完的那一节打勾（跳着看不算）
+  useEffect(() => {
+    const index = current === undefined ? undefined : sections.findIndex(x => x.s.id === current.id)
+    const prev = lastIndex.current
+    lastIndex.current = index
+    if (index === undefined || prev === undefined || index !== prev + 1) return
+    const done = sections[prev].s
+    if (!done.done) void palaceOp('setSectionDone', { id: item.id, sectionId: done.id, done: true }).catch(() => undefined)
+  }, [current?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pickedCard = picked === undefined ? undefined : item.cards.find(k => k.loc === picked)
+  const cancelExcerpt = async () => {
+    if (!pickedCard || picked === undefined) return
+    try {
+      await palaceOp('deleteCard', { id: item.id, cardId: pickedCard.id })
+      handle.current?.unhighlight(picked)
+      setPicked(undefined)
+    } catch (e) {
+      setStatus(`没删掉：${(e as Error).message}`)
+    }
+  }
 
   const changeFont = (delta: number) => {
     const next = Math.max(14, Math.min(28, fontSize + delta))
@@ -117,7 +145,8 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
     }
   }
 
-  return createPortal(
+  return (
+    <PanelOverlay>
     <div className="rd-root">
       <header className="rd-head">
         <button type="button" className="rd-text" onClick={onClose}>← 返回</button>
@@ -139,7 +168,7 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
       </header>
       <div className="rd-body">
         <button type="button" className="rd-turn" aria-label="上一页" onClick={() => handle.current?.prev()}>‹</button>
-        <div className="rd-stage" ref={stage}>
+        <div className="rd-stage" ref={setStage}>
           {error ? <p className="rd-error">{error}</p> : !ready && <p className="rd-muted rd-loading">正在打开…</p>}
         </div>
         <button type="button" className="rd-turn" aria-label="下一页" onClick={() => handle.current?.next()}>›</button>
@@ -151,7 +180,16 @@ export function EpubReader({ item, title, onClose }: { item: Item; title: string
           <button type="button" className="rd-text" onClick={() => { handle.current?.clearSelection(); setSelection(undefined) }}>取消</button>
         </div>
       )}
-    </div>,
-    document.body,
+      {pickedCard && (
+        <div className="rd-select">
+          <span className="rd-quote">{pickedCard.quote}</span>
+          <button type="button" className="rd-btn" onClick={() => setSharing(pickedCard)}>分享</button>
+          <button type="button" className="rd-text rd-danger" onClick={() => void cancelExcerpt()}>取消摘录</button>
+          <button type="button" className="rd-text" aria-label="关闭" onClick={() => setPicked(undefined)}>×</button>
+        </div>
+      )}
+      {sharing && <ShareEditor itemId={item.id} card={sharing} title={title} subtitle={subtitle} onClose={() => setSharing(undefined)} />}
+    </div>
+    </PanelOverlay>
   )
 }

@@ -51,7 +51,7 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
         ))}
       </div>
       {opError && <div className="nb-error" onClick={() => setOpError(undefined)}>{opError}</div>}
-      {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} title={title} onPick={() => setPicking(true)} onError={setOpError} />}
+      {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} title={title} subtitle={subtitle} onPick={() => setPicking(true)} onError={setOpError} />}
       {current === 'cards' && <CardsTab item={item} title={title} subtitle={subtitle} onError={setOpError} />}
       {current === 'inspirations' && <InspirationsTab item={item} title={title} sessionId={sessionId} onError={setOpError} />}
     </div>
@@ -60,7 +60,7 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
 
 // ---------- 进度 ----------
 
-function ProgressTab({ item, title, onPick, onError }: { item: Item; title: string; onPick: () => void; onError: (m: string) => void }) {
+function ProgressTab({ item, title, subtitle, onPick, onError }: { item: Item; title: string; subtitle?: string; onPick: () => void; onError: (m: string) => void }) {
   const run = useOp(onError)
   const [reading, setReading] = useState(false)
   const p = progressOf(item)
@@ -103,7 +103,7 @@ function ProgressTab({ item, title, onPick, onError }: { item: Item; title: stri
           {item.position && <span className="nb-small nb-muted">读到 {Math.round(item.position.percent * 100)}%</span>}
         </div>
       )}
-      {reading && <EpubReader item={item} title={title} onClose={() => setReading(false)} />}
+      {reading && <EpubReader item={item} title={title} subtitle={subtitle} onClose={() => setReading(false)} />}
       {item.source !== null && item.source.type !== 'epub' && (
         <button type="button" className="nb-btn" onClick={() => void openSource(item.id, video ? p.current?.section.id : undefined).catch((e: Error) => onError(e.message))}>
           {video ? (p.current ? '继续看' : '打开视频') : item.source.type === 'pdf' ? '打开 PDF' : '打开原文'}

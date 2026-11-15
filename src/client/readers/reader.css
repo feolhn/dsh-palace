@@ -1,5 +1,5 @@
-/* EPUB 阅读界面（盖在整个窗口上）。前缀 rd-。纸色偏暖，和分享卡片的默认纸一致。 */
-.rd-root { position: fixed; inset: 0; z-index: 1900; display: flex; flex-direction: column; background: #f7f3e8; color: #2b2a24; font-size: 13px; }
+/* EPUB 阅读界面（盖在所在面板上，data-mp-host）。前缀 rd-。纸色偏暖，和分享卡片的默认纸一致。 */
+.rd-root { position: absolute; inset: 0; z-index: 1900; display: flex; flex-direction: column; background: #f7f3e8; color: #2b2a24; font-size: 13px; }
 .rd-root * { box-sizing: border-box; }
 .rd-root button, .rd-root select { font: inherit; color: inherit; }
 .rd-root button { cursor: pointer; border: 0; background: none; padding: 0; }
@@ -12,7 +12,8 @@
 .rd-text:hover { background: #ece5d3 !important; }
 .rd-body { flex: 1; min-height: 0; display: flex; }
 .rd-stage { flex: 1; min-width: 0; position: relative; padding: 24px 0; }
-.rd-turn { width: 56px; flex-shrink: 0; font-size: 28px; color: #b3a98f !important; }
+.rd-danger { color: #934b39 !important; }
+.rd-turn { width: clamp(28px, 5%, 56px); flex-shrink: 0; font-size: 28px; color: #b3a98f !important; }
 .rd-turn:hover { color: #2b2a24 !important; background: #f0ead9 !important; }
 .rd-loading, .rd-error { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; }
 .rd-error { color: #934b39; }

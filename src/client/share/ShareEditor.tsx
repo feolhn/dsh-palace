@@ -3,7 +3,7 @@
  * 草稿存在 card.share 里（停手 0.6 秒自动保存），下次打开接着改。
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
+import { PanelOverlay } from '../host.tsx'
 import type { Card } from '../../shared/palace.ts'
 import { palaceOp } from '../palace/data.ts'
 import { draw, loadFont, measurer } from './draw.ts'
@@ -110,7 +110,8 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
 
   const setRanges = (key: TextKey, ranges: Range[]) => update({ ranges: { ...draft.ranges, [key]: ranges } })
 
-  return createPortal(
+  return (
+    <PanelOverlay>
     <div className="sh-backdrop" onPointerDown={e => { if (e.target === e.currentTarget) close() }}>
       <div className="sh-dialog" role="dialog" aria-label="分享卡片">
         <header className="sh-head">
@@ -172,8 +173,8 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
           </div>
         </div>
       </div>
-    </div>,
-    document.body,
+    </div>
+    </PanelOverlay>
   )
 }
 
