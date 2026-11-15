@@ -30,6 +30,8 @@ interface Rendition {
   themes: { default(styles: object): void; override(name: string, value: string, priority?: boolean): void }
   getContents(): EpubContents[]
   getRange(cfi: string): Range | undefined
+  resize(width?: number, height?: number): void
+  spread(mode: 'auto' | 'none', min?: number): void
   currentLocation(): EpubLocation | Promise<EpubLocation> | undefined
   destroy(): void
 }
@@ -107,6 +109,11 @@ function outlineOf(toc: NavItem[]): OutlineInput[] {
     }))
 }
 
+/** 双页只在宽面板（全屏）里用；右侧栏固定单页（容器带 data-single）。 */
+function spreadFor(el: HTMLElement): 'auto' | 'none' {
+  return el.closest('[data-single]') === null && el.clientWidth >= 760 ? 'auto' : 'none'
+}
+
 export async function mountEpub(el: HTMLElement, opts: {
   data: ArrayBuffer
   initialLoc?: string
@@ -136,7 +143,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     width: '100%',
     height: '100%',
     flow: 'paginated',
-    spread: el.clientWidth >= 760 ? 'auto' : 'none',
+    spread: spreadFor(el),
     allowScriptedContent: false, // 书里的脚本一律不跑
   })
   rendition.themes.default({ body: { 'line-height': '1.8' }, '::selection': { background: '#f4dfa0' } })
@@ -189,6 +196,23 @@ export async function mountEpub(el: HTMLElement, opts: {
 
   await rendition.display(opts.initialLoc || undefined).catch(() => rendition.display())
   for (const cfi of opts.highlights) highlight(cfi)
+  // 外层面板变宽变窄（拖动右侧栏、窗口缩放）：按新尺寸重新分页，停在原来的位置
+  let lastSize = `${el.clientWidth}x${el.clientHeight}`
+  let resizeTimer: ReturnType<typeof setTimeout> | undefined
+  const observer = new ResizeObserver(() => {
+    const size = `${el.clientWidth}x${el.clientHeight}`
+    if (size === lastSize || el.clientWidth === 0) return
+    lastSize = size
+    clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(async () => {
+      const here = await rendition.currentLocation()
+      rendition.spread(spreadFor(el))
+      rendition.resize(el.clientWidth, el.clientHeight)
+      if (here?.start) await rendition.display(here.start.cfi).catch(() => undefined)
+    }, 150)
+  })
+  observer.observe(el)
+
   if (toc.length > 0) opts.onToc(outlineOf(toc))
   // 精确进度要先切分全书，大书要几秒，放到后台；切完后按当前位置重新回报一次
   void book.locations.generate(1600).then(async () => {
@@ -210,6 +234,8 @@ export async function mountEpub(el: HTMLElement, opts: {
     clearSelection: () => { for (const c of rendition.getContents()) c.window.getSelection()?.removeAllRanges() },
     setFontSize: px => rendition.themes.override('font-size', `${px}px`, true),
     destroy: () => {
+      observer.disconnect()
+      clearTimeout(resizeTimer)
       document.removeEventListener('keyup', onKey)
       rendition.destroy()
       book.destroy()

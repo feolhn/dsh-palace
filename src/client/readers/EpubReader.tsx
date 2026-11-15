@@ -155,9 +155,9 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
     <div className="rd-root">
       <header className="rd-head">
         <button type="button" className="rd-text" onClick={onClose}>← 返回</button>
-        <span className="rd-title">{title}</span>
+        <span className="rd-title" title={title}>{title}</span>
         {sections.length > 0 && (
-          <select value={current?.id ?? ''} onChange={(e) => {
+          <select className="rd-toc" title={current ? sections.find(x => x.s.id === current.id)?.label : '目录'} value={current?.id ?? ''} onChange={(e) => {
             const loc = sections.find(x => x.s.id === e.target.value)?.s.loc
             if (loc) handle.current?.goTo(loc)
           }}>
@@ -166,7 +166,7 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
           </select>
         )}
         <span className="rd-spacer" />
-        <span className="rd-muted">{status}</span>
+        {status && <span className="rd-muted rd-status">{status}</span>}
         <button type="button" className="rd-text" title="字小一点" onClick={() => changeFont(-1)}>A−</button>
         <button type="button" className="rd-text" title="字大一点" onClick={() => changeFont(1)}>A+</button>
         <span className="rd-muted">{Math.round(percent * 100)}%</span>
