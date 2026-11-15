@@ -1,7 +1,7 @@
 {
   "name": "dsh-shelf",
-  "version": "0.1.0",
-  "description": "DeepSeek Harness 学习书架：按学习目标和科目管理教材、视频课和错题，AI 帮你生成目录、记录错题。",
+  "version": "0.2.0-beta.1",
+  "description": "Memory Palace：DeepSeek Harness 读书插件。把书、视频课和笔记放进宫殿，记进度、摘录和想法，和 AI 聊完存成灵感，排版成分享卡片。",
   "type": "module",
   "main": "lib/index.js",
   "license": "MIT",
@@ -11,7 +11,9 @@
     "dsh",
     "dsh-plugin",
     "study",
-    "learning"
+    "learning",
+    "reading",
+    "epub"
   ],
   "engines": {
     "dsh": ">=0.2.0 <0.3.0"
