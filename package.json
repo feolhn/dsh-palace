@@ -33,8 +33,8 @@
     "build": "node scripts/build.mjs",
     "prepublishOnly": "node scripts/build.mjs && node scripts/check-privacy.mjs --publish",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/*.test.mjs",
-    "verify": "tsc --noEmit && node --test test/*.test.mjs && node scripts/check-privacy.mjs && node scripts/build.mjs",
+    "test": "node --import ./test/stubs/register.mjs --test test/*.test.mjs",
+    "verify": "tsc --noEmit && pnpm test && node scripts/check-privacy.mjs && node scripts/build.mjs",
     "check-privacy": "node scripts/check-privacy.mjs",
     "setup": "git config core.hooksPath .githooks"
   },

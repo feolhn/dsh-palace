@@ -258,7 +258,7 @@ export function Palace() {
       </footer>
 
       {selected !== undefined && palace !== undefined && palace.cells.some(c => c.id === selected) && (
-        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]} onClose={() => setSelected(undefined)} />
+        <CellSheet palace={palace} cellId={selected} onClose={() => setSelected(undefined)} />
       )}
       {adding && <AddDialog parentId={group?.id} onClose={() => setAdding(false)} />}
     </div>

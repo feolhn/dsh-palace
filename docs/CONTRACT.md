@@ -1,6 +1,6 @@
 # 契约：数据结构与模块接口（v0.2）
 
-> v0.2 实现中。类型定义最终以 `src/shared/` 为准，这里是设计说明；改契约要先改这里，再改代码。
+> v0.2 实现中（存储、宫殿、笔记本已完成）。类型定义最终以 `src/shared/` 为准，这里是设计说明；改契约要先改这里，再改代码。
 > v0.1 的 `library.json` 不迁移（见 WORK §4），v0.2 起用下面的新格式。
 
 ## 1. 数据目录
@@ -195,6 +195,7 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 | POST | `op` | `{ op, args }` → `{ rev, result }`，op 白名单见 `src/host/routes.ts` |
 | GET | `file?id=` | 原文字节（pdf、epub），只给登记过的路径 |
 | GET | `image?name=` | 卡片原图 |
+| GET | `page-text?id=&pages=1,2` | `{ pages: [{page,text}], scanned: [页码] }`，PDF 选目录页用 |
 | GET | `asset?f=` | 前端需要的静态资源（pdf.js 的 CMap、阅读器脚本等） |
 | POST | `pick-file` | macOS 弹出文件选择框 |
 | POST | `open` | 用系统程序打开原文或数据目录 |
@@ -208,7 +209,7 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 |---|---|
 | `shelf_overview` | 列出宫殿里的格子和进度；传 `item_id` 时返回完整目录和卡片 |
 | `shelf_add` | 新建分组、书（pdf / epub / 视频）、笔记格子 |
-| `shelf_read` | 读原文指定位置的文字，并说明哪些读不出（扫描页） |
+| `shelf_read` | 读 PDF 指定页的文字，并说明哪些读不出（扫描页） |
 | `shelf_set_outline` | 写入两级目录 |
 | `shelf_set_target_dates` | 批量设置目标日期 |
 | `shelf_add_card` | 记一张卡片（摘录 / 想法 / 错题）。格子默认取当前对话打开的那个，节默认取当前节；`image` 填图片路径或 `sha256:` 附件 id |

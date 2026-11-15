@@ -93,7 +93,7 @@ pnpm build
 pnpm install
 pnpm run setup    # 启用提交前的个人信息检查（只需一次）
 pnpm build        # 生成 lib/（Host）和 client/（前端）
-pnpm test         # 测试
+pnpm test         # 测试（core / host / AI 工具）
 pnpm verify       # 合并前跑：类型检查 + 测试 + 个人信息检查 + 构建
 node --experimental-strip-types test/host-smoke.mjs <某个.pdf> [B站链接]
 ```

@@ -24,11 +24,11 @@ function assetBase(dir: string): string {
 const docs = new Map<string, Promise<PDFDocumentProxy>>()
 
 /** 打开书架里某本 PDF（同一本只加载一次）。 */
-export function loadPdf(materialId: string): Promise<PDFDocumentProxy> {
-  let doc = docs.get(materialId)
+export function loadPdf(id: string): Promise<PDFDocumentProxy> {
+  let doc = docs.get(id)
   if (doc === undefined) {
     doc = (async () => {
-      const response = await fetch(apiUrl('pdf', { id: materialId }))
+      const response = await fetch(apiUrl('file', { id: id }))
       if (!response.ok) {
         const body = await response.json().catch(() => ({})) as { error?: string }
         throw new Error(body.error ?? `PDF 读取失败（HTTP ${response.status}）`)
@@ -41,20 +41,20 @@ export function loadPdf(materialId: string): Promise<PDFDocumentProxy> {
         cMapPacked: true,
         standardFontDataUrl: assetBase('standard_fonts'),
         wasmUrl: assetBase('wasm'),
-        isEvalSupported: false,
+        ...({ isEvalSupported: false } as object), // pdf.js 6 的类型里去掉了这个选项；旧版本仍然认，保留
       }).promise
     })()
-    doc.catch(() => docs.delete(materialId))
-    docs.set(materialId, doc)
+    doc.catch(() => docs.delete(id))
+    docs.set(id, doc)
   }
   return doc
 }
 
 /** 释放 PDF（离开选页界面时调用，节省内存）。 */
-export function releasePdf(materialId: string): void {
-  const doc = docs.get(materialId)
-  docs.delete(materialId)
-  void doc?.then(d => d.destroy()).catch(() => undefined)
+export function releasePdf(id: string): void {
+  const doc = docs.get(id)
+  docs.delete(id)
+  void doc?.then(d => (d as unknown as { destroy?: () => Promise<void> }).destroy?.()).catch(() => undefined)
 }
 
 /** 把一页渲染到 canvas，宽度为 width 像素（按设备像素比放大）。 */
@@ -78,8 +78,8 @@ export async function renderPage(doc: PDFDocumentProxy, pageNumber: number, canv
 }
 
 /** 把指定页渲染成 JPEG 文件（长边约 1600px），用于发给 AI 识别扫描版目录。 */
-export async function pagesToFiles(materialId: string, pages: number[], title: string): Promise<File[]> {
-  const doc = await loadPdf(materialId)
+export async function pagesToFiles(id: string, pages: number[], title: string): Promise<File[]> {
+  const doc = await loadPdf(id)
   const files: File[] = []
   for (const n of pages) {
     const page = await doc.getPage(n)

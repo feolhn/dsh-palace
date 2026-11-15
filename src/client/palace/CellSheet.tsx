@@ -1,24 +1,22 @@
 /**
- * 点开书 / 笔记格子后的详情：改名、作者 / 副标题、目标日期、移出分组、删除。
- * 下一步（#5）这里会换成完整的笔记本（进度 / 卡片 / 灵感）。
+ * 全屏宫殿里点开书 / 笔记格子后的详情：改名、作者 / 副标题，下面是笔记本；底部移出分组、删除。
  */
 import { useEffect, useState } from 'react'
-import type { Cell, CellSummary, Item, Palace } from '../../shared/palace.ts'
-import { getItem, palaceOp } from './data.ts'
+import type { Cell, Palace } from '../../shared/palace.ts'
+import { Notebook, type NotebookTab } from '../notebook/Notebook.tsx'
+import { palaceOp } from './data.ts'
 
-export function CellSheet({ palace, cellId, summary, onClose }: { palace: Palace; cellId: string; summary?: CellSummary; onClose: () => void }) {
+export function CellSheet({ palace, cellId, onClose }: { palace: Palace; cellId: string; onClose: () => void }) {
   const cell = palace.cells.find(c => c.id === cellId) as Cell
-  const [item, setItem] = useState<Item>()
   const [title, setTitle] = useState(cell.title)
   const [subtitle, setSubtitle] = useState(cell.subtitle ?? '')
-  const [targetDate, setTargetDate] = useState('')
+  const [tab, setTab] = useState<NotebookTab>('progress')
   const [error, setError] = useState<string>()
   const [armed, setArmed] = useState(false)
 
   useEffect(() => {
     setTitle(cell.title)
     setSubtitle(cell.subtitle ?? '')
-    getItem(cell.id).then((it) => { setItem(it); setTargetDate(it.targetDate ?? '') }).catch((e: Error) => setError(e.message))
   }, [cell.id, cell.title, cell.subtitle])
 
   const run = (op: string, args: Record<string, unknown>) => palaceOp(op, { id: cell.id, ...args }).catch((e: Error) => { setError(e.message); throw e })
@@ -27,12 +25,6 @@ export function CellSheet({ palace, cellId, summary, onClose }: { palace: Palace
     if (title.trim() === cell.title && subtitle.trim() === (cell.subtitle ?? '')) return
     void run('updateCell', { title, subtitle: subtitle.trim() === '' ? null : subtitle }).catch(() => setTitle(cell.title))
   }
-  const saveDate = () => {
-    if (targetDate === (item?.targetDate ?? '')) return
-    void run('updateItem', { targetDate: targetDate === '' ? null : targetDate })
-  }
-
-  const source = item?.source
   return (
     <aside className="mp-sheet" onPointerDown={e => e.stopPropagation()}>
       <div className="mp-sheet-head">
@@ -44,20 +36,7 @@ export function CellSheet({ palace, cellId, summary, onClose }: { palace: Palace
       <input className="mp-sheet-sub" value={subtitle} placeholder={cell.kind === 'book' ? '作者' : '副标题'} onChange={e => setSubtitle(e.target.value)} onBlur={saveText}
         onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
 
-      <dl className="mp-facts">
-        {source?.type === 'pdf' && <><dt>原文</dt><dd>PDF · {source.pageCount} 页</dd></>}
-        {source?.type === 'video' && <><dt>原文</dt><dd>视频课</dd></>}
-        {summary !== undefined && summary.total > 0 && <><dt>进度</dt><dd>{summary.done} / {summary.total} 节{summary.perDay ? ` · 每天约 ${summary.perDay} 节` : ''}{summary.overdue ? ' · 已过目标日期' : ''}</dd></>}
-        {summary !== undefined && <><dt>卡片</dt><dd>{summary.cards} 张</dd></>}
-        {cell.kind === 'book' && (
-          <>
-            <dt>目标日期</dt>
-            <dd><input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} onBlur={saveDate} /></dd>
-          </>
-        )}
-      </dl>
-
-      <p className="mp-hint">笔记本（进度 / 卡片 / 灵感）在下一步做。</p>
+      <Notebook id={cell.id} title={cell.title} tab={tab} onTab={setTab} />
 
       {error && <p className="mp-error">{error}</p>}
       <div className="mp-sheet-actions">

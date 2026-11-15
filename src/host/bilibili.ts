@@ -12,12 +12,12 @@ export interface VideoCourse { title: string; url: string; chapters: VideoChapte
 export class VideoError extends Error {}
 
 /** 从文本里找出 B 站链接或 BV 号。支持 b23.tv 短链。 */
-export async function resolveBvid(input: string): Promise<string> {
+export async function resolveBvid(input: string, signal?: AbortSignal): Promise<string> {
   const direct = input.match(/BV[0-9A-Za-z]{10}/)
   if (direct) return direct[0]
   const short = input.match(/https?:\/\/b23\.tv\/[0-9A-Za-z]+/)
   if (short) {
-    const response = await fetch(short[0], { redirect: 'follow', headers: { 'user-agent': UA } })
+    const response = await fetch(short[0], { redirect: 'follow', headers: { 'user-agent': UA }, signal: withTimeout(signal) })
     const found = response.url.match(/BV[0-9A-Za-z]{10}/)
     if (found) return found[0]
   }
@@ -34,10 +34,10 @@ interface ViewData {
   }
 }
 
-async function view(bvid: string): Promise<ViewData> {
+async function view(bvid: string, signal?: AbortSignal): Promise<ViewData> {
   const response = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
     headers: { 'user-agent': UA, referer: 'https://www.bilibili.com/' },
-    signal: AbortSignal.timeout(15_000),
+    signal: withTimeout(signal),
   })
   if (!response.ok) throw new VideoError(`B 站接口请求失败（HTTP ${response.status}）`)
   const body = await response.json() as { code: number; message?: string; data?: ViewData }
@@ -51,9 +51,15 @@ async function view(bvid: string): Promise<ViewData> {
  * - 单 P 但属于合集：合集里每个视频是一集，合集的分区是章；
  * - 都不是：只有一集。
  */
-export async function readVideoCourse(input: string): Promise<VideoCourse> {
-  const bvid = await resolveBvid(input)
-  const data = await view(bvid)
+/** 15 秒超时，再加上调用方的取消。 */
+function withTimeout(signal?: AbortSignal): AbortSignal {
+  const timeout = AbortSignal.timeout(15_000)
+  return signal ? AbortSignal.any([signal, timeout]) : timeout
+}
+
+export async function readVideoCourse(input: string, signal?: AbortSignal): Promise<VideoCourse> {
+  const bvid = await resolveBvid(input, signal)
+  const data = await view(bvid, signal)
   const base = `https://www.bilibili.com/video/${data.bvid}`
   const pages = data.pages ?? []
   if (pages.length > 1) {

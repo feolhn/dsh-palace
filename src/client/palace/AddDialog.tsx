@@ -1,5 +1,5 @@
 /** 添加格子：书（PDF / 视频课）、笔记、分组。分组展开时，书和笔记放进这个分组。 */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pickPdf } from '../api.ts'
 import { palaceOp } from './data.ts'
 
@@ -25,14 +25,20 @@ export function AddDialog({ parentId, onClose }: { parentId?: string; onClose: (
     else if (path === undefined) setError('这台电脑不能弹出选择框，请把 PDF 的完整路径粘贴进来')
   }
 
+  // 取消 / 关闭时中止还在读取的请求，Host 收到后不会再建格子
+  const abort = useRef<AbortController>()
+  useEffect(() => () => abort.current?.abort(), [])
+
   const submit = async () => {
     setBusy(true)
     setError(undefined)
+    abort.current = new AbortController()
     try {
-      if (kind === 'book') await palaceOp('addBook', { file, url, title, parentId })
+      if (kind === 'book') await palaceOp('addBook', { file, url, title, parentId }, abort.current.signal)
       else await palaceOp('addCell', { kind, title, parentId })
       onClose()
     } catch (e) {
+      if (abort.current?.signal.aborted) return
       setError((e as Error).message)
     } finally {
       setBusy(false)

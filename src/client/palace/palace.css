@@ -78,15 +78,15 @@
   display: flex; flex-direction: column; gap: 6px;
 }
 .mp-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.mp-sheet input { background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 3px 0; width: 100%; }
-.mp-sheet input:hover, .mp-sheet input:focus { border-bottom-color: #7a99a455; outline: none; }
+.mp-sheet-title, .mp-sheet-sub { background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 3px 0; width: 100%; }
+.mp-sheet-title:hover, .mp-sheet-title:focus, .mp-sheet-sub:hover, .mp-sheet-sub:focus { border-bottom-color: #7a99a455; outline: none; }
 .mp-sheet-title { font-family: var(--mp-serif) !important; font-size: 26px !important; line-height: 1.2; }
 .mp-sheet-sub { font-size: 13px !important; }
 .mp-facts { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 22px 0 8px; font-size: 13px; }
 .mp-facts dt { color: var(--mp-quiet); font-size: 12px; }
 .mp-facts dd { margin: 0; }
 .mp-facts input[type=date] { border-bottom-color: #7a99a455; width: auto; }
-.mp-sheet-actions { margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #fffffa7a; }
+.mp-sheet-actions { flex-shrink: 0; margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #fffffa7a; }
 
 /* 添加 */
 .mp-dialog-backdrop { position: absolute; inset: 0; z-index: 10; background: #57788a33; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; cursor: default; }
