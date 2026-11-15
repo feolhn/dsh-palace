@@ -8,6 +8,7 @@
 import css from './styles.css?raw'
 import palaceCss from './palace/palace.css?raw'
 import { Palace } from './palace/Palace.tsx'
+import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
 import { App } from './ui/App.tsx'
 
@@ -39,6 +40,22 @@ function BookIcon({ size = 16 }: { size?: number }) {
   )
 }
 
+/** 界面出错时显示提示和「重新加载」，而不是整页空白。 */
+class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
+  state: { error?: Error } = {}
+  static getDerivedStateFromError(error: Error) { return { error } }
+  componentDidCatch(error: Error) { console.error('[dsh-shelf]', error) }
+  render() {
+    if (this.state.error === undefined) return this.props.children
+    return (
+      <div style={{ padding: 32, fontSize: 13, lineHeight: 1.8 }}>
+        <p>界面出错了：{this.state.error.message}</p>
+        <button type="button" onClick={() => this.setState({ error: undefined })}>重新加载</button>
+      </div>
+    )
+  }
+}
+
 function ShelfTab(props: { sessionId?: string }) {
   return <App sessionId={props.sessionId} />
 }
@@ -46,7 +63,7 @@ function ShelfTab(props: { sessionId?: string }) {
 function MainPanel() {
   return (
     <div style={{ height: '100%', overflow: 'hidden' }}>
-      <Palace />
+      <Guard><Palace /></Guard>
     </div>
   )
 }
