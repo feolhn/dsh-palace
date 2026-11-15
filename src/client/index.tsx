@@ -1,16 +1,16 @@
 /**
- * dsh-shelf 前端入口。注册四个位置：
- * 1. 右侧栏页面「学习书架」（主要工作区，和对话并排）
+ * dsh-shelf（Memory Palace）前端入口。注册四个位置：
+ * 1. 右侧栏页面：当前格子的笔记本（和对话并排，AI 功能在这里用）
  * 2. 右侧栏引导页里的入口卡片
- * 3. 对话标题栏右侧的 📚 按钮
+ * 3. 对话标题栏右侧的书本按钮
  * 4. 左侧导航「学习」→ 全屏宫殿（v0.2，Memory Palace）
  */
-import css from './styles.css?raw'
+import notebookCss from './notebook/notebook.css?raw'
 import palaceCss from './palace/palace.css?raw'
 import { Palace } from './palace/Palace.tsx'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
-import { App } from './ui/App.tsx'
+import { Sidebar } from './notebook/Sidebar.tsx'
 
 export const name = 'dsh-shelf'
 export const inject = ['slots', 'sidebarRightTabs', 'sidebarRight']
@@ -57,7 +57,7 @@ class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
 }
 
 function ShelfTab(props: { sessionId?: string }) {
-  return <App sessionId={props.sessionId} />
+  return <Guard><Sidebar sessionId={props.sessionId} /></Guard>
 }
 
 function MainPanel() {
@@ -72,8 +72,8 @@ function HeaderButton(props: { openShelf?: () => void }) {
   return (
     <button
       type="button"
-      title="学习书架"
-      aria-label="学习书架"
+      title="Memory Palace"
+      aria-label="Memory Palace"
       onClick={() => props.openShelf?.()}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28,
@@ -97,7 +97,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = 'dsh-shelf'
-    style.textContent = css + '\n' + palaceCss
+    style.textContent = notebookCss + '\n' + palaceCss
     document.head.appendChild(style)
     return () => style.remove()
   }, 'dsh-shelf: styles')
@@ -107,8 +107,8 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.sidebarRightTabs.register({
     id: TAB_ID,
     kind: TAB_KIND,
-    title: () => '学习书架',
-    guide: [{ id: 'dsh-shelf', order: 40, title: () => '学习书架', description: () => '教材、视频课的进度和错题' }],
+    title: () => 'Memory Palace',
+    guide: [{ id: 'dsh-shelf', order: 40, title: () => 'Memory Palace', description: () => '书的进度、卡片和灵感' }],
   }), 'dsh-shelf: tab type')
 
   ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({ name: 'sidebar.right.pane.tab', key: TAB_ID }, ShelfTab))

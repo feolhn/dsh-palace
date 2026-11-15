@@ -1,9 +1,9 @@
 /**
  * 宫殿数据：全局共享一份，有人在看时每 1.5 秒查一次 rev，变了就重新拉取（AI 改了数据，界面能跟上）。
  */
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { CellSummary, Item, Palace } from '../../shared/palace.ts'
-import { apiUrl } from '../api.ts'
+import { apiUrl, readJson } from '../api.ts'
 
 interface State {
   palace?: Palace
@@ -17,12 +17,6 @@ let state: State = { summaries: {}, rev: 0 }
 const listeners = new Set<() => void>()
 let timer: ReturnType<typeof setInterval> | undefined
 let loading: Promise<void> | undefined
-
-async function readJson<T>(response: Response): Promise<T> {
-  const body = await response.json().catch(() => ({ ok: false, error: `请求失败（HTTP ${response.status}）` })) as { ok: boolean; error?: string } & T
-  if (!response.ok || body.ok === false) throw new Error(body.error ?? `请求失败（HTTP ${response.status}）`)
-  return body
-}
 
 function emit(next: State): void {
   state = next
@@ -41,7 +35,7 @@ export function refreshPalace(): Promise<void> {
 async function poll(): Promise<void> {
   if (document.visibilityState !== 'visible') return
   try {
-    const { rev } = await readJson<{ rev: number }>(await fetch(apiUrl('palace/rev'), { cache: 'no-store' }))
+    const { rev } = await readJson<{ rev: number }>(await fetch(apiUrl('rev'), { cache: 'no-store' }))
     if (rev !== state.rev) await refreshPalace()
   } catch {
     // Host 重启中：下一轮再试
@@ -67,9 +61,9 @@ export function usePalace(): State {
   return useSyncExternalStore(subscribe, () => state)
 }
 
-/** 执行一个写操作（白名单见 host/palace-routes.ts），成功后刷新。 */
+/** 执行一个写操作（白名单见 host/routes.ts），成功后刷新。 */
 export async function palaceOp<T = unknown>(op: string, args: Record<string, unknown>): Promise<T> {
-  const response = await fetch(apiUrl('palace/op'), {
+  const response = await fetch(apiUrl('op'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ op, args }),
@@ -81,4 +75,17 @@ export async function palaceOp<T = unknown>(op: string, args: Record<string, unk
 
 export async function getItem(id: string): Promise<Item> {
   return (await readJson<{ item: Item }>(await fetch(apiUrl('item', { id }), { cache: 'no-store' }))).item
+}
+
+/** 一个格子的内容；宫殿数据变了（rev 变化）就重新拉取。 */
+export function useItem(id: string | undefined): { item?: Item; error?: string } {
+  const { rev } = usePalace()
+  const [state, setState] = useState<{ id?: string; item?: Item; error?: string }>({})
+  useEffect(() => {
+    if (id === undefined) return
+    let alive = true
+    getItem(id).then(item => alive && setState({ id, item }), (e: Error) => alive && setState({ id, error: e.message }))
+    return () => { alive = false }
+  }, [id, rev])
+  return state.id === id ? state : {}
 }

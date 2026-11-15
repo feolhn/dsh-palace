@@ -1,25 +1,51 @@
 /**
  * 前端 ↔ Host 的 HTTP 接口。挂在 Harness 的 /api 通道上（已带鉴权），全部是精确路径。
- * 接口清单见 docs/CONTRACT.md。
+ * 接口清单见 docs/CONTRACT.md §5。
  */
 import { execFile, spawn } from 'node:child_process'
 import { createReadStream, existsSync, statSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { basename, extname, join, normalize, sep } from 'node:path'
 import { Readable } from 'node:stream'
-import { homedir } from 'node:os'
-import { findSection } from '../shared/model.ts'
-import * as ops from './ops.ts'
+import * as core from '../core/ops.ts'
+import { assertCellId, ShelfError, type PalaceStore } from '../core/store.ts'
+import { findSection, type Item } from '../shared/palace.ts'
+import { addBook } from './books.ts'
 import { pdfjsDistDir, readPageTexts, SCANNED_THRESHOLD } from './pdf.ts'
-import type { ShelfStore } from './store.ts'
-import type { ActiveMaterials } from './tools.ts'
 
 export const API = '/api/dsh-shelf'
+
+/** 每个对话当前打开的格子（前端上报，AI 记卡片时默认记到这里）。sessionId → 格子 id。 */
+export type ActiveItems = Map<string, string>
 
 export interface FetchRoute {
   path: string
   methods: ('GET' | 'HEAD' | 'POST')[]
   requestBody: 'buffered' | 'streaming'
   fetch: (request: Request) => Promise<Response>
+}
+
+type Op = (store: PalaceStore, args: never) => Promise<unknown>
+
+/** 前端可调用的写操作白名单。 */
+const OPS: Record<string, Op> = {
+  addBook,
+  addCell: core.addCell,
+  updateCell: core.updateCell,
+  moveCell: core.moveCell,
+  deleteCell: core.deleteCell,
+  updateItem: core.updateItem,
+  setPosition: core.setPosition,
+  setOutline: core.setOutline,
+  setSectionDone: core.setSectionDone,
+  markUpTo: core.markUpTo,
+  resetProgress: core.resetProgress,
+  addCard: core.addCard,
+  updateCard: core.updateCard,
+  deleteCard: core.deleteCard,
+  addInspiration: core.addInspiration,
+  updateInspiration: core.updateInspiration,
+  deleteInspiration: core.deleteInspiration,
 }
 
 function json(value: unknown, status = 200): Response {
@@ -30,7 +56,7 @@ function json(value: unknown, status = 200): Response {
 }
 
 function fail(error: unknown): Response {
-  if (error instanceof ops.ShelfError) return json({ ok: false, error: error.message }, 400)
+  if (error instanceof ShelfError) return json({ ok: false, error: error.message }, 400)
   console.error('[dsh-shelf]', error)
   return json({ ok: false, error: `内部错误：${(error as Error)?.message ?? String(error)}` }, 500)
 }
@@ -39,6 +65,12 @@ function streamFile(file: string, type: string): Response {
   const size = statSync(file).size
   const body = Readable.toWeb(createReadStream(file)) as unknown as ReadableStream
   return new Response(body, { headers: { 'content-type': type, 'content-length': String(size), 'cache-control': 'no-store' } })
+}
+
+/** 界面上显示路径时把用户目录换成 ~，避免截图泄露本机用户名。 */
+function displayPath(path: string): string {
+  const home = homedir()
+  return path === home || path.startsWith(home + sep) ? '~' + path.slice(home.length) : path
 }
 
 /** 用系统默认程序打开文件或网址。 */
@@ -57,7 +89,7 @@ function pickPdf(): Promise<string | null | undefined> {
   if (process.platform !== 'darwin') return Promise.resolve(undefined)
   return new Promise((resolve) => {
     execFile('osascript', [
-      '-e', 'set f to choose file with prompt "选择 PDF 教材" of type {"com.adobe.pdf"}',
+      '-e', 'set f to choose file with prompt "选择 PDF" of type {"com.adobe.pdf"}',
       '-e', 'POSIX path of f',
     ], { timeout: 10 * 60_000 }, (error, stdout) => {
       if (error) resolve(null) // 用户取消
@@ -70,49 +102,23 @@ const IMAGE_TYPES: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
 }
 
-type OpHandler = (store: ShelfStore, args: never) => Promise<unknown>
-
-/** 前端可调用的写操作白名单。 */
-const OPS: Record<string, OpHandler> = {
-  addGoal: ops.addGoal,
-  updateGoal: ops.updateGoal,
-  deleteGoal: ops.deleteGoal,
-  addSubject: ops.addSubject,
-  updateSubject: ops.updateSubject,
-  deleteSubject: ops.deleteSubject,
-  addBook: ops.addBook,
-  addVideo: ops.addVideo,
-  updateMaterial: ops.updateMaterial,
-  deleteMaterial: ops.deleteMaterial,
-  setOutline: ops.setOutline,
-  setSectionDone: ops.setSectionDone,
-  markUpTo: ops.markUpTo,
-  resetProgress: ops.resetProgress,
-  updateMistake: ops.updateMistake,
-  deleteMistake: ops.deleteMistake,
+/** 书 / 笔记格子的内容；分组或不存在就报错。 */
+function itemOf(store: PalaceStore, id: unknown): Item {
+  assertCellId(id)
+  const cell = store.getPalace().cells.find(c => c.id === id)
+  if (cell === undefined || cell.kind === 'group') throw new ShelfError('格子不存在')
+  return store.getItem(id)
 }
 
-export function createRoutes(store: ShelfStore, active: ActiveMaterials): FetchRoute[] {
-  const get = (path: string, handler: (url: URL) => Promise<Response> | Response): FetchRoute => ({
+export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRoute[] {
+  const route = (method: 'GET' | 'POST', path: string, handler: (input: { url: URL; body: Record<string, unknown> }) => Promise<Response> | Response): FetchRoute => ({
     path: `${API}/${path}`,
-    methods: ['GET'],
+    methods: [method],
     requestBody: 'buffered',
     fetch: async (request) => {
       try {
-        return await handler(new URL(request.url))
-      } catch (error) {
-        return fail(error)
-      }
-    },
-  })
-  const post = (path: string, handler: (body: Record<string, unknown>) => Promise<Response> | Response): FetchRoute => ({
-    path: `${API}/${path}`,
-    methods: ['POST'],
-    requestBody: 'buffered',
-    fetch: async (request) => {
-      try {
-        const body = await request.json().catch(() => ({})) as Record<string, unknown>
-        return await handler(body ?? {})
+        const body = method === 'POST' ? (await request.json().catch(() => ({})) as Record<string, unknown>) ?? {} : {}
+        return await handler({ url: new URL(request.url), body })
       } catch (error) {
         return fail(error)
       }
@@ -120,37 +126,43 @@ export function createRoutes(store: ShelfStore, active: ActiveMaterials): FetchR
   })
 
   return [
-    get('library', () => json({ ok: true, rev: store.rev, library: store.get(), dataDir: displayPath(store.dir) })),
+    route('GET', 'palace', () => json({
+      ok: true, rev: store.rev, palace: store.getPalace(), summaries: store.summaries(), dataDir: displayPath(store.dir),
+    })),
 
-    get('rev', () => {
-      store.get() // 顺便检查文件是否被手动修改
+    route('GET', 'item', ({ url }) => json({ ok: true, rev: store.rev, item: itemOf(store, url.searchParams.get('id')) })),
+
+    route('GET', 'rev', () => {
+      store.getPalace() // 顺便检查文件是否被手动修改
       return json({ ok: true, rev: store.rev })
     }),
 
-    post('op', async (body) => {
+    route('POST', 'op', async ({ body }) => {
       const name = String(body.op)
-      const handler = OPS[name]
+      const handler = Object.hasOwn(OPS, name) ? OPS[name] : undefined
       if (handler === undefined) return json({ ok: false, error: `未知操作 ${name}` }, 400)
       const result = await handler(store, (body.args ?? {}) as never)
       return json({ ok: true, rev: store.rev, result: result ?? null })
     }),
 
-    get('pdf', (url) => {
-      const m = ops.material(store.get(), url.searchParams.get('id') ?? '')
-      if (m.file === undefined || !existsSync(m.file)) return json({ ok: false, error: '找不到 PDF 文件，可能被移动或删除了' }, 404)
-      return streamFile(m.file, 'application/pdf')
+    // 原文字节：只给格子里登记过的路径
+    route('GET', 'file', ({ url }) => {
+      const source = itemOf(store, url.searchParams.get('id')).source
+      if (source === null || source.type === 'video') throw new ShelfError('这个格子没有原文文件')
+      if (!existsSync(source.path)) return json({ ok: false, error: '找不到原文文件，可能被移动或删除了' }, 404)
+      return streamFile(source.path, source.type === 'pdf' ? 'application/pdf' : 'application/epub+zip')
     }),
 
-    get('page-text', async (url) => {
-      const m = ops.material(store.get(), url.searchParams.get('id') ?? '')
-      if (m.file === undefined) throw new ops.ShelfError('这不是 PDF 资料')
+    route('GET', 'page-text', async ({ url }) => {
+      const source = itemOf(store, url.searchParams.get('id')).source
+      if (source?.type !== 'pdf') throw new ShelfError('这不是 PDF')
       const pages = (url.searchParams.get('pages') ?? '').split(',').map(Number).filter(Number.isInteger)
-      const texts = await readPageTexts(m.file, pages)
+      const texts = await readPageTexts(source.path, pages)
       const scanned = texts.filter(t => t.text.length < SCANNED_THRESHOLD).map(t => t.page)
       return json({ ok: true, pages: texts, scanned })
     }),
 
-    get('image', (url) => {
+    route('GET', 'image', ({ url }) => {
       const name = basename(url.searchParams.get('name') ?? '')
       const file = join(store.imagesDir, name)
       const type = IMAGE_TYPES[extname(name).toLowerCase()]
@@ -159,49 +171,46 @@ export function createRoutes(store: ShelfStore, active: ActiveMaterials): FetchR
     }),
 
     // pdf.js 前端渲染需要的 CMap / 标准字体 / wasm：?f=cmaps/UniGB-UCS2-H.bcmap
-    get('asset', (url) => {
+    route('GET', 'asset', ({ url }) => {
       const rel = normalize(url.searchParams.get('f') ?? '')
-      const root = pdfjsDistDir()
       const allowed = ['cmaps', 'standard_fonts', 'wasm', 'iccs']
       if (!allowed.some(dir => rel.startsWith(dir + sep)) || rel.includes('..')) return new Response('not found', { status: 404 })
-      const file = join(root, rel)
+      const file = join(pdfjsDistDir(), rel)
       if (!existsSync(file)) return new Response('not found', { status: 404 })
-      const type = file.endsWith('.wasm') ? 'application/wasm' : 'application/octet-stream'
-      const response = streamFile(file, type)
+      const response = streamFile(file, file.endsWith('.wasm') ? 'application/wasm' : 'application/octet-stream')
       response.headers.set('cache-control', 'public, max-age=31536000, immutable')
       return response
     }),
 
-    post('pick-file', async () => json({ ok: true, path: await pickPdf() })),
+    route('POST', 'pick-file', async () => json({ ok: true, path: await pickPdf() })),
 
-    // 只打开书架里登记过的东西，不接受任意路径
-    post('open', (body) => {
-      const lib = store.get()
+    // 只打开格子里登记过的东西，不接受任意路径
+    route('POST', 'open', ({ body }) => {
       if (body.target === 'dataDir') {
         openExternal(store.dir)
         return json({ ok: true })
       }
-      const m = ops.material(lib, String(body.materialId ?? ''))
-      const section = findSection(m, typeof body.sectionId === 'string' ? body.sectionId : undefined)?.section
-      const target = section?.url ?? m.file ?? m.url
-      if (target === undefined) throw new ops.ShelfError('没有可以打开的文件或链接')
-      if (m.file !== undefined && target === m.file && !existsSync(m.file)) throw new ops.ShelfError(`找不到文件：${m.file}`)
-      openExternal(target)
+      const item = itemOf(store, body.id)
+      const section = findSection(item, typeof body.sectionId === 'string' ? body.sectionId : undefined)?.section
+      const source = item.source
+      if (source === null) throw new ShelfError('这个格子没有原文')
+      if (source.type === 'video') {
+        // 视频的节 loc 是这一集的链接
+        const loc = section?.loc
+        openExternal(loc !== undefined && /^https?:\/\//.test(loc) ? loc : source.url)
+        return json({ ok: true })
+      }
+      if (!existsSync(source.path)) throw new ShelfError(`找不到文件：${displayPath(source.path)}`)
+      openExternal(source.path)
       return json({ ok: true })
     }),
 
-    post('active', (body) => {
+    route('POST', 'active', ({ body }) => {
       const sessionId = typeof body.sessionId === 'string' ? body.sessionId : undefined
       if (sessionId === undefined) return json({ ok: false, error: '缺少 sessionId' }, 400)
-      if (typeof body.materialId === 'string') active.set(sessionId, body.materialId)
+      if (typeof body.itemId === 'string') active.set(sessionId, body.itemId)
       else active.delete(sessionId)
       return json({ ok: true })
     }),
   ]
-}
-
-/** 界面上显示路径时把用户目录换成 ~，避免截图泄露本机用户名。 */
-function displayPath(path: string): string {
-  const home = homedir()
-  return path === home || path.startsWith(home + sep) ? '~' + path.slice(home.length) : path
 }
