@@ -150,7 +150,7 @@ fonts     字体设置和官方字体包（等设计负责人选完字体再做�
 
 ### 5.4 待技术验证
 
-- 阅读器按需加载：Harness 的前端插件是单个文件，要验证能否从 host 接口加载额外的脚本（v0.1 的 pdf.js 资源已经这样加载）
+- ~~阅读器按需加载~~：已验证。epub.js 和 jszip 放在包的 `vendor/` 里，第一次打开阅读器时用 `<script>` 从 `asset?f=reader/…` 加载（同源，`script-src 'self'` 下也能用），不进主包
 - 记忆注入新对话：Harness 的 context 插件可以在请求前加消息（参考 `time-context`），要验证插件能否用
 
 ---

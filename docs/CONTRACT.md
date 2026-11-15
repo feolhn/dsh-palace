@@ -70,7 +70,7 @@ book 和 note 格子各有一个；group 没有。
   "source": { "type": "pdf", "path": "/abs/a.pdf", "pageCount": 254 },  // note 格子为 null
   "targetDate": "2026-12-31",
   "finishedAt": "2026-12-20",                // 用户手动标记读完的日期，可选
-  "outlineSource": "bookmarks",              // bookmarks | ai | video | manual
+  "outlineSource": "bookmarks",              // bookmarks（PDF 书签）| toc（EPUB 自带目录）| ai | video | manual
   "chapters": [{ "id": "ch_…", "title": "第一讲", "sections": [
     { "id": "s_…", "title": "刑法的解释", "loc": "12", "done": true, "doneAt": "ISO" }
   ]}],
@@ -149,20 +149,23 @@ interface Source {
 
 ### 4.2 reader（前端，每种原文一个，用到时才加载）
 
+阅读器模块只管渲染和事件，存位置、记卡片由外层界面负责。第一个实现是 EPUB（`src/client/readers/epub.ts`）：
+
 ```ts
-interface ReaderModule {
-  type: 'pdf' | 'epub' | 'video'
-  /** 把阅读器挂到 el 上，返回卸载函数。 */
-  mount(el: HTMLElement, opts: {
-    item: Item
-    initialLoc?: string
-    onPosition(loc: string, percent: number): void            // 翻页时回报位置（节流后保存）
-    onExcerpt(excerpt: { quote: string; loc: string }): void  // 用户划线 → 生成摘录卡片
-  }): () => void
-}
+function mountEpub(el: HTMLElement, opts: {
+  data: ArrayBuffer               // 原文字节，来自 GET file?id=
+  initialLoc?: string             // item.position.loc（CFI）
+  highlights: string[]            // 已有摘录卡片的 loc（CFI），在书里显示高亮
+  fontSize: number
+  onPosition(loc: string, percent: number, href: string): void  // 翻页后回报；外层停 1 秒再 setPosition
+  onSelect(sel: { quote: string; loc: string }): void            // 用户选中一段 → 外层问要不要记成摘录
+  onToc(outline: OutlineInput[]): void                          // 书自带的目录；item 还没有目录时外层 setOutline(source: 'toc')
+}): Promise<{ prev(); next(); goTo(loc); highlight(cfi); clearSelection(); setFontSize(px); destroy() }>
 ```
 
-video 不在插件里播放，reader 只负责「打开链接」。
+- 书里的脚本一律不执行（`allowScriptedContent: false`）。
+- 摘录卡片的 `loc` 是选区 CFI，`sectionId` 是当前所在文件对应的节。
+- PDF 仍用系统程序打开；video 不在插件里播放，只负责「打开链接」。
 
 ### 4.3 memory（host 端）
 
@@ -214,7 +217,7 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 | GET | `file?id=` | 原文字节（pdf、epub），只给登记过的路径 |
 | GET | `image?name=` | 卡片原图 |
 | GET | `page-text?id=&pages=1,2` | `{ pages: [{page,text}], scanned: [页码] }`，PDF 选目录页用 |
-| GET | `asset?f=` | 前端需要的静态资源（pdf.js 的 CMap、阅读器脚本等） |
+| GET | `asset?f=` | 前端需要的静态资源：`reader/epub.min.js`、`reader/jszip.min.js`（白名单），pdf.js 的 CMap 等 |
 | POST | `pick-file` | macOS 弹出文件选择框 |
 | POST | `open` | 用系统程序打开原文或数据目录 |
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |

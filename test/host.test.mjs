@@ -110,3 +110,24 @@ test('addBook：取消后不建格子（网络请求已经发出、晚些才返�
     globalThis.fetch = realFetch
   }
 })
+
+test('EPUB：可以添加（目录等前端读），阅读器脚本只给白名单里的文件', async () => {
+  const store = fresh()
+  const call = api(store)
+  const file = join(store.dir, '书.epub')
+  writeFileSync(file, Buffer.from([0x50, 0x4b, 0x03, 0x04, 0]))
+  const fake = join(store.dir, '假的.epub')
+  writeFileSync(fake, '只是文本')
+  await assert.rejects(addBook(store, { file: fake }), /不是有效的 EPUB/)
+  const c = await addBook(store, { file })
+  assert.equal(c.title, '书')
+  assert.deepEqual(store.getItem(c.id).source, { type: 'epub', path: file })
+  await assert.rejects(addBook(store, { file: join(store.dir, 'palace.json') }), /只支持 PDF 和 EPUB/)
+
+  let r = await call('asset', { query: '?f=reader/epub.min.js' })
+  assert.equal(r.status, 200)
+  r = await call('asset', { query: '?f=reader/../package.json' })
+  assert.equal(r.status, 404)
+  r = await call('asset', { query: '?f=reader/epub.LICENSE.txt' })
+  assert.equal(r.status, 404)
+})
