@@ -8,16 +8,15 @@ import type { Card, Item, Section } from '../../shared/palace.ts'
 import { apiUrl } from '../api.ts'
 import { palaceOp } from '../palace/data.ts'
 import { ShareEditor } from '../share/ShareEditor.tsx'
-import { mountEpub, type EpubHandle } from './epub.ts'
+import { mountEpub, sameFile, type EpubHandle } from './epub.ts'
 
 const FONT_KEY = 'dsh-shelf:epub-font-size'
 
-/** 目录里的 href 和 epub.js 报告的 href 前缀可能不同（相对路径），只比文件名部分。 */
-function sameFile(a: string, b: string): boolean {
-  const strip = (h: string) => decodeURIComponent(h.split('#')[0]).replace(/^(\.\.\/|\.\/)+/, '')
-  const x = strip(a)
-  const y = strip(b)
-  return x !== '' && y !== '' && (x === y || x.endsWith('/' + y) || y.endsWith('/' + x))
+/** 当前目录项（href 带锚点）对应的节；章级目录项（目录里不是节）落到同一文件的第一节。 */
+function sectionOf(item: Item, anchor: string | undefined): Section | undefined {
+  if (anchor === undefined) return undefined
+  const flat = item.chapters.flatMap(c => c.sections)
+  return flat.find(x => x.loc === anchor) ?? flat.find(x => x.loc !== undefined && sameFile(x.loc, anchor))
 }
 
 export function EpubReader({ item, title, subtitle, onClose }: { item: Item; title: string; subtitle?: string; onClose: () => void }) {
@@ -29,7 +28,7 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
   const [error, setError] = useState<string>()
   const [ready, setReady] = useState(false)
   const [percent, setPercent] = useState(item.position?.percent ?? 0)
-  const [href, setHref] = useState('')
+  const [currentId, setCurrentId] = useState<string>()
   const [selection, setSelection] = useState<{ quote: string; loc: string }>()
   const [picked, setPicked] = useState<string>() // 点中的高亮（摘录卡片的 loc）
   const [sharing, setSharing] = useState<Card>()
@@ -64,11 +63,22 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
         initialLoc: item.position?.loc,
         highlights: item.cards.filter(k => k.type === 'excerpt' && k.loc?.startsWith('epubcfi(')).map(k => k.loc as string),
         fontSize,
-        onPosition: (loc, p, file) => {
-          setPercent(p)
-          setHref(file)
-          // 翻页很快，停 1 秒再存
-          pendingPos.current = { loc, percent: p }
+        onPosition: (pos) => {
+          const it = latest.current
+          if (pos.percent !== undefined) setPercent(pos.percent)
+          const section = sectionOf(it, pos.anchor)
+          setCurrentId(section?.id)
+          // 往后翻一页、正好从一节翻进下一节：上一节读完了，打勾（跳转、往前翻、刚打开都不算）
+          const flat = it.chapters.flatMap(c => c.sections)
+          const index = section === undefined ? -1 : flat.findIndex(x => x.id === section.id)
+          const prev = lastIndex.current
+          lastIndex.current = index >= 0 ? index : undefined
+          if (pos.byTurn && prev !== undefined && index === prev + 1 && !flat[prev].done) {
+            void palaceOp('setSectionDone', { id: it.id, sectionId: flat[prev].id, done: true }).catch(() => undefined)
+          }
+          // 精确进度还没算好时沿用上次的，不存粗略估算；翻页很快，停 1 秒再存
+          const percent = pos.percent ?? pendingPos.current?.percent ?? it.position?.percent ?? 0
+          pendingPos.current = { loc: pos.loc, percent }
           clearTimeout(posTimer.current)
           posTimer.current = setTimeout(savePosition, 1000)
         },
@@ -93,24 +103,19 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
     }
   }, [item.id, stage]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Esc 只关最上面一层：分享编辑器自己处理；有选中 / 高亮操作条时先收起它
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || sharing) return
+      if (selection || picked) { setSelection(undefined); setPicked(undefined); return }
+      onClose()
+    }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [onClose])
+  }, [onClose, sharing, selection, picked])
 
   const sections = item.chapters.flatMap(c => c.sections.map(s => ({ s, label: c.title === s.title ? s.title : `${c.title} › ${s.title}` })))
-  const current: Section | undefined = href === '' ? undefined : [...sections].reverse().find(x => x.s.loc && sameFile(x.s.loc, href))?.s
-
-  // 顺着往后读、从一节翻进下一节时，把读完的那一节打勾（跳着看不算）
-  useEffect(() => {
-    const index = current === undefined ? undefined : sections.findIndex(x => x.s.id === current.id)
-    const prev = lastIndex.current
-    lastIndex.current = index
-    if (index === undefined || prev === undefined || index !== prev + 1) return
-    const done = sections[prev].s
-    if (!done.done) void palaceOp('setSectionDone', { id: item.id, sectionId: done.id, done: true }).catch(() => undefined)
-  }, [current?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  const current: Section | undefined = sections.find(x => x.s.id === currentId)?.s
 
   const pickedCard = picked === undefined ? undefined : item.cards.find(k => k.loc === picked)
   const cancelExcerpt = async () => {

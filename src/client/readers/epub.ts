@@ -6,7 +6,17 @@ import type { OutlineInput } from '../../core/ops.ts'
 import { apiUrl } from '../api.ts'
 
 /* epub.js 没有类型包，这里只声明用到的部分 */
-interface EpubLocation { start: { cfi: string; href: string; index: number; percentage?: number } }
+interface EpubLocation { start: { cfi: string; href: string; index: number; percentage?: number }; end?: { cfi: string } }
+/** 翻页后回报给外层的位置。 */
+export interface EpubPosition {
+  loc: string
+  /** 0–1 的精确进度；全书还没切分完时是 undefined（不要存粗略估算）。 */
+  percent?: number
+  /** 当前所在的目录项 href（带锚点），对应 outline 里的 loc。 */
+  anchor?: string
+  /** 这次是不是用户往后翻了一页（而不是跳转、往前翻、刚打开）。 */
+  byTurn: boolean
+}
 interface EpubContents { window: Window }
 interface NavItem { label: string; href: string; subitems?: NavItem[] }
 interface Rendition {
@@ -19,9 +29,12 @@ interface Rendition {
   annotations: { highlight(cfi: string, data?: object, cb?: () => void, className?: string, styles?: object): void; remove(cfi: string, type: string): void }
   themes: { default(styles: object): void; override(name: string, value: string, priority?: boolean): void }
   getContents(): EpubContents[]
+  getRange(cfi: string): Range | undefined
+  currentLocation(): EpubLocation | Promise<EpubLocation> | undefined
   destroy(): void
 }
 interface EpubBook {
+  on(event: 'openFailed', fn: (error: Error) => void): void
   ready: Promise<void>
   loaded: { navigation: Promise<{ toc: NavItem[] }> }
   spine: { length: number }
@@ -66,6 +79,23 @@ export interface EpubHandle {
   destroy(): void
 }
 
+/** 目录 href 的文件部分（去掉锚点和开头的 ./ ../）。 */
+function fileOf(href: string): string {
+  return decodeURIComponent(href.split('#')[0]).replace(/^(\.\.\/|\.\/)+/, '')
+}
+
+/** 目录里的 href 和 epub.js 报告的 href 前缀可能不同（相对路径），只比文件名部分。 */
+export function sameFile(a: string, b: string): boolean {
+  const x = fileOf(a)
+  const y = fileOf(b)
+  return x !== '' && y !== '' && (x === y || x.endsWith('/' + y) || y.endsWith('/' + x))
+}
+
+/** 目录展开成平铺的 href 列表（章和节都在内，按书中顺序）。 */
+function flatHrefs(toc: NavItem[]): string[] {
+  return toc.flatMap(n => [n.href, ...flatHrefs(n.subitems ?? [])])
+}
+
 /** 只取两层：顶层是章，下一层是节（更深的忽略）。 */
 function outlineOf(toc: NavItem[]): OutlineInput[] {
   return toc
@@ -82,8 +112,7 @@ export async function mountEpub(el: HTMLElement, opts: {
   initialLoc?: string
   highlights: string[]
   fontSize: number
-  /** 翻页后：位置（CFI）、0–1 的进度、当前文件 href。 */
-  onPosition(loc: string, percent: number, href: string): void
+  onPosition(pos: EpubPosition): void
   /** 选中一段文字（划线）；取消选择时不回调。 */
   onSelect(sel: { quote: string; loc: string }): void
   onToc(outline: OutlineInput[]): void
@@ -92,7 +121,17 @@ export async function mountEpub(el: HTMLElement, opts: {
 }): Promise<EpubHandle> {
   const ePub = await loadEpub()
   const book = ePub(opts.data)
-  await book.ready
+  // 文件损坏时 epub.js 不会让 ready 失败，而是发 openFailed；再加个超时兜底
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('打开超时')), 30_000)
+    book.on('openFailed', (e) => { clearTimeout(timer); reject(e) })
+    book.ready.then(() => { clearTimeout(timer); resolve() }, (e: Error) => { clearTimeout(timer); reject(e) })
+  }).catch((e: Error) => {
+    try { book.destroy() } catch { /* 已经坏了 */ }
+    throw new Error(`这本 EPUB 打不开，可能文件损坏或没下载完整（${e?.message ?? e}）`)
+  })
+  const toc = await book.loaded.navigation.then(n => n.toc, () => [] as NavItem[])
+  const hrefs = flatHrefs(toc)
   const rendition = book.renderTo(el, {
     width: '100%',
     height: '100%',
@@ -103,38 +142,69 @@ export async function mountEpub(el: HTMLElement, opts: {
   rendition.themes.default({ body: { 'line-height': '1.8' }, '::selection': { background: '#f4dfa0' } })
   rendition.themes.override('font-size', `${opts.fontSize}px`, true)
 
+  /** 同一个文件里可能有好几个目录锚点：取这一页结尾之前出现的最后一个（标题出现在这一页上，就算进了那一节）。 */
+  function anchorOf(loc: EpubLocation): string | undefined {
+    const same = hrefs.filter(h => sameFile(h, loc.start.href))
+    if (same.length <= 1) return same[0]
+    let range: Range | undefined
+    try { range = rendition.getRange(loc.end?.cfi ?? loc.start.cfi) } catch { range = undefined }
+    if (!range) return same[0]
+    const start = range.startContainer // 这一页的结尾
+    const doc = start.ownerDocument
+    let found = same[0]
+    for (const h of same) {
+      const id = h.split('#')[1]
+      if (!id) { found = h; continue } // 没有锚点 = 文件开头
+      const target = doc?.getElementById(decodeURIComponent(id))
+      if (!target) continue
+      const pos = target.compareDocumentPosition(start)
+      if (target === start || pos & Node.DOCUMENT_POSITION_FOLLOWING || pos & Node.DOCUMENT_POSITION_CONTAINED_BY) found = h
+    }
+    return found
+  }
+
   let locationsReady = false
+  let turning = false // 最近一次是不是 next()
+  const report = (loc: EpubLocation, byTurn: boolean) => {
+    const percent = locationsReady ? Math.max(0, Math.min(1, book.locations.percentageFromCfi(loc.start.cfi))) : undefined
+    opts.onPosition({ loc: loc.start.cfi, percent, anchor: anchorOf(loc), byTurn })
+  }
   rendition.on('relocated', (loc) => {
-    const percent = locationsReady
-      ? book.locations.percentageFromCfi(loc.start.cfi)
-      : loc.start.index / Math.max(1, book.spine.length)
-    opts.onPosition(loc.start.cfi, Math.max(0, Math.min(1, percent)), loc.start.href)
+    const byTurn = turning
+    turning = false
+    report(loc, byTurn)
   })
+  const next = () => { turning = true; void rendition.next() }
+  const prev = () => { turning = false; void rendition.prev() }
   rendition.on('selected', (cfi, contents) => {
     const quote = contents.window.getSelection()?.toString().trim() ?? ''
     if (quote !== '') opts.onSelect({ quote, loc: cfi })
   })
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') void rendition.prev()
-    if (e.key === 'ArrowRight') void rendition.next()
+    if (e.key === 'ArrowLeft') prev()
+    if (e.key === 'ArrowRight') next()
   }
   rendition.on('keyup', onKey)
   document.addEventListener('keyup', onKey)
 
   await rendition.display(opts.initialLoc || undefined).catch(() => rendition.display())
   for (const cfi of opts.highlights) highlight(cfi)
-  void book.loaded.navigation.then(nav => opts.onToc(outlineOf(nav.toc))).catch(() => undefined)
-  // 精确进度要先切分全书，大书要几秒，放到后台
-  void book.locations.generate(1600).then(() => { locationsReady = true }).catch(() => undefined)
+  if (toc.length > 0) opts.onToc(outlineOf(toc))
+  // 精确进度要先切分全书，大书要几秒，放到后台；切完后按当前位置重新回报一次
+  void book.locations.generate(1600).then(async () => {
+    locationsReady = true
+    const loc = await rendition.currentLocation()
+    if (loc?.start) report(loc, false)
+  }).catch(() => undefined)
 
   function highlight(cfi: string) {
     try { rendition.annotations.highlight(cfi, {}, () => opts.onHighlight(cfi), 'mp-hl', { fill: '#f4dfa0', 'fill-opacity': '0.45' }) } catch { /* 旧位置在新版本书里不存在 */ }
   }
 
   return {
-    prev: () => void rendition.prev(),
-    next: () => void rendition.next(),
-    goTo: loc => void rendition.display(loc).catch(() => undefined),
+    prev,
+    next,
+    goTo: (loc) => { turning = false; void rendition.display(loc).catch(() => undefined) },
     highlight,
     unhighlight: (cfi) => { try { rendition.annotations.remove(cfi, 'highlight') } catch { /* 已经没有了 */ } },
     clearSelection: () => { for (const c of rendition.getContents()) c.window.getSelection()?.removeAllRanges() },

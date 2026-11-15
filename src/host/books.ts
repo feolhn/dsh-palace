@@ -2,7 +2,7 @@
  * 需要先读原文的操作：添加书（读 PDF 书签 / B 站分 P）、保存卡片原图。
  * 都要等待（读文件、联网），所以在 core 的 mutate 之外先做完。
  */
-import { copyFileSync, existsSync, readdirSync, statSync } from 'node:fs'
+import { closeSync, copyFileSync, existsSync, openSync, readdirSync, readSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, extname, isAbsolute, join } from 'node:path'
 import * as core from '../core/ops.ts'
@@ -38,7 +38,9 @@ export async function addBook(store: PalaceStore, args: { file?: unknown; url?: 
     const ext = extname(file).toLowerCase()
     if (ext !== '.pdf' && ext !== '.epub') throw new ShelfError('目前只支持 PDF 和 EPUB 文件')
     if (ext === '.epub') {
-      // EPUB 的目录在第一次打开阅读器时由前端读出（epub.js 解析导航最可靠）
+      // EPUB 是 zip：先看文件头，改了后缀的普通文件直接拒绝（打开时还会再检查一次）
+      if (!isZip(file)) throw new ShelfError('这不是有效的 EPUB 文件（可能损坏或没下载完整）')
+      // 目录在第一次打开阅读器时由前端读出（epub.js 解析导航最可靠）
       source = { type: 'epub', path: file }
       title = basename(file, ext)
       if (typeof args.title === 'string' && args.title.trim() !== '') title = args.title.trim()
@@ -60,6 +62,17 @@ export async function addBook(store: PalaceStore, args: { file?: unknown; url?: 
   if (typeof args.title === 'string' && args.title.trim() !== '') title = args.title.trim()
   cancelled()
   return core.addCell(store, { kind: 'book', title, subtitle: args.subtitle, source, parentId: args.parentId, targetDate: args.targetDate, outline, outlineSource })
+}
+
+/** zip 文件头 PK\x03\x04。 */
+function isZip(file: string): boolean {
+  const fd = openSync(file, 'r')
+  try {
+    const head = Buffer.alloc(4)
+    return readSync(fd, head, 0, 4, 0) === 4 && head.equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))
+  } finally {
+    closeSync(fd)
+  }
 }
 
 /** 在 Harness 附件目录里按 sha256 找图片（AI 只给出附件 id 时的兜底）。 */
