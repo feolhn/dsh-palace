@@ -357,7 +357,12 @@ function cardFields(item: Item, input: CardInput, card: Partial<Card>): void {
   if (input.status !== undefined) card.status = input.status as Card['status']
   if (input.share !== undefined) {
     if (input.share === null) delete card.share
-    else card.share = input.share
+    else {
+      // 内容由 share 模块定义，这里只防止存进去奇怪的东西
+      if (typeof input.share !== 'object' || Array.isArray(input.share)) throw new ShelfError('分享草稿格式不对')
+      if (JSON.stringify(input.share).length > 64 * 1024) throw new ShelfError('分享草稿太大')
+      card.share = input.share
+    }
   }
 }
 

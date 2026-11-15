@@ -108,6 +108,8 @@ test('卡片和灵感：校验、修改、删除卡片时灵感里的引用也�
   await ops.updateCard(store, { id: n.id, cardId: k.id, status: 'mastered', share: { color: '#efe8d2' }, answer: '答案' })
   const saved = store.getItem(n.id).cards[0]
   assert.deepEqual([saved.status, saved.answer, saved.share.color], ['mastered', '答案', '#efe8d2'])
+  await assert.rejects(ops.updateCard(store, { id: n.id, cardId: k.id, share: 'x' }), /分享草稿格式不对/)
+  await assert.rejects(ops.updateCard(store, { id: n.id, cardId: k.id, share: { s: 'x'.repeat(70000) } }), /分享草稿太大/)
   await ops.updateCard(store, { id: n.id, cardId: k.id, answer: null })
   assert.equal(store.getItem(n.id).cards[0].answer, undefined)
   const i = await ops.addInspiration(store, { id: n.id, title: 'T', body: '正文', cardIds: [k.id, 'k_不存在'] })
