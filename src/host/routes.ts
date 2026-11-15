@@ -7,6 +7,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, extname, join, normalize, sep } from 'node:path'
 import { Readable } from 'node:stream'
+import { fileURLToPath } from 'node:url'
 import * as core from '../core/ops.ts'
 import { assertCellId, ShelfError, type PalaceStore } from '../core/store.ts'
 import { findSection, type Item } from '../shared/palace.ts'
@@ -90,18 +91,27 @@ export function openExternal(target: string): void {
   child.unref()
 }
 
-/** macOS：弹出系统文件选择框选 PDF。其它平台返回 undefined（前端退回手动粘贴路径）。 */
-function pickPdf(): Promise<string | null | undefined> {
+/** macOS：弹出系统文件选择框选 PDF / EPUB。其它平台返回 undefined（前端退回手动粘贴路径）。 */
+function pickBook(): Promise<string | null | undefined> {
   if (process.platform !== 'darwin') return Promise.resolve(undefined)
   return new Promise((resolve) => {
     execFile('osascript', [
-      '-e', 'set f to choose file with prompt "选择 PDF" of type {"com.adobe.pdf"}',
+      '-e', 'set f to choose file with prompt "选择 PDF 或 EPUB" of type {"com.adobe.pdf", "org.idpf.epub-container"}',
       '-e', 'POSIX path of f',
     ], { timeout: 10 * 60_000 }, (error, stdout) => {
       if (error) resolve(null) // 用户取消
       else resolve(stdout.trim())
     })
   })
+}
+
+/** 阅读器脚本（vendor/，随 npm 包发布），只有这几个文件能被读取。 */
+const READER_SCRIPTS = ['jszip.min.js', 'epub.min.js']
+
+/** vendor/ 在包根目录：构建后从 lib/index.js 找，开发和测试时从 src/host/routes.ts 找。 */
+function vendorDir(): string {
+  const built = fileURLToPath(new URL('../vendor/', import.meta.url))
+  return existsSync(built) ? built : fileURLToPath(new URL('../../vendor/', import.meta.url))
 }
 
 const IMAGE_TYPES: Record<string, string> = {
@@ -173,9 +183,16 @@ export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRout
       return streamFile(file, type)
     }),
 
-    // pdf.js 前端渲染需要的 CMap / 标准字体 / wasm：?f=cmaps/UniGB-UCS2-H.bcmap
+    // 前端按需加载的资源：阅读器脚本 ?f=reader/epub.min.js；pdf.js 的 CMap / 标准字体 / wasm：?f=cmaps/UniGB-UCS2-H.bcmap
     route('GET', 'asset', ({ url }) => {
       const rel = normalize(url.searchParams.get('f') ?? '')
+      if (rel.startsWith('reader/')) {
+        const name = rel.slice('reader/'.length)
+        if (!READER_SCRIPTS.includes(name)) return new Response('not found', { status: 404 })
+        const response = streamFile(join(vendorDir(), name), 'text/javascript; charset=utf-8')
+        response.headers.set('cache-control', 'public, max-age=86400')
+        return response
+      }
       const allowed = ['cmaps', 'standard_fonts', 'wasm', 'iccs']
       if (!allowed.some(dir => rel.startsWith(dir + sep)) || rel.includes('..')) return new Response('not found', { status: 404 })
       const file = join(pdfjsDistDir(), rel)
@@ -185,7 +202,7 @@ export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRout
       return response
     }),
 
-    route('POST', 'pick-file', async () => json({ ok: true, path: await pickPdf() })),
+    route('POST', 'pick-file', async () => json({ ok: true, path: await pickBook() })),
 
     // 只打开格子里登记过的东西，不接受任意路径
     route('POST', 'open', ({ body }) => {

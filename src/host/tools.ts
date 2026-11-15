@@ -102,14 +102,14 @@ export function createTools(store: PalaceStore, active: ActiveItems) {
     defineTool({
       name: 'shelf_add',
       description: '往宫殿里放东西。kind=group 新建分组（title）；kind=note 新建笔记格子（title，用于没有原文的东西：日记、心情、追剧）；'
-        + 'kind=book 添加 PDF（path 为绝对路径）或 B 站视频课（url），可选 title、subtitle（作者）、target_date（YYYY-MM-DD）。'
+        + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或 B 站视频课（url），可选 title、subtitle（作者）、target_date（YYYY-MM-DD）。'
         + 'parent_id 填分组 id 可以直接放进分组（分组里不能再放分组）。',
       parameters: {
         kind: { type: 'string', enum: ['group', 'note', 'book'], required: true },
         title: { type: 'string' },
         subtitle: { type: 'string' },
         parent_id: { type: 'string' },
-        path: { type: 'string', description: 'book：PDF 绝对路径' },
+        path: { type: 'string', description: 'book：PDF 或 EPUB 的绝对路径' },
         url: { type: 'string', description: 'book：B 站视频链接' },
         target_date: { type: 'string' },
       },
@@ -124,6 +124,7 @@ export function createTools(store: PalaceStore, active: ActiveItems) {
           const item = store.getItem(c.id)
           const total = progressOf(item).total
           if (item.source?.type === 'video') return `已添加视频课《${c.title}》 id=${c.id}，共 ${total} 集。`
+          if (item.source?.type === 'epub') return `已添加《${c.title}》 id=${c.id}。用户第一次在笔记本里打开阅读时会自动读出目录。`
           return `已添加《${c.title}》 id=${c.id}，共 ${item.source?.type === 'pdf' ? item.source.pageCount : '?'} 页。`
             + (total > 0
               ? `已从 PDF 书签读出目录：${item.chapters.length} 章 ${total} 节。`

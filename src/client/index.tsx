@@ -8,6 +8,7 @@
 import notebookCss from './notebook/notebook.css?raw'
 import palaceCss from './palace/palace.css?raw'
 import shareCss from './share/share.css?raw'
+import readerCss from './readers/reader.css?raw'
 import { Palace } from './palace/Palace.tsx'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
@@ -58,12 +59,13 @@ class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
 }
 
 function ShelfTab(props: { sessionId?: string }) {
-  return <Guard><Sidebar sessionId={props.sessionId} /></Guard>
+  // data-mp-host：阅读器盖在这个容器上，不盖住 Harness 的界面
+  return <div data-mp-host data-single style={{ position: 'relative', height: '100%' }}><Guard><Sidebar sessionId={props.sessionId} /></Guard></div>
 }
 
 function MainPanel() {
   return (
-    <div style={{ height: '100%', overflow: 'hidden' }}>
+    <div data-mp-host style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
       <Guard><Palace /></Guard>
     </div>
   )
@@ -98,7 +100,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = 'dsh-shelf'
-    style.textContent = [notebookCss, palaceCss, shareCss].join('\n')
+    style.textContent = [notebookCss, palaceCss, shareCss, readerCss].join('\n')
     document.head.appendChild(style)
     return () => style.remove()
   }, 'dsh-shelf: styles')

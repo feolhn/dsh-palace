@@ -1,11 +1,11 @@
-/** 添加格子：书（PDF / 视频课）、笔记、分组。分组展开时，书和笔记放进这个分组。 */
+/** 添加格子：书（PDF / EPUB / 视频课）、笔记、分组。分组展开时，书和笔记放进这个分组。 */
 import { useEffect, useRef, useState } from 'react'
-import { pickPdf } from '../api.ts'
+import { pickBook } from '../api.ts'
 import { palaceOp } from './data.ts'
 
 type Kind = 'book' | 'note' | 'group'
 const KINDS: { kind: Kind; label: string; hint: string }[] = [
-  { kind: 'book', label: '书', hint: 'PDF 或视频课，有目录和进度' },
+  { kind: 'book', label: '书', hint: 'PDF、EPUB 或视频课，有目录和进度' },
   { kind: 'note', label: '笔记', hint: '没有原文：日记、心情、追剧……' },
   { kind: 'group', label: '分组', hint: '像文件夹，把几格收在一起' },
 ]
@@ -20,9 +20,9 @@ export function AddDialog({ parentId, onClose }: { parentId?: string; onClose: (
   const [error, setError] = useState<string>()
 
   const pick = async () => {
-    const path = await pickPdf().catch(() => undefined)
+    const path = await pickBook().catch(() => undefined)
     if (path) setFile(path)
-    else if (path === undefined) setError('这台电脑不能弹出选择框，请把 PDF 的完整路径粘贴进来')
+    else if (path === undefined) setError('这台电脑不能弹出选择框，请把文件的完整路径粘贴进来')
   }
 
   // 取消 / 关闭时中止还在读取的请求，Host 收到后不会再建格子
@@ -63,9 +63,9 @@ export function AddDialog({ parentId, onClose }: { parentId?: string; onClose: (
 
         {kind === 'book' && (
           <>
-            <label>PDF 文件</label>
+            <label>PDF / EPUB 文件</label>
             <div className="mp-row">
-              <input value={file} placeholder="/完整路径/书.pdf" onChange={e => { setFile(e.target.value); setUrl('') }} />
+              <input value={file} placeholder="/完整路径/书.pdf 或 .epub" onChange={e => { setFile(e.target.value); setUrl('') }} />
               <button type="button" className="mp-text-btn" onClick={() => void pick()}>选择…</button>
             </div>
             <label>或者，B 站视频课链接</label>

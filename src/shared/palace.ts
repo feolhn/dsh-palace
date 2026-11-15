@@ -99,7 +99,7 @@ export interface Item {
   source: SourceRef | null
   targetDate?: string
   finishedAt?: string
-  outlineSource?: 'bookmarks' | 'ai' | 'video' | 'manual'
+  outlineSource?: 'bookmarks' | 'toc' | 'ai' | 'video' | 'manual'
   chapters: Chapter[]
   position?: { loc: string; percent: number }
   cards: Card[]
