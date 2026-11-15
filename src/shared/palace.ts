@@ -161,6 +161,10 @@ export interface CellSummary {
   overdue?: boolean
   cards: number
   finished: boolean
+  /** 原文类型；笔记格子没有。 */
+  source?: SourceType
+  /** 0–1 的阅读进度：读完是 1；EPUB 用阅读位置，其他按打勾的节；没法算就没有。 */
+  percent?: number
 }
 
 export function summaryOf(item: Item, now = today()): CellSummary {
@@ -172,7 +176,15 @@ export function summaryOf(item: Item, now = today()): CellSummary {
     ...(pace?.overdue ? { overdue: true } : {}),
     cards: item.cards.length,
     finished: item.finishedAt !== undefined,
+    ...(item.source !== null ? { source: item.source.type } : {}),
+    ...(percentOf(item, done, total) !== undefined ? { percent: percentOf(item, done, total) } : {}),
   }
+}
+
+function percentOf(item: Item, done: number, total: number): number | undefined {
+  if (item.finishedAt !== undefined) return 1
+  if (item.source?.type === 'epub' && item.position !== undefined) return item.position.percent
+  return total > 0 ? done / total : undefined
 }
 
 export function findSection(item: Pick<Item, 'chapters'>, sectionId: string | undefined): { chapter: Chapter; section: Section } | undefined {

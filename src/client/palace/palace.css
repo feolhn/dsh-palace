@@ -70,23 +70,40 @@
 .mp-hint { font-size: 11px; line-height: 1.8; color: var(--mp-quiet); }
 .mp-eyebrow { font-size: 10px; letter-spacing: .2em; color: var(--mp-quiet); }
 
-/* 详情 */
+/* 详情（阅览室）：盖在宫殿中间，半透明纸面 */
+.mp-room, .mp-room * { box-sizing: border-box; }
+.mp-room { position: absolute; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; padding: 28px 28px 76px; background: rgba(87, 120, 138, .16); cursor: default; }
 .mp-sheet {
-  position: absolute; z-index: 8; top: 16px; right: 16px; bottom: 76px; width: min(340px, calc(100% - 32px));
-  padding: 22px 26px; overflow: auto; cursor: default; user-select: text; -webkit-user-select: text;
-  background: #e0e9e8f2; border: 1px solid #fffffbbf; box-shadow: 0 20px 70px #294c602b;
-  display: flex; flex-direction: column; gap: 6px;
+  position: relative; width: min(760px, 100%); height: min(720px, 100%); overflow: auto; overscroll-behavior: contain;
+  padding: 26px 44px 24px; user-select: text; -webkit-user-select: text;
+  background: linear-gradient(170deg, rgba(226, 236, 238, .74), rgba(214, 228, 232, .66)); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #fffffbbf; box-shadow: 0 20px 90px #294c602b;
+  display: flex; flex-direction: column; gap: 4px;
+  scrollbar-width: thin; scrollbar-color: #ffffff90 transparent;
 }
-.mp-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.mp-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.mp-sheet-close { font-size: 24px; line-height: 1; color: var(--mp-quiet); }
+.mp-sheet-close:hover { color: var(--mp-ink); }
+.mp-sheet-moon { position: absolute; top: 58px; right: 44px; }
+.mp-sheet-moon .mp-moon { position: static; font-size: 16px; }
+.mp-sheet:has(.mp-sheet-moon) .mp-sheet-title, .mp-sheet:has(.mp-sheet-moon) .mp-sheet-sub { width: calc(100% - 96px); }
+
+/* 书格子右上角的月亮：进入阅读 + 阅读进度。大小随缩放（em） */
+.mp-moon { position: absolute; right: .9em; top: .8em; width: 3.6em; display: flex; flex-direction: column; align-items: center; gap: .1em; padding: 0; z-index: 1; }
+.mp-moon svg { width: 3.6em; height: 3.6em; display: block; transition: transform .25s; }
+.mp-moon:hover svg { transform: scale(1.08); }
+.mp-moon-wash { fill: none; stroke: #fff5d6; stroke-width: 5; opacity: .5; }
+.mp-moon-ring { fill: none; stroke: #e5ba68; stroke-width: 5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; opacity: .85; }
+.mp-moon-pct { font-family: var(--mp-serif); font-size: .85em; letter-spacing: .03em; line-height: 1; }
 .mp-sheet-title, .mp-sheet-sub { background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 3px 0; width: 100%; }
 .mp-sheet-title:hover, .mp-sheet-title:focus, .mp-sheet-sub:hover, .mp-sheet-sub:focus { border-bottom-color: #7a99a455; outline: none; }
-.mp-sheet-title { font-family: var(--mp-serif) !important; font-size: 26px !important; line-height: 1.2; }
+.mp-sheet-title { font-family: var(--mp-serif) !important; font-size: 30px !important; line-height: 1.2; letter-spacing: -.01em; }
 .mp-sheet-sub { font-size: 13px !important; }
 .mp-facts { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 22px 0 8px; font-size: 13px; }
 .mp-facts dt { color: var(--mp-quiet); font-size: 12px; }
 .mp-facts dd { margin: 0; }
 .mp-facts input[type=date] { border-bottom-color: #7a99a455; width: auto; }
-.mp-sheet-actions { flex-shrink: 0; margin-top: auto; padding-top: 18px; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #fffffa7a; }
+.mp-sheet-actions { flex-shrink: 0; margin-top: 18px; padding-top: 14px; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #fffffa7a; }
 
 /* 添加 */
 .mp-dialog-backdrop { position: absolute; inset: 0; z-index: 10; background: #57788a33; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; cursor: default; }

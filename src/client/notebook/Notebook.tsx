@@ -233,7 +233,9 @@ function CardsTab({ item, title, subtitle, onError }: { item: Item; title: strin
           在左边对话里粘贴错题截图说「记错题」，或者把一段原文发给 AI 说「摘录下来」，AI 会记到这里当前在读的那一节。
         </p>
       )}
-      {shown.map(k => <CardView key={k.id} item={item} card={k} title={title} subtitle={subtitle} onError={onError} />)}
+      <div className="nb-cards">
+        {shown.map(k => <CardView key={k.id} item={item} card={k} title={title} subtitle={subtitle} onError={onError} />)}
+      </div>
     </div>
   )
 }
