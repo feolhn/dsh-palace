@@ -8,7 +8,7 @@ import type { Card } from '../../shared/palace.ts'
 import { palaceOp } from '../palace/data.ts'
 import { draw, loadFont, measurer } from './draw.ts'
 import {
-  FONTS, H, PAPERS, W, defaultSource, draftFor, layout, mergeDraft, normalizeRanges, sourceOf,
+  FONTS, H, PAPERS, W, defaultSource, draftFor, fingerprint, layout, mergeDraft, normalizeRanges, sourceOf,
   type FontId, type Range, type ShareDraft, type ShareTexts, type TextKey,
 } from './model.ts'
 
@@ -36,21 +36,37 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
     timer.current = setTimeout(() => void flush(), 600)
   }
 
-  const flush = async (): Promise<boolean> => {
+  /** 保存排成一条队：关闭时等前面的保存都完成，失败的版本留在 pending 里，下次重试。 */
+  const chain = useRef<Promise<boolean>>(Promise.resolve(true))
+  const flush = (): Promise<boolean> => {
     clearTimeout(timer.current)
-    const next = pending.current
-    if (next === undefined) return true
-    pending.current = undefined
-    try {
-      await palaceOp('updateCard', { id: itemId, cardId: card.id, share: mergeDraft(card.share, next) })
-      setStatus('草稿已保存')
-      return true
-    } catch (e) {
-      pending.current ??= next
-      setStatus(`草稿保存失败：${(e as Error).message}`)
-      return false
-    }
+    chain.current = chain.current.then(async () => {
+      const next = pending.current
+      if (next === undefined) return true
+      pending.current = undefined
+      try {
+        await palaceOp('updateCard', { id: itemId, cardId: card.id, share: mergeDraft(card.share, next) })
+        setStatus('草稿已保存')
+        return true
+      } catch (e) {
+        pending.current ??= next
+        setStatus(`草稿保存失败：${(e as Error).message}`)
+        return false
+      }
+    })
+    return chain.current
   }
+
+  // 编辑器开着时原文被改了（AI 或手改文件）：那一段的旧选段作废，重新全选，其他设置不动
+  useEffect(() => {
+    const stale = (['quote', 'note'] as const).filter(k => fingerprint(texts[k]) !== draft.basis[k])
+    if (stale.length === 0) return
+    const fresh = draftFor(undefined, texts)
+    const ranges = { ...draft.ranges }
+    const basis = { ...draft.basis }
+    for (const k of stale) { ranges[k] = fresh.ranges[k]; basis[k] = fresh.basis[k] }
+    update({ ranges, basis })
+  }, [card.quote, card.note]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 编辑器被意外卸载（比如卡片被 AI 删了）时也把草稿存下
   useEffect(() => () => { void flush() }, []) // eslint-disable-line react-hooks/exhaustive-deps
