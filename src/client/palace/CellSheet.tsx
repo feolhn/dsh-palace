@@ -36,7 +36,7 @@ export function CellSheet({ palace, cellId, onClose }: { palace: Palace; cellId:
       <input className="mp-sheet-sub" value={subtitle} placeholder={cell.kind === 'book' ? '作者' : '副标题'} onChange={e => setSubtitle(e.target.value)} onBlur={saveText}
         onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
 
-      <Notebook id={cell.id} title={cell.title} tab={tab} onTab={setTab} />
+      <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} tab={tab} onTab={setTab} />
 
       {error && <p className="mp-error">{error}</p>}
       <div className="mp-sheet-actions">

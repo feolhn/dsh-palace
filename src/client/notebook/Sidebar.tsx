@@ -36,7 +36,7 @@ export function Sidebar({ sessionId }: { sessionId?: string }) {
         <button type="button" className="nb-link nb-back" onClick={() => setView({ tab: view.tab })}>← {group?.title ?? '全部'}</button>
         <h2 className="nb-title">{cell.title}</h2>
         {cell.subtitle && <div className="nb-subtitle">{cell.subtitle}</div>}
-        <Notebook id={cell.id} title={cell.title} sessionId={sessionId} tab={view.tab} onTab={tab => setView({ ...view, tab })} />
+        <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} sessionId={sessionId} tab={view.tab} onTab={tab => setView({ ...view, tab })} />
       </div>
     )
   }

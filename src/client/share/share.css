@@ -1,0 +1,50 @@
+/*
+ * 分享卡片编辑器（盖在整个窗口上）。前缀 sh-。配色跟宫殿一致：浅蓝灰底、深蓝字。
+ */
+.sh-backdrop { position: fixed; inset: 0; z-index: 2000; background: rgba(41, 76, 96, .45); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.sh-dialog {
+  --sh-text: #1f3a4a; --sh-muted: #6b8593; --sh-line: #cfdade; --sh-accent: #294c60;
+  width: min(1240px, 100%); height: min(780px, 100%); display: flex; flex-direction: column;
+  background: #e6ecec; color: var(--sh-text); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 60px rgba(20, 40, 52, .3);
+  font-size: 13px; line-height: 1.6;
+}
+.sh-dialog *, .sh-dialog *::before { box-sizing: border-box; }
+.sh-dialog button, .sh-dialog input, .sh-dialog select { font: inherit; color: inherit; }
+.sh-dialog button { cursor: pointer; border: 0; background: none; padding: 0; }
+.sh-head { display: flex; align-items: center; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--sh-line); }
+.sh-head > div:first-child { margin-right: auto; }
+.sh-head h2 { margin: 2px 0 0; font-family: "EB Garamond", "Songti SC", serif; font-weight: 400; font-size: 22px; }
+.sh-eyebrow { font-size: 10px; letter-spacing: .18em; color: var(--sh-muted); }
+.sh-status { font-size: 12px; color: var(--sh-muted); }
+.sh-btn { padding: 7px 18px !important; border: 1px solid var(--sh-accent) !important; border-radius: 999px; font-size: 13px; }
+.sh-btn.sh-primary { background: var(--sh-accent) !important; color: #fff !important; }
+.sh-btn:disabled { opacity: .4; cursor: default; }
+.sh-close { font-size: 22px; line-height: 1; padding: 0 4px !important; color: var(--sh-muted) !important; }
+.sh-body { flex: 1; min-height: 0; display: flex; }
+.sh-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; }
+.sh-paper { height: calc(100% - 40px); max-width: 100%; aspect-ratio: 3 / 4; object-fit: contain; box-shadow: 0 14px 36px rgba(31, 58, 74, .18); }
+.sh-feedback { font-size: 11px; letter-spacing: .12em; color: var(--sh-muted); }
+.sh-feedback.sh-error { letter-spacing: 0; font-size: 12px; color: #934b39; }
+.sh-panel { width: 340px; flex-shrink: 0; overflow: auto; padding: 20px 24px 40px; border-left: 1px solid var(--sh-line); display: flex; flex-direction: column; gap: 16px; }
+.sh-field { display: flex; align-items: center; gap: 12px; }
+.sh-field > span:first-child { width: 36px; flex-shrink: 0; color: var(--sh-muted); font-size: 12px; }
+.sh-field select { flex: 1; padding: 5px 8px; border: 1px solid var(--sh-line); border-radius: 8px; background: #f3f6f6; }
+.sh-swatches { display: flex; gap: 8px; align-items: center; }
+.sh-swatches button { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #0002 !important; }
+.sh-swatches button[aria-pressed=true] { outline: 2px solid var(--sh-accent); outline-offset: 2px; }
+.sh-swatches input { width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }
+.sh-seg { display: flex; gap: 6px; }
+.sh-seg button { padding: 3px 12px !important; border: 1px solid var(--sh-line) !important; border-radius: 6px; font-size: 12px; background: #f3f6f6 !important; }
+.sh-seg button[aria-pressed=true] { border-color: var(--sh-accent) !important; background: #fff !important; }
+.sh-part { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--sh-line); }
+.sh-check { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
+.sh-pick { max-height: 200px; overflow: auto; padding: 10px 12px; background: #f3f6f6; border: 1px solid var(--sh-line); border-radius: 10px; white-space: pre-wrap; line-height: 1.8; cursor: text; user-select: text; }
+.sh-pick mark { background: #f4dfa0; color: inherit; border-radius: 2px; cursor: pointer; }
+.sh-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--sh-muted); }
+.sh-spacer { flex: 1; }
+.sh-link { font-size: 12px; color: var(--sh-accent) !important; border: 0 !important; background: none !important; padding: 0 !important; }
+.sh-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sh-range { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--sh-muted); }
+.sh-range input { width: 100%; accent-color: var(--sh-accent); }
+.sh-input { width: 100%; padding: 6px 10px; border: 1px solid var(--sh-line); border-radius: 8px; background: #f3f6f6; outline: none; }
+.sh-input:focus { border-color: var(--sh-accent); }

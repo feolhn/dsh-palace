@@ -181,7 +181,25 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 
 ### 4.4 share（前端）
 
-`card.share` 的结构由 share 模块自己定义并做版本兼容，core 只负责原样保存。导出的 PNG 在浏览器里生成，不经过 host。
+`card.share` 的结构由 share 模块自己定义并做版本兼容，core 只校验它是对象、不超过 64 KB，然后原样保存。导出的 PNG 在浏览器里生成，不经过 host。
+
+当前草稿（`src/client/share/model.ts`，`v: 1`）：
+
+```jsonc
+{
+  "v": 1,
+  "color": "#efe8d2",            // 纸色
+  "font": "song",                // song / kai / fang / hei（系统字体，字体包以后加）
+  "size": 50, "noteSize": 36,    // 原文 / 想法字号，纸张像素
+  "align": "center",             // left / center
+  "showQuote": true, "showNote": true, "showSource": true,
+  "source": "— 《书名》 · 作者",  // 用户改写过才有，否则按书名和作者生成
+  "ranges": { "quote": [[0, 12]], "note": [] },   // 选段，UTF-16 偏移 [start, end)
+  "basis": { "quote": "长度:哈希", "note": "…" }  // 选段时原文的指纹，原文改了选段就作废、重新全选
+}
+```
+
+纸张固定 1080×1440。认不出的字段保存时原样保留。
 
 ## 5. HTTP 接口（前端 ↔ host）
 

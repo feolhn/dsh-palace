@@ -12,12 +12,15 @@ import { canChat, sendText } from '../chat.ts'
 import { useItem } from '../palace/data.ts'
 import { ConfirmButton, Overlay, useOp } from './common.tsx'
 import { PagePicker } from './PagePicker.tsx'
+import { ShareEditor } from '../share/ShareEditor.tsx'
 
 export type NotebookTab = 'progress' | 'cards' | 'inspirations'
 
-export function Notebook({ id, title, sessionId, tab, onTab }: {
+export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
   id: string
   title: string
+  /** 作者 / 副标题，分享卡片的出处用。 */
+  subtitle?: string
   /** 右侧栏传入当前对话；全屏宫殿没有对话。 */
   sessionId?: string
   tab: NotebookTab
@@ -48,7 +51,7 @@ export function Notebook({ id, title, sessionId, tab, onTab }: {
       </div>
       {opError && <div className="nb-error" onClick={() => setOpError(undefined)}>{opError}</div>}
       {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} onPick={() => setPicking(true)} onError={setOpError} />}
-      {current === 'cards' && <CardsTab item={item} onError={setOpError} />}
+      {current === 'cards' && <CardsTab item={item} title={title} subtitle={subtitle} onError={setOpError} />}
       {current === 'inspirations' && <InspirationsTab item={item} title={title} sessionId={sessionId} onError={setOpError} />}
     </div>
   )
@@ -180,7 +183,7 @@ function shuffle<T>(items: T[]): T[] {
   return a
 }
 
-function CardsTab({ item, onError }: { item: Item; onError: (m: string) => void }) {
+function CardsTab({ item, title, subtitle, onError }: { item: Item; title: string; subtitle?: string; onError: (m: string) => void }) {
   const run = useOp(onError)
   const [filter, setFilter] = useState<Filter>('all')
   const [seed, setSeed] = useState(0)
@@ -220,12 +223,13 @@ function CardsTab({ item, onError }: { item: Item; onError: (m: string) => void 
           在左边对话里粘贴错题截图说「记错题」，或者把一段原文发给 AI 说「摘录下来」，AI 会记到这里当前在读的那一节。
         </p>
       )}
-      {shown.map(k => <CardView key={k.id} item={item} card={k} onError={onError} />)}
+      {shown.map(k => <CardView key={k.id} item={item} card={k} title={title} subtitle={subtitle} onError={onError} />)}
     </div>
   )
 }
 
-function CardView({ item, card: k, onError }: { item: Item; card: Card; onError: (m: string) => void }) {
+function CardView({ item, card: k, title, subtitle, onError }: { item: Item; card: Card; title: string; subtitle?: string; onError: (m: string) => void }) {
+  const [sharing, setSharing] = useState(false)
   const run = useOp(onError)
   const [showAnswer, setShowAnswer] = useState(false)
   const [zoom, setZoom] = useState(false)
@@ -276,9 +280,11 @@ function CardView({ item, card: k, onError }: { item: Item; card: Card; onError:
           </button>
         )}
         {editing === undefined && <button type="button" className="nb-link" onClick={() => setEditing(k.note ?? '')}>{k.note ? '改想法' : '写想法'}</button>}
+        {k.type !== 'mistake' && (k.quote || k.note) && <button type="button" className="nb-link" onClick={() => setSharing(true)}>分享</button>}
         <span className="nb-spacer" />
         <ConfirmButton label="删除" confirmLabel="确认删除" onConfirm={() => void run('deleteCard', { id: item.id, cardId: k.id })} />
       </footer>
+      {sharing && <ShareEditor itemId={item.id} card={k} title={title} subtitle={subtitle} onClose={() => setSharing(false)} />}
       {zoom && image && <Overlay onClose={() => setZoom(false)}><img src={image} alt="原图" /></Overlay>}
     </article>
   )
