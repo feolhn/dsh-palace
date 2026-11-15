@@ -22,8 +22,12 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
   const texts: ShareTexts = { quote: card.quote ?? '', note: card.note ?? '' }
   const [draft, setDraft] = useState<ShareDraft>(() => draftFor(card.share, texts))
   const [status, setStatus] = useState('')
-  const [problem, setProblem] = useState<string>()
-  const canvas = useRef<HTMLCanvasElement>(null)
+  // 还没画出第一帧时也算「有问题」，不能导出
+  const [problem, setProblem] = useState<string | undefined>('正在排版…')
+  // 画布在浮层里，晚于本组件挂载：用 state 记住它，挂上后触发绘制
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null)
+  const canvas = useRef<HTMLCanvasElement | null>(null)
+  canvas.current = canvasEl
   const pending = useRef<ShareDraft>()
   const timer = useRef<ReturnType<typeof setTimeout>>()
   const fallbackSource = defaultSource(title, subtitle)
@@ -77,14 +81,14 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
   useEffect(() => {
     let stale = false
     void loadFont(draft).then(() => {
-      const ctx = canvas.current?.getContext('2d')
+      const ctx = canvasEl?.getContext('2d')
       if (stale || !ctx) return
       const result = layout(draft, texts, sourceOf(draft, fallbackSource), measurer(ctx, draft))
       draw(ctx, draft, result)
       setProblem(result.empty ? '请选择要分享的文字。' : result.overflow ? '文字放不下一张纸，请少选一些，或者把字号调小。' : undefined)
     })
     return () => { stale = true }
-  }, [draft, card.quote, card.note, fallbackSource]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [draft, card.quote, card.note, fallbackSource, canvasEl]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
@@ -125,7 +129,7 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
         </header>
         <div className="sh-body">
           <div className="sh-stage">
-            <canvas ref={canvas} width={W} height={H} className="sh-paper" />
+            <canvas ref={setCanvasEl} width={W} height={H} className="sh-paper" />
             <div className={problem ? 'sh-feedback sh-error' : 'sh-feedback'}>{problem ?? '3 : 4 · 1080 × 1440 PNG'}</div>
           </div>
           <div className="sh-panel">
