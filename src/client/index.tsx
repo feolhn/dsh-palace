@@ -13,6 +13,7 @@ import { Palace } from './palace/Palace.tsx'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
 import { Sidebar } from './notebook/Sidebar.tsx'
+import { bindSessions, CHAT_SLOT, ChatSlotPanel, ChatSlotsProvider, type ChatSlots } from './chat/host.tsx'
 
 export const name = 'dsh-shelf'
 export const inject = ['slots', 'sidebarRightTabs', 'sidebarRight']
@@ -63,10 +64,12 @@ function ShelfTab(props: { sessionId?: string }) {
   return <div data-mp-host data-single style={{ position: 'relative', height: '100%' }}><Guard><Sidebar sessionId={props.sessionId} /></Guard></div>
 }
 
-function MainPanel() {
+/** 全屏面板：渲染器注入 SessionProvider / renderSlot（因为声明了 session 作用域的子 slot），交给宫殿里的 AI 对话用。 */
+function MainPanel(props: Partial<ChatSlots>) {
+  const slots = props.SessionProvider && props.renderSlot ? { SessionProvider: props.SessionProvider, renderSlot: props.renderSlot } : undefined
   return (
     <div data-mp-host style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
-      <Guard><Palace /></Guard>
+      <ChatSlotsProvider value={slots}><Guard><Palace /></Guard></ChatSlotsProvider>
     </div>
   )
 }
@@ -96,6 +99,7 @@ function PanelIcon({ size }: { size: number }) {
 
 export function apply(ctx: ClientContext): void {
   bindChat(ctx)
+  bindSessions(name => ctx.get(name))
 
   ctx.effect(() => {
     const style = document.createElement('style')
@@ -123,7 +127,12 @@ export function apply(ctx: ClientContext): void {
     inject: () => ({ openShelf }),
   }, HeaderButton))
 
-  ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_ID }, MainPanel))
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main',
+    key: PANEL_ID,
+    children: { [CHAT_SLOT]: { kind: 'single', scope: 'session' } },
+  }, MainPanel))
+  ctx.slots.inject(CHAT_SLOT, () => ctx.slots.register({ name: CHAT_SLOT }, ChatSlotPanel))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
     name: 'sidebar.panellist',
     id: PANEL_ID,

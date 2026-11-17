@@ -146,6 +146,9 @@ export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRout
       ok: true, rev: store.rev, palace: store.getPalace(), summaries: store.summaries(), dataDir: displayPath(store.dir),
     })),
 
+    // 宫殿里的 AI 对话建在数据目录这个工作区下（左侧会话列表里归在一起）；绝对路径只给前端建会话用，不显示
+    route('GET', 'chat-workspace', () => json({ ok: true, cwd: store.dir })),
+
     route('GET', 'item', ({ url }) => json({ ok: true, rev: store.rev, item: itemOf(store, url.searchParams.get('id')) })),
 
     route('GET', 'rev', () => json({ ok: true, rev: store.checkDisk() })),

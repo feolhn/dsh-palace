@@ -134,6 +134,26 @@ export function createTools(store: PalaceStore, active: ActiveItems) {
     }),
 
     defineTool({
+      name: 'shelf_remove',
+      description: '从宫殿里删掉一个格子（书、笔记或空分组），连同它的进度、卡片和灵感，不删电脑上的原文件。'
+        + '不可撤销：调用前必须先说清要删的是哪一个、会丢掉多少卡片和灵感，等用户明确同意后再调用。分组里还有东西时不能删。',
+      parameters: {
+        item_id: { type: 'string', required: true },
+      },
+      output: stringOut,
+      async execute(args) {
+        return guard(async () => {
+          const cell = store.getPalace().cells.find(c => c.id === args.item_id)
+          if (cell === undefined) throw new ShelfError('格子不存在')
+          const item = cell.kind === 'group' ? undefined : store.getItem(cell.id)
+          await core.deleteCell(store, { id: cell.id })
+          return `已删除${KIND_LABEL[cell.kind]}「${cell.title}」`
+            + (item ? `（卡片 ${item.cards.length} 张、灵感 ${item.inspirations.length} 条）` : '')
+        })
+      },
+    }),
+
+    defineTool({
       name: 'shelf_read',
       description: '读取某本 PDF 指定页的文字（页码为 PDF 的页序号，从 1 开始，不是书上印的页码）。用于读取目录页来生成章节结构。每次最多 30 页。',
       parameters: {
