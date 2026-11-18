@@ -66,3 +66,11 @@ export function sendWithImages(sessionId: string, text: string, files: File[]): 
     return false
   }
 }
+
+/** 把一句话放进输入框（不发送），用户可以接着改。返回 false 表示当前版本不支持。 */
+export function setDraft(sessionId: string, text: string): boolean {
+  const actx = scope(sessionId)
+  const input = conversationOf(actx)?.input
+  if (input === undefined) return false
+  try { input.for(actx).setDraft(text); return true } catch { return false }
+}

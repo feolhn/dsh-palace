@@ -7,6 +7,7 @@
  * 这些都是 Harness 的非公开接口，版本变了可能失效：拿不到时界面显示提示，不影响宫殿其他功能。
  */
 import { createContext, useContext, type ReactNode } from 'react'
+import { sendText, setDraft } from '../chat.ts'
 
 /** 子 slot 名：一个 session 作用域的对话位置。 */
 export const CHAT_SLOT = 'dsh-shelf.chat'
@@ -56,6 +57,11 @@ const ChatSlotsContext = createContext<ChatSlots | undefined>(undefined)
 export const ChatSlotsProvider = ChatSlotsContext.Provider
 export const useChatSlots = () => useContext(ChatSlotsContext)
 
+/** 空对话时的引导（设计稿「从一个念头开始」）：一行说明 + 两条可以点的开头。 */
+export interface ChatIntro { context?: string; prompts: readonly string[] }
+const ChatIntroContext = createContext<ChatIntro | undefined>(undefined)
+export const ChatIntroProvider = ChatIntroContext.Provider
+
 /** 子 slot 里的内容：照抄 Harness 的 ConversationSlotPanel，算出 phase 后渲染原生对话。 */
 interface PanelProps {
   sessionId: string
@@ -79,5 +85,21 @@ export function ChatSlotPanel({ sessionId, useSession, useConversation, useSessi
   const settling = shellPhase === 'blank' && session.openState === 'loading' && summaryBlank !== true
   // 不用 Harness 的首页大标题和工作区选择（宫殿的对话固定在 Memory Palace 工作区），空对话也按普通对话显示
   const phase = settling ? 'settling' : 'active'
-  return <>{renderFactorySlot('conversation.content', { variant: 'embedded', phase, hero: false }, { slots: { views: FixedChatView } })}</>
+  const intro = useContext(ChatIntroContext)
+  const content = renderFactorySlot('conversation.content', { variant: 'embedded', phase, hero: false }, { slots: { views: FixedChatView } })
+  if (intro === undefined || active || session.promptAttempted || settling) return <>{content}</>
+  // 点开头：放进输入框接着写（以「……」结尾的本来就是半句）；不支持放草稿就直接发
+  const pick = (text: string) => { if (!setDraft(sessionId, text)) void sendText(sessionId, text) }
+  return (
+    <div className="mp-chat-shell">
+      <div className="mp-chat-intro">
+        <span className="mp-chat-mark" aria-hidden="true">✧</span>
+        <p>从一个念头开始。</p>
+        {intro.context && <p className="mp-chat-context">{intro.context}</p>}
+        <span className="mp-chat-example">可以从这里聊起</span>
+        {intro.prompts.map(t => <button key={t} type="button" className="mp-chat-prompt" onClick={() => pick(t)}>{t}</button>)}
+      </div>
+      {content}
+    </div>
+  )
 }

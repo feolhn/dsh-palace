@@ -87,6 +87,9 @@ function roomSize(size: Size, chat: boolean, mode: RoomMode): { w: number; h: nu
 type RoomMode = 'notes' | 'reader'
 /** 光球打开的对话面板大小（原型 #palace-ai-chat 是 260×350，嵌原生对话放大一些）。 */
 const ORB_CHAT = { w: 340, h: 520 }
+/** 空对话时可以点的开头（设计稿原文；宫殿的第二条是新加的）。 */
+const BOOK_PROMPTS = ['这段文字，让我想起……', '这个想法与我读过的书，有什么联系？']
+const PALACE_PROMPTS = ['这个想法与我读过的书，有什么联系？', '最近读的几本书，可以放在一起看吗？']
 const VIEW_KEY = 'dsh-shelf:view'
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
@@ -544,7 +547,7 @@ export function Palace() {
             {shown && roomMode === 'notes' && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open }} />}
             {shown && roomMode === 'notes' && chatOpen && proj.open > 0.6 && (
               <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={rsize.beside ? { left: sx - 16 - CHAT_W, top: sy, width: CHAT_W, height: h * cam.scale } : undefined}
-                onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} onClose={() => setChatOpen(false)} />
+                onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} prompts={BOOK_PROMPTS} onClose={() => setChatOpen(false)} />
             )}
           </>
         )
@@ -556,9 +559,9 @@ export function Palace() {
         const ch = Math.min(ORB_CHAT.h, size.h - 120), cw = Math.min(ORB_CHAT.w, size.w - 36)
         const dock = { left: clamp(orbChat.x - 100, 18, size.w - cw - 18), top: clamp(orbChat.y + orbChat.h + 18, 20, size.h - ch - 20), width: cw, height: ch }
         return reader && roomCell !== undefined
-          ? <PalaceChat key={`orb-${roomCell.id}`} scope={roomCell.id} itemId={roomCell.id} dock={dock} heading="与书对话" context={`《${roomCell.title}》`}
+          ? <PalaceChat key={`orb-${roomCell.id}`} scope={roomCell.id} itemId={roomCell.id} dock={dock} heading="与书对话" context={`《${roomCell.title}》`} prompts={BOOK_PROMPTS}
               onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} onClose={() => setOrbChat(undefined)} />
-          : <PalaceChat key="orb-palace" scope="palace" dock={dock} heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setOrbChat(undefined)} />
+          : <PalaceChat key="orb-palace" scope="palace" dock={dock} heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" prompts={PALACE_PROMPTS} onClose={() => setOrbChat(undefined)} />
       })()}
       {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {
         const c = palace.cells.find(x => x.id === reading) as Cell

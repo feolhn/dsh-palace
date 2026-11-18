@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { chatWorkspace, setActive } from '../api.ts'
-import { CHAT_SLOT, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
+import { CHAT_SLOT, ChatIntroProvider, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
 
 const STORE_KEY = 'dsh-shelf:chat-sessions'
 
@@ -56,13 +56,15 @@ async function sessionFor(scope: string, fresh: boolean): Promise<string> {
   return id
 }
 
-export function PalaceChat({ scope, itemId, heading, context, dock, onSession, onClose }: {
+export function PalaceChat({ scope, itemId, heading, context, prompts, dock, onSession, onClose }: {
   /** 'palace' 或格子 id：决定用哪个会话 */
   scope: string
   /** 书 / 笔记的 id：AI 记卡片时默认记到这里 */
   itemId?: string
   heading: string
   context?: string
+  /** 空对话时可以点的开头 */
+  prompts: readonly string[]
   /** 阅览室旁边的对话：贴在阅览室左边（屏幕坐标）。不给就是靠右的面板。 */
   dock?: { left: number; top: number; width: number; height: number }
   /** 当前对话的会话 id（打开 / 换新对话 / 关闭时通知），给旁边的笔记本发消息用 */
@@ -109,7 +111,6 @@ export function PalaceChat({ scope, itemId, heading, context, dock, onSession, o
         <div>
           <span className="mp-eyebrow">A CONVERSATION</span>
           <h2>{heading}</h2>
-          {context && <p className="mp-chat-context">{context}</p>}
         </div>
         <button type="button" className="mp-text-btn" title="开始一个新对话（旧对话仍在左侧会话列表里）"
           onClick={() => { fresh.current = true; setGeneration(g => g + 1) }}>新对话</button>
@@ -122,7 +123,9 @@ export function PalaceChat({ scope, itemId, heading, context, dock, onSession, o
             ? <p className="mp-chat-note">对话没打开：{error}</p>
             : reference === undefined
               ? <p className="mp-chat-note">正在打开对话…</p>
-              : <slots.SessionProvider session={reference}>{slots.renderSlot(CHAT_SLOT, {})}</slots.SessionProvider>}
+              : <ChatIntroProvider value={{ context, prompts }}>
+                <slots.SessionProvider session={reference}>{slots.renderSlot(CHAT_SLOT, {})}</slots.SessionProvider>
+              </ChatIntroProvider>}
       </div>
     </aside>
   )
