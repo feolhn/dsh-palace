@@ -346,7 +346,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     defineTool({
       name: 'shelf_wiki_write',
       description: `整页重写一页记忆（会覆盖旧内容，先在旧内容基础上改）。正文最多 ${PAGE_LIMIT} 字，超了会被拒绝：合并相近的、删掉过时的再写。`
-        + 'target=me：关于用户的长期记忆，分「长期」「最近」两段，只记用户说过或做过的事实（喜好、正在经历的事、深入聊过的话题），尽量用用户原话，不推断、不扩写、不贴性格标签。'
+        + 'target=me：关于用户的长期记忆，分「长期」「最近」两段，只记用户说过或做过的事实（喜好、正在经历的事、深入聊过的话题），不贴性格标签。'
         + 'target=格子 id：这一格的 wiki，只写卡片和灵感里没有的东西（对用户意味着什么、卡在哪、反复出现的主题、没解决的疑问），句末用 [^卡片或灵感 id] 标出依据；'
         + 'summary 一句话（≤40 字），topics 3–5 个主题词（自由填写，跨格子相通的词更好，比如「等待」「孤独」）。',
       parameters: {
