@@ -443,8 +443,9 @@ export function Palace() {
 
       {group !== undefined && gsize !== undefined && cam !== undefined && (
         <>
-          <div className="mp-dim" />
-          <div className="mp-group-frame" style={rect(group.col * B, group.row * B, gsize.cols * B, gsize.rows * B)} />
+          {/* 阅览室展开时分组框和遮罩跟格子一起淡出，关上后回到原来的分组 */}
+          <div className="mp-dim" style={{ opacity: 1 - proj.open }} />
+          <div className="mp-group-frame" style={{ ...rect(group.col * B, group.row * B, gsize.cols * B, gsize.rows * B), opacity: 1 - proj.open }} />
           {children.map(c => renderCell(c))}
         </>
       )}
@@ -454,7 +455,7 @@ export function Palace() {
       <header className="mp-masthead">
         <span className="mp-wordmark">Memory Palace</span>
         {selected !== undefined && <button type="button" className="mp-back" aria-label="回到宫殿" onPointerDown={e => e.stopPropagation()} onClick={() => setSelected(undefined)}><span /></button>}
-        {group !== undefined && <GroupBar group={group} empty={children.length === 0} onBack={() => setOpenGroup(undefined)} onError={setOpError} />}
+        {group !== undefined && selected === undefined && proj.open < 0.001 && <GroupBar group={group} empty={children.length === 0} onBack={() => setOpenGroup(undefined)} onError={setOpError} />}
       </header>
 
       {palace !== undefined && cells.length === 0 && (
