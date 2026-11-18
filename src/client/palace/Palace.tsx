@@ -85,6 +85,11 @@ function roomSize(size: Size, chat: boolean, mode: RoomMode): { w: number; h: nu
   return { w: Math.max(300, Math.min(840, avail)), h: Math.max(230, Math.min(730, size.h - 180)), beside }
 }
 type RoomMode = 'notes' | 'reader'
+/** 阅览室左边那一列网格里放对话（左右各留 12px，对齐网格线）；太窄就不贴边，改成浮层。 */
+function besideDock(beside: boolean, sx: number, sy: number, height: number, column: number) {
+  const width = column - 24
+  return beside && width >= 220 ? { left: sx - column + 12, top: sy, width, height } : undefined
+}
 /** 光球打开的对话面板大小（原型 #palace-ai-chat 是 260×350，嵌原生对话放大一些）。 */
 const ORB_CHAT = { w: 340, h: 520 }
 /** 空对话时可以点的开头（设计稿原文；宫殿的第二条是新加的）。 */
@@ -544,9 +549,9 @@ export function Palace() {
               )}
               {shown && roomMode === 'notes' && !chatOpen && <button type="button" className="mp-room-ai" title="和这本书对话" onPointerDown={e => e.stopPropagation()} onClick={() => setChatOpen(true)}>AI</button>}
             </div>
-            {shown && roomMode === 'notes' && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open }} />}
+            {shown && roomMode === 'notes' && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open, left: sx + w * cam.scale / 2 }} />}
             {shown && roomMode === 'notes' && chatOpen && proj.open > 0.6 && (
-              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={rsize.beside ? { left: sx - 16 - CHAT_W, top: sy, width: CHAT_W, height: h * cam.scale } : undefined}
+              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={besideDock(rsize.beside, sx, sy, h * cam.scale, B * cam.scale)}
                 onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} prompts={BOOK_PROMPTS} onClose={() => setChatOpen(false)} />
             )}
           </>
