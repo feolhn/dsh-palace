@@ -56,7 +56,7 @@
 .mp-danger { color: #934b39; }
 .mp-primary { border-bottom: 1px solid #5f7c8a77 !important; padding: 5px 0 !important; font-size: 13px; }
 
-.mp-footer { position: absolute; z-index: 7; right: 28px; bottom: 22px; display: flex; gap: 11px; align-items: center; cursor: default; }
+.mp-footer { position: absolute; z-index: 9; /* 高于阅览室（8）：开着书也能点 AI，书不关 */  right: 28px; bottom: 22px; display: flex; gap: 11px; align-items: center; cursor: default; }
 .mp-round { width: 35px; height: 35px; border: 1px solid #fffffa85 !important; border-radius: 50%; font-size: 17px; }
 .mp-round:hover { background: #ffffff20 !important; }
 .mp-zoom { display: flex; align-items: center; height: 35px; border: 1px solid #fffffa85; border-radius: 30px; background: #c5dae338; }
