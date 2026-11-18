@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import type { Cell, CellSummary, Palace } from '../../shared/palace.ts'
 import { Notebook, type NotebookTab } from '../notebook/Notebook.tsx'
 import { palaceOp } from './data.ts'
+import { iconOf } from './icons.ts'
 import { Moon } from './Moon.tsx'
 
 export function CellSheet({ palace, cellId, summary, sessionId, onRead, onClose }: { palace: Palace; cellId: string; summary?: CellSummary; sessionId?: string; onRead: () => void; onClose: () => void }) {
@@ -36,7 +37,7 @@ export function CellSheet({ palace, cellId, summary, sessionId, onRead, onClose 
         <span className="mp-eyebrow">{cell.kind === 'book' ? 'READING ROOM' : 'NOTEBOOK'}</span>
         <button type="button" className="mp-sheet-close" aria-label="关闭" onClick={close}>×</button>
       </div>
-      {summary?.source !== undefined && <div className="mp-sheet-moon"><Moon percent={summary.percent} title={cell.title} onOpen={onRead} /></div>}
+      {summary?.source !== undefined && <div className="mp-sheet-moon"><Moon icon={iconOf(cell)} percent={summary.percent} label={`阅读《${cell.title}》`} onOpen={onRead} /></div>}
       <input className="mp-sheet-title" value={title} onChange={e => setTitle(e.target.value)} onBlur={saveText}
         onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
       <input className="mp-sheet-sub" value={subtitle} placeholder={cell.kind === 'book' ? '作者' : '副标题'} onChange={e => setSubtitle(e.target.value)} onBlur={saveText}

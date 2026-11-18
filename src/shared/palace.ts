@@ -22,6 +22,8 @@ export interface Cell {
   row: number
   title: string
   subtitle?: string
+  /** 水彩图标（vendor/icons/<icon>.webp）。不填时按 id 挑一个固定的。 */
+  icon?: string
   createdAt: string
 }
 
@@ -163,6 +165,8 @@ export interface CellSummary {
   finished: boolean
   /** 原文类型；笔记格子没有。 */
   source?: SourceType
+  /** 目标日期（YYYY-MM-DD）。 */
+  targetDate?: string
   /** 0–1 的阅读进度：读完是 1；EPUB 用阅读位置，其他按打勾的节；没法算就没有。 */
   percent?: number
 }
@@ -177,6 +181,7 @@ export function summaryOf(item: Item, now = today()): CellSummary {
     cards: item.cards.length,
     finished: item.finishedAt !== undefined,
     ...(item.source !== null ? { source: item.source.type } : {}),
+    ...(item.targetDate ? { targetDate: item.targetDate } : {}),
     ...(percentOf(item, done, total) !== undefined ? { percent: percentOf(item, done, total) } : {}),
   }
 }

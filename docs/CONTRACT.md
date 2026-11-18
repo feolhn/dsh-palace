@@ -53,6 +53,7 @@ dsh-shelf-data/
 | `parentId` | `null` 表示在宫殿最外层；否则是所在分组的 id |
 | `col`, `row` | 整数坐标。最外层可以是负数；分组里从 0 开始 |
 | `title`, `subtitle` | 格子上显示的文字。subtitle 可选（作者、副标题） |
+| `icon` | 可选：水彩图标名（`vendor/icons/<icon>.webp`，经 `asset?f=icons/<icon>.webp` 读取）。不填时前端按 id 固定挑一个，分组默认彩虹 |
 
 规则：
 - 同一层里 `(parentId, col, row)` 不能重复。移动到有格子的位置 = 两个格子互换，一次写入完成。
@@ -200,7 +201,7 @@ function mountEpub(el: HTMLElement, opts: {
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `palace` | `{ rev, palace, summaries, dataDir }`。summaries 是每个格子的进度摘要（`{done,total,perDay?,cards,finished,source?,percent?}`，percent 给格子上的月亮用），画布不用读全部 item |
+| GET | `palace` | `{ rev, palace, summaries, dataDir }`。summaries 是每个格子的进度摘要（`{done,total,perDay?,cards,finished,source?,targetDate?,percent?}`，percent 给格子上的月亮用），画布不用读全部 item |
 | GET | `item?id=` | `{ rev, item }` |
 | GET | `rev` | `{ rev }`，前端轮询，变了就重新拉取 |
 | POST | `op` | `{ op, args }` → `{ rev, result }`，op 白名单见 `src/host/routes.ts` |

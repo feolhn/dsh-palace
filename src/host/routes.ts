@@ -217,6 +217,15 @@ export function createRoutes(store: PalaceStore, active: ActiveItems, memory = n
         response.headers.set('cache-control', 'public, max-age=86400')
         return response
       }
+      // 水彩图标（#29）：vendor/icons/<名字>.webp
+      const icon = /^icons\/([a-z][a-z-]{0,30})\.webp$/.exec(rel)?.[1]
+      if (icon !== undefined) {
+        const file = join(vendorDir(), 'icons', `${icon}.webp`)
+        if (!existsSync(file)) return new Response('not found', { status: 404 })
+        const response = streamFile(file, 'image/webp')
+        response.headers.set('cache-control', 'public, max-age=86400')
+        return response
+      }
       const allowed = ['cmaps', 'standard_fonts', 'wasm', 'iccs']
       if (!allowed.some(dir => rel.startsWith(dir + sep)) || rel.includes('..')) return new Response('not found', { status: 404 })
       const file = join(pdfjsDistDir(), rel)
