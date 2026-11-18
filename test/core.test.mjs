@@ -273,3 +273,14 @@ test('新建书时带初始目录；不给坐标的移动放到目标层第一�
   const moved = await ops.moveCell(store, { id: b.id, parentId: g.id })
   assert.deepEqual([moved.parentId, moved.col, moved.row], [g.id, 1, 0])
 })
+
+test('阅读起止月份：从打勾、卡片、灵感推出，读完才有结束（Discussion #37）', async () => {
+  const { summaryOf, emptyItem } = await import('../src/shared/palace.ts')
+  const item = emptyItem('c_0000000001')
+  assert.equal(summaryOf(item).period, undefined)
+  item.cards.push({ id: 'k_1', type: 'thought', note: 'x', createdAt: '2026-11-03T04:00:00.000Z' })
+  item.chapters.push({ id: 'ch', title: '一', sections: [{ id: 's', title: '甲', done: true, doneAt: '2026-10-20T04:00:00.000Z' }] })
+  assert.deepEqual(summaryOf(item).period, { start: '2026-10' })
+  item.finishedAt = '2026-12-01'
+  assert.deepEqual(summaryOf(item).period, { start: '2026-10', end: '2026-12' })
+})

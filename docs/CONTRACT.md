@@ -201,7 +201,7 @@ function mountEpub(el: HTMLElement, opts: {
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `palace` | `{ rev, palace, summaries, dataDir }`。summaries 是每个格子的进度摘要（`{done,total,perDay?,cards,finished,source?,targetDate?,percent?}`，percent 给格子上的月亮用），画布不用读全部 item |
+| GET | `palace` | `{ rev, palace, summaries, dataDir }`。summaries 是每个格子的进度摘要（`{done,total,perDay?,cards,finished,source?,period?,percent?}`，percent 给格子上的月亮用），画布不用读全部 item |
 | GET | `item?id=` | `{ rev, item }` |
 | GET | `rev` | `{ rev }`，前端轮询，变了就重新拉取 |
 | POST | `op` | `{ op, args }` → `{ rev, result }`，op 白名单见 `src/host/routes.ts` |

@@ -165,8 +165,8 @@ export interface CellSummary {
   finished: boolean
   /** 原文类型；笔记格子没有。 */
   source?: SourceType
-  /** 目标日期（YYYY-MM-DD）。 */
-  targetDate?: string
+  /** 阅读起止月份（YYYY-MM）：开始 = 最早一次打勾 / 记卡片 / 存灵感，结束 = 读完；格子右边竖排显示（Discussion #37）。 */
+  period?: { start: string; end?: string }
   /** 0–1 的阅读进度：读完是 1；EPUB 用阅读位置，其他按打勾的节；没法算就没有。 */
   percent?: number
 }
@@ -181,9 +181,27 @@ export function summaryOf(item: Item, now = today()): CellSummary {
     cards: item.cards.length,
     finished: item.finishedAt !== undefined,
     ...(item.source !== null ? { source: item.source.type } : {}),
-    ...(item.targetDate ? { targetDate: item.targetDate } : {}),
+    ...(periodOf(item) !== undefined ? { period: periodOf(item) } : {}),
     ...(percentOf(item, done, total) !== undefined ? { percent: percentOf(item, done, total) } : {}),
   }
+}
+
+/** 阅读起止月份：不另存，从已有的记录推出来（用户只管记）。 */
+function periodOf(item: Item): CellSummary['period'] {
+  const times = [
+    ...item.chapters.flatMap(c => c.sections.map(s => s.doneAt)),
+    ...item.cards.map(k => k.createdAt),
+    ...item.inspirations.map(i => i.createdAt),
+  ].filter((t): t is string => typeof t === 'string' && t !== '')
+  if (times.length === 0) return item.finishedAt ? { start: monthOf(item.finishedAt), end: monthOf(item.finishedAt) } : undefined
+  const start = monthOf(times.reduce((a, b) => (a < b ? a : b)))
+  return { start, ...(item.finishedAt ? { end: monthOf(item.finishedAt) } : {}) }
+}
+
+/** ISO 时间 → 本地 YYYY-MM。 */
+function monthOf(iso: string): string {
+  // 读完日期是本地 YYYY-MM-DD，直接取；ISO 时间戳按本地时区换算
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.slice(0, 7) : today(new Date(iso)).slice(0, 7)
 }
 
 function percentOf(item: Item, done: number, total: number): number | undefined {
