@@ -17,7 +17,7 @@ import { EpubReader } from '../readers/EpubReader.tsx'
 
 export type NotebookTab = 'progress' | 'cards' | 'inspirations'
 
-export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
+export function Notebook({ id, title, subtitle, sessionId, tab, onTab, hideTabs = false }: {
   id: string
   title: string
   /** 备注（作者、中文名……），分享卡片的出处用。 */
@@ -26,6 +26,8 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
   sessionId?: string
   tab: NotebookTab
   onTab: (tab: NotebookTab) => void
+  /** 全屏阅览室里标签是画面顶上的舷窗，这里不画。 */
+  hideTabs?: boolean
 }) {
   const { item, error } = useItem(id)
   const [picking, setPicking] = useState(false)
@@ -43,13 +45,13 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
 
   return (
     <div className="nb">
-      <div className="nb-tabs">
+      {!hideTabs && <div className="nb-tabs">
         {tabs.map(([t, label]) => (
           <button key={t} type="button" className={current === t ? 'nb-on' : ''} onClick={() => onTab(t)}>
             {label}{count(t) ? <small>{count(t)}</small> : null}
           </button>
         ))}
-      </div>
+      </div>}
       {opError && <div className="nb-error" onClick={() => setOpError(undefined)}>{opError}</div>}
       {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} title={title} subtitle={subtitle} onPick={() => setPicking(true)} onError={setOpError} />}
       {current === 'cards' && <CardsTab item={item} title={title} subtitle={subtitle} onError={setOpError} />}
