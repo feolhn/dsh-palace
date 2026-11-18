@@ -8,7 +8,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from 'react'
 import type { Cell, CellSummary } from '../../shared/palace.ts'
 import { AddDialog } from './AddDialog.tsx'
-import { CellSheet } from './CellSheet.tsx'
+import { Room, RoomTabs } from './Room.tsx'
+import type { NotebookTab } from '../notebook/Notebook.tsx'
 import { Moon, percentText } from './Moon.tsx'
 import { iconOf } from './icons.ts'
 import { ReadBook } from './ReadBook.tsx'
@@ -67,7 +68,16 @@ function spreadCamera(layout: SpreadLayout, cells: Cell[], size: Size): Camera {
   return { x: size.w / 2 - (left + right) / 2 * scale, y: size.h / 2 + 12 - (top + bottom) / 2 * scale, scale }
 }
 
-interface Proj { amount: number; spread: number }
+/** amount 投影程度，spread 分组展开程度，open 阅览室展开程度（都是 0–1，动画中是小数）。 */
+interface Proj { amount: number; spread: number; open: number }
+
+/** 阅览室的大小（原型 dimensions()）和要不要给左边的对话留位置。 */
+const CHAT_W = 300
+function roomSize(size: Size, chat: boolean): { w: number; h: number; beside: boolean } {
+  const beside = chat && size.w >= 760
+  const avail = size.w - 40 - (beside ? CHAT_W + 16 : 0)
+  return { w: Math.max(300, Math.min(840, avail)), h: Math.max(230, Math.min(730, size.h - 180)), beside }
+}
 const VIEW_KEY = 'dsh-shelf:view'
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
@@ -94,7 +104,12 @@ export function Palace() {
   const setChatOpen = (open: boolean) => { localStorage.setItem('dsh-shelf:chat-open', open ? '1' : '0'); setChatOpenState(open) }
   // 轴测视图（记在本机）。proj 是动画中的当前值：amount 投影程度，spread 分组展开程度
   const [iso, setIso] = useState(() => localStorage.getItem(VIEW_KEY) === 'iso')
-  const [proj, setProj] = useState<Proj>(() => (iso ? { amount: 1, spread: 1 } : { amount: 0, spread: 0 }))
+  const [proj, setProj] = useState<Proj>(() => (iso ? { amount: 1, spread: 1, open: 0 } : { amount: 0, spread: 0, open: 0 }))
+  const [tab, setTab] = useState<NotebookTab>('progress')
+  /** 打开阅览室前的镜头，关上时回去。 */
+  const beforeRoom = useRef<Camera>()
+  /** 正在关上的阅览室（动画结束前还要画）。 */
+  const lastRoom = useRef<string>()
   const [hover, setHover] = useState<string>()
   const live = useRef({ iso, proj, cam, size, m: matrixOf(proj.amount) })
   const anim = useRef(0)
@@ -127,7 +142,7 @@ export function Palace() {
     const frame = (now: number) => {
       if (id !== anim.current) return
       const t = duration > 0 ? Math.min(1, (now - start) / duration) : 1, e = ease(t)
-      const p = { amount: from.amount + (to.amount - from.amount) * e, spread: from.spread + (to.spread - from.spread) * e }
+      const p = { amount: from.amount + (to.amount - from.amount) * e, spread: from.spread + (to.spread - from.spread) * e, open: from.open + (to.open - from.open) * e }
       live.current.proj = p
       setProj(p)
       if (toCam !== undefined && fromCam !== undefined) {
@@ -140,10 +155,25 @@ export function Palace() {
 
   // 进入笔记或阅读时回到平面，出来再回到轴测（分组保持展开）
   const isoTarget = (on: boolean) => (on && selected === undefined && reading === undefined ? 1 : 0)
+  // 打开 / 关上阅览室：这一格在网格里展开，镜头移过去（scale 回到 1）；关上时回到原来的镜头（原型 openCell / roomCamera）
   useEffect(() => {
-    const target = isoTarget(live.current.iso)
-    if (Math.abs(live.current.proj.amount - target) > 0.001) animate({ amount: target, spread: live.current.iso ? 1 : 0 })
-  }, [selected, reading]) // eslint-disable-line react-hooks/exhaustive-deps
+    const p = live.current.proj
+    const target = { amount: isoTarget(live.current.iso), spread: live.current.iso ? 1 : 0, open: selected !== undefined ? 1 : 0 }
+    let toCam: Camera | undefined
+    const sel = selected !== undefined ? cells.find(c => c.id === selected) : undefined
+    if (sel !== undefined && live.current.cam !== undefined) {
+      if (p.open < 0.001) beforeRoom.current = live.current.cam
+      lastRoom.current = sel.id
+      const r = roomSize(size, chatOpen)
+      const w = worldCellRef.current(sel)
+      const left = r.beside ? 20 + CHAT_W + 16 + (size.w - 40 - CHAT_W - 16 - r.w) / 2 : (size.w - r.w) / 2
+      toCam = { scale: 1, x: left - w.col * B, y: (size.h - r.h) / 2 + 10 - w.row * B }
+    } else if (p.open > 0.001) {
+      toCam = beforeRoom.current
+    }
+    const same = Math.abs(p.amount - target.amount) < 0.001 && Math.abs(p.open - target.open) < 0.001 && Math.abs(p.spread - target.spread) < 0.001
+    if (!same || toCam !== undefined) animate(target, toCam)
+  }, [selected, reading, chatOpen, size.w, size.h]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleIso = () => {
     if (palace === undefined || cam === undefined) return
@@ -153,7 +183,7 @@ export function Palace() {
     live.current.iso = next
     setOpenGroup(undefined)
     if (next) flatCam.current = cam
-    animate({ amount: isoTarget(next), spread: next ? 1 : 0 }, next ? spreadCamera(layout, cells, size) : (flatCam.current ?? fitCamera(cells, size)))
+    animate({ amount: isoTarget(next), spread: next ? 1 : 0, open: live.current.proj.open }, next ? spreadCamera(layout, cells, size) : (flatCam.current ?? fitCamera(cells, size)))
   }
 
   // I 键切换（在输入框、对话里打字时不算）
@@ -199,8 +229,9 @@ export function Palace() {
     if (el === null) return
     // 触控板：双指滑动 = 平移，捏合（浏览器报为 ctrl + wheel）= 缩放；鼠标滚轮 + ⌘ 也是缩放
     const onWheel = (e: WheelEvent) => {
-      if ((e.target as HTMLElement).closest('.mp-sheet, .mp-dialog, .mp-chat')) return
+      if ((e.target as HTMLElement).closest('.mp-room, .mp-dialog, .mp-chat')) return
       e.preventDefault()
+      if (live.current.proj.open > 0.001) return // 阅览室开着：画布不动
       const rect = el.getBoundingClientRect()
       if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - rect.left, e.clientY - rect.top)
       else {
@@ -221,6 +252,8 @@ export function Palace() {
 
   const onBackgroundDown = (e: RPointerEvent) => {
     if (e.button !== 0 || cam === undefined) return
+    // 阅览室开着：点外面 = 关上（原型「阅读器外短点击回到卡片」）
+    if (selected !== undefined) { setSelected(undefined); return }
     const p = local(e)
     capture(e.currentTarget as Element, e.pointerId)
     setGesture({ kind: 'pan', id: e.pointerId, sx: p.x, sy: p.y, cam, moved: false })
@@ -300,6 +333,19 @@ export function Palace() {
     if (c.parentId !== null && group !== undefined && c.parentId === group.id) return { col: group.col + c.col, row: group.row + c.row }
     return { col: c.col, row: c.row }
   }
+  const worldCellRef = useRef(worldCell)
+  worldCellRef.current = worldCell
+
+  // 阅览室展开时，它右边和下面的网格整体让开（原型 axisCoord）：第 i 条线的世界坐标
+  const roomCell = (selected ?? lastRoom.current) !== undefined && proj.open > 0.001 ? cells.find(c => c.id === (selected ?? lastRoom.current)) : undefined
+  const roomAt = roomCell !== undefined ? worldCell(roomCell) : undefined
+  const rsize = roomSize(size, chatOpen)
+  const ax = (i: number, axis: 'col' | 'row'): number => {
+    if (roomAt === undefined) return i * B
+    const at = axis === 'col' ? roomAt.col : roomAt.row
+    const extra = ((axis === 'col' ? rsize.w : rsize.h) - B) * proj.open
+    return i * B + (i > at + 0.001 ? extra : 0)
+  }
 
   /** 世界坐标里的矩形 → 屏幕上的样式（一个 matrix 同时完成缩放、平移和投影）。 */
   const rect = (x: number, y: number, w: number, h: number): CSSProperties => {
@@ -343,7 +389,7 @@ export function Palace() {
   const renderCell = (c: Cell) => {
     const isDragged = dragging?.cell.id === c.id
     const w = worldCell(c)
-    let x = w.col * B, y = w.row * B
+    let x = ax(w.col, 'col'), y = ax(w.row, 'row')
     if (isDragged && cam !== undefined) {
       const d = delta(m, dragging.px - dragging.sx, dragging.py - dragging.sy)
       x += d.x / cam.scale
@@ -351,7 +397,7 @@ export function Palace() {
     }
     return (
       <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''} ${selected === c.id ? 'mp-selected' : ''}`}
-        style={{ ...rect(x, y, B, B), opacity: spreading && c.parentId !== null ? proj.spread : undefined }}
+        style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * (1 - proj.open), pointerEvents: proj.open > 0.001 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
         <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => setReading(c.id)} />
@@ -381,7 +427,7 @@ export function Palace() {
           <feGaussianBlur stdDeviation=".45" />
         </filter>
       </defs></svg>
-      {cam !== undefined && <Grid cam={cam} size={size} m={m} />}
+      {cam !== undefined && <Grid cam={cam} size={size} m={m} ax={ax} />}
 
       {spreading && [...layout.frames.values()].map((e) => {
         const p = worldCell(e.cell), t = proj.spread
@@ -407,6 +453,7 @@ export function Palace() {
 
       <header className="mp-masthead">
         <span className="mp-wordmark">Memory Palace</span>
+        {selected !== undefined && <button type="button" className="mp-back" aria-label="回到宫殿" onPointerDown={e => e.stopPropagation()} onClick={() => setSelected(undefined)}><span /></button>}
         {group !== undefined && <GroupBar group={group} empty={children.length === 0} onBack={() => setOpenGroup(undefined)} onError={setOpError} />}
       </header>
 
@@ -415,7 +462,7 @@ export function Palace() {
       )}
       {(error ?? opError) && <div className="mp-toast">{opError ?? `加载失败：${error}`}</div>}
 
-      <footer className="mp-footer" onPointerDown={e => e.stopPropagation()}>
+      <footer className="mp-footer" hidden={proj.open > 0.001} onPointerDown={e => e.stopPropagation()}>
         <button type="button" className="mp-round" title="添加" onClick={() => setAdding(true)}>＋</button>
         <button type="button" className="mp-view-toggle" aria-pressed={iso} aria-keyshortcuts="I" title={iso ? '切换到平面视图（I）' : '切换到轴测视图（I）：看分组和书之间的电弧'} onClick={toggleIso}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 6-10 6L2 9Z M2 13l10 6 10-6 M2 17l10 6 10-6" /></svg>
@@ -429,18 +476,33 @@ export function Palace() {
         </div>
       </footer>
 
-      {selected !== undefined && palace !== undefined && palace.cells.some(c => c.id === selected) && (
-        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]}
-          sessionId={chatOpen && roomSession?.cellId === selected ? roomSession.sessionId : undefined} onRead={() => setReading(selected)} onClose={() => setSelected(undefined)} />
-      )}
-      {chatOpen && palace !== undefined && (() => {
-        // 打开了某本书 / 笔记：和这本书对话；否则和整个宫殿对话
-        const room = selected !== undefined ? palace.cells.find(c => c.id === selected) : undefined
-        return room !== undefined
-          ? <PalaceChat key={room.id} scope={room.id} itemId={room.id}
-              onSession={id => setRoomSession(id === undefined ? undefined : { cellId: room.id, sessionId: id })} heading="与书对话" context={`《${room.title}》`} onClose={() => setChatOpen(false)} />
-          : <PalaceChat scope="palace" heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setChatOpen(false)} />
+      {roomCell !== undefined && roomAt !== undefined && palace !== undefined && cam !== undefined && (() => {
+        const x = ax(roomAt.col, 'col'), y = ax(roomAt.row, 'row')
+        const w = ax(roomAt.col + 1, 'col') - x, h = ax(roomAt.row + 1, 'row') - y
+        const shown = selected === roomCell.id
+        // 阅览室在屏幕上的位置（这时已经是平面）：对话面板贴在它左边
+        const sx = cam.x + x * cam.scale, sy = cam.y + y * cam.scale
+        return (
+          <>
+            <div className="mp-room" style={{ ...rect(x, y, w, h), opacity: proj.open }}>
+              {proj.open > 0.6 && (
+                <Room key={roomCell.id} palace={palace} cellId={roomCell.id} summary={summaries[roomCell.id]} tab={tab} onTab={setTab}
+                  sessionId={chatOpen && roomSession?.cellId === roomCell.id ? roomSession.sessionId : undefined}
+                  onRead={() => setReading(roomCell.id)} onClose={() => setSelected(undefined)} />
+              )}
+              {shown && !chatOpen && <button type="button" className="mp-room-ai" title="和这本书对话" onPointerDown={e => e.stopPropagation()} onClick={() => setChatOpen(true)}>AI</button>}
+            </div>
+            {shown && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open }} />}
+            {shown && chatOpen && proj.open > 0.6 && (
+              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={rsize.beside ? { left: sx - 16 - CHAT_W, top: sy, width: CHAT_W, height: h * cam.scale } : undefined}
+                onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} onClose={() => setChatOpen(false)} />
+            )}
+          </>
+        )
       })()}
+      {chatOpen && palace !== undefined && selected === undefined && proj.open < 0.001 && (
+        <PalaceChat scope="palace" heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setChatOpen(false)} />
+      )}
       {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {
         const c = palace.cells.find(x => x.id === reading) as Cell
         return <ReadBook key={c.id} id={c.id} title={c.title} subtitle={c.subtitle} onClose={() => setReading(undefined)} onError={setOpError} />
@@ -504,15 +566,17 @@ function CellFace({ cell, summary, count, groupPercent, onRead }: { cell: Cell; 
   )
 }
 
-/** 网格线和交点（随投影一起变形）。只画视野里的部分。移植自原型 isometric.js 的 grid()。 */
-function Grid({ cam, size, m }: { cam: Camera; size: Size; m: Matrix }) {
+/** 网格线和交点（随投影一起变形；阅览室展开时线跟着让开）。只画视野里的部分。移植自原型 isometric.js 的 grid()。 */
+function Grid({ cam, size, m, ax }: { cam: Camera; size: Size; m: Matrix; ax: (i: number, axis: 'col' | 'row') => number }) {
   const corners = [[0, 0], [size.w, 0], [0, size.h], [size.w, size.h]].map(([x, y]) => unproject(m, x, y, size.w, size.h))
   const step = B * cam.scale
-  const minX = Math.floor((Math.min(...corners.map(p => p.x)) - cam.x) / step) - 1
+  // 阅览室让开的那段宽度也算进去，多画几条线
+  const extraX = Math.ceil((ax(1e6, 'col') - 1e6 * B) / B), extraY = Math.ceil((ax(1e6, 'row') - 1e6 * B) / B)
+  const minX = Math.floor((Math.min(...corners.map(p => p.x)) - cam.x) / step) - 1 - extraX
   const maxX = Math.ceil((Math.max(...corners.map(p => p.x)) - cam.x) / step) + 1
-  const minY = Math.floor((Math.min(...corners.map(p => p.y)) - cam.y) / step) - 1
+  const minY = Math.floor((Math.min(...corners.map(p => p.y)) - cam.y) / step) - 1 - extraY
   const maxY = Math.ceil((Math.max(...corners.map(p => p.y)) - cam.y) / step) + 1
-  const pt = (i: number, j: number) => project(m, cam.x + i * step, cam.y + j * step, size.w, size.h)
+  const pt = (i: number, j: number) => project(m, cam.x + ax(i, 'col') * cam.scale, cam.y + ax(j, 'row') * cam.scale, size.w, size.h)
   const lines: { a: { x: number; y: number }; b: { x: number; y: number } }[] = []
   const dots: { x: number; y: number }[] = []
   for (let i = minX; i <= maxX; i++) {
