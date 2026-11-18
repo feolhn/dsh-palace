@@ -9,6 +9,7 @@ import { basename, extname, join, normalize, sep } from 'node:path'
 import { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 import * as core from '../core/ops.ts'
+import { Memory } from '../core/memory.ts'
 import { assertCellId, ShelfError, type PalaceStore } from '../core/store.ts'
 import { findSection, type Item } from '../shared/palace.ts'
 import { addBook } from './books.ts'
@@ -126,7 +127,7 @@ function itemOf(store: PalaceStore, id: unknown): Item {
   return store.getItem(id)
 }
 
-export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRoute[] {
+export function createRoutes(store: PalaceStore, active: ActiveItems, memory = new Memory(store)): FetchRoute[] {
   const route = (method: 'GET' | 'POST', path: string, handler: (input: { url: URL; body: Record<string, unknown>; signal: AbortSignal }) => Promise<Response> | Response): FetchRoute => ({
     path: `${API}/${path}`,
     methods: [method],
@@ -148,6 +149,14 @@ export function createRoutes(store: PalaceStore, active: ActiveItems): FetchRout
 
     // 宫殿里的 AI 对话建在数据目录这个工作区下（左侧会话列表里归在一起）；绝对路径只给前端建会话用，不显示
     route('GET', 'chat-workspace', () => json({ ok: true, cwd: store.dir })),
+
+    // 电弧（由联想算出）：轴测视图画弧用
+    route('GET', 'arcs', () => json({ ok: true, rev: store.rev, arcs: memory.arcs() })),
+
+    route('POST', 'cut-arc', ({ body }) => {
+      memory.cut({ from: body.from, to: body.to })
+      return json({ ok: true, rev: store.rev })
+    }),
 
     route('GET', 'item', ({ url }) => json({ ok: true, rev: store.rev, item: itemOf(store, url.searchParams.get('id')) })),
 

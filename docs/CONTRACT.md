@@ -12,7 +12,8 @@ dsh-shelf-data/
 ├─ palace.json        宫殿布局（原始数据）
 ├─ items/<id>.json    每个书 / 笔记格子的内容（原始数据），文件名就是格子 id
 ├─ images/            卡片原图
-├─ memory/            记忆（派生数据，由 memory 模块管理，可以删掉重建）
+├─ links.jsonl        电弧的「联想」记录（原始数据，只追加，见 §8）
+├─ memory/            AI 维护的记忆：me.md、cells/<id>.md（见 §8）。删掉不丢用户的卡片和灵感，只丢 AI 的总结
 └─ library.json       v0.1 遗留，v0.2 不读不写
 ```
 
@@ -169,18 +170,7 @@ function mountEpub(el: HTMLElement, opts: {
 
 ### 4.3 memory（host 端）
 
-```ts
-interface Memory {
-  /** 新对话开始时附带的背景，控制在 maxChars 以内。itemId 是当前打开的格子。 */
-  context(opts: { itemId?: string; maxChars: number }): Promise<string>
-  /** 给 AI 的工具（搜索、读、写记忆）。会和 core 的工具一起注册。 */
-  tools(): Tool[]
-  /** 原始数据变了。实现可以忽略，也可以记下来等 AI 整理。 */
-  onChange?(change: { kind: 'item' | 'card' | 'inspiration'; itemId: string; id?: string; op: 'add' | 'update' | 'delete' }): void
-}
-```
-
-v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memory/index.md` 是目录，AI 通过工具读写页面；`context()` 返回 `index.md` 的开头部分。整理工作由 AI 在对话中完成，host 代码不调用模型。
+`src/core/memory.ts` 的 `Memory`：读写记忆页、联想和电弧，拼对话背景。不调模型，内容都由对话里的 AI 用工具写。详见 §8。
 
 ### 4.4 share（前端）
 
@@ -221,6 +211,8 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 | POST | `pick-file` | macOS 弹出文件选择框 |
 | POST | `open` | 用系统程序打开原文或数据目录 |
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |
+| GET | `arcs` | `{ rev, arcs }`：电弧，`[{ from, to, strands, why, lastAt, links }]`，按股数排序（见 §8） |
+| POST | `cut-arc` | `{ from, to }`：用户剪断两格之间的电弧 |
 | GET | `chat-workspace` | `{ cwd }`：数据目录的绝对路径，前端把它登记成工作区「Memory Palace」，宫殿里的 AI 对话建在这里（见 §7） |
 
 业务错误返回 HTTP 400 和 `{ ok: false, error: "中文说明" }`。
@@ -237,7 +229,10 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 | `shelf_add_card` | 记一张卡片（摘录 / 想法 / 错题）。格子默认取当前对话打开的那个，节默认取当前节；`image` 填图片路径或 `sha256:` 附件 id |
 | `shelf_add_inspiration` | 把这次对话总结成一条灵感，存到当前格子 |
 | `shelf_remove` | 删除格子（书 / 笔记 / 空分组），连同卡片和灵感，不删原文件；调用前必须得到用户明确同意 |
-| `memory_*` | 由 memory 模块提供 |
+| `shelf_wiki_read` | 读一页记忆：格子 id 或 `me` |
+| `shelf_wiki_write` | 整页重写一页记忆（正文 ≤500 字，超了拒绝）；格子页带一句话 `summary` 和 3–5 个 `topics` |
+| `shelf_link` | 在两格之间连一条联想：`why` 一句话 + 两端各至少一条证据（卡片 / 灵感 id） |
+| `shelf_unlink` | 剪断两格之间的电弧 |
 
 ## 7. 宫殿里的 AI 对话
 
@@ -247,3 +242,26 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 - 会话：宫殿一个、每个书 / 笔记格子各一个，映射记在本机 localStorage（`dsh-shelf:chat-sessions`）；会话被删或归档后自动新建；「新对话」换一个新的，旧的留在会话列表里。新建时用 `workspaces.create({ path: 数据目录 })` 登记工作区再 `sessions.create({ workspaceId })`，不切换主界面。
 - 打开对话时上报 `active`，AI 记卡片、存灵感默认记到这本书。
 - 都是 Harness 的非公开接口：拿不到时面板显示提示，宫殿其他功能不受影响。同一个会话不要同时在两处挂输入框（每个会话只有一个编辑器）。
+
+## 8. 记忆与电弧（#8）
+
+原则：不用向量检索、不跑后台任务，只靠对话里的 AI 调工具；内容越多、模型越强，效果越好。以后的玩法见 Discussion #47。
+
+**记忆页**（`memory/`，Markdown，frontmatter 里有 `summary`、`topics`、`writtenAt`）：
+- `me.md`：关于用户的长期记忆，「长期」「最近」两段，只记用户说过或做过的事实。
+- `cells/<id>.md`：每格一页 wiki，只写卡片和灵感里没有的（意味着什么、卡在哪、反复的主题、未解的疑问），句末 `[^卡片或灵感 id]` 标依据。
+- 正文上限 500 字：超了工具直接拒绝，让 AI 当场合并、精简后整页重写。不做自动压缩（原始的卡片和灵感都在）。
+- 欠账：页面 `writtenAt` 之后新增的卡片 / 灵感数。记卡片、存灵感时欠账 ≥3 就在工具结果里提示 AI 顺手更新（每个对话每格只提示一次）。
+
+**联想与电弧**（`links.jsonl`，一行一条，只追加）：
+```jsonc
+{ "type": "link", "id": "l_…", "from": "c_…", "to": "c_…", "why": "≤40 字", "evidence": ["k_…", "i_…"], "sessionId": "…", "createdAt": "ISO" }
+{ "type": "cut", "from": "c_…", "to": "c_…", "createdAt": "ISO" }
+```
+- 存「联想」不存「弧」。电弧由有效联想按格子对聚合：股数 = 有效联想条数，`why` 取最新一条。
+- 有效：两端格子都在、晚于这对格子最近一次剪断、两端各还剩至少一条证据（证据卡片删了就失效）。
+- 同一对格子、同样的证据不能重复连；有新证据再连一条，电弧变粗。剪断后 AI 不能自己重连，用户明确要求（`user_asked`）才行。
+- 手改坏的行跳过。
+
+**对话背景**：宫殿的对话（会话建在数据目录下，或前端上报了打开的格子）每次请求附上一段背景（`systemPrompt.context`，约 6000 字以内）：使用说明、`me.md`、宫殿索引（每格一行：标题 · 一句话 · 主题词 · 最近活跃月份；当前格、它的电弧邻居和最近活跃的 30 格写整行，其余只列标题）、当前格的 wiki 和电弧。用户别的对话不附。
+
