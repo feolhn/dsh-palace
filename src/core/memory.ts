@@ -176,7 +176,10 @@ export class Memory {
   }
 
   private append(record: LinkRecord | CutRecord): void {
-    appendFileSync(this.linksFile, JSON.stringify(record) + '\n', 'utf8')
+    // 上一行没写完（中断或手改）时先补换行，免得新记录和坏行粘成一行一起被跳过
+    const size = existsSync(this.linksFile) ? statSync(this.linksFile).size : 0
+    const broken = size > 0 && readFileSync(this.linksFile, 'utf8').at(-1) !== '\n'
+    appendFileSync(this.linksFile, (broken ? '\n' : '') + JSON.stringify(record) + '\n', 'utf8')
     this.store.rev += 1
   }
 
@@ -209,9 +212,9 @@ export class Memory {
     if (unknown.length > 0) throw new ShelfError(`这些证据不在两端的格子里：${unknown.join('、')}`)
     if (!evidence.some(e => a.has(e)) || !evidence.some(e => b.has(e))) throw new ShelfError('两端都要至少有一张卡片或一条灵感作为证据')
     if (this.lastCut(from.id, to.id) !== '' && args.userAsked !== true) throw new ShelfError('用户剪断过这两格之间的电弧：除非用户明确要求重新连，否则不要再连')
-    const key = [...evidence].sort().join(',')
-    const dup = this.validLinks().some(l => pairKey(l.from, l.to) === pairKey(from.id, to.id) && [...l.evidence].sort().join(',') === key)
-    if (dup) throw new ShelfError('同样的证据已经连过了；有新的卡片或灵感再连')
+    // 至少要有一条这对格子还没用过的证据：旧证据换个组合不算，股数刷不高
+    const used = new Set(this.validLinks().filter(l => pairKey(l.from, l.to) === pairKey(from.id, to.id)).flatMap(l => l.evidence))
+    if (evidence.every(e => used.has(e))) throw new ShelfError('这些证据已经连过了；有新的卡片或灵感再连')
     const record: LinkRecord = { type: 'link', id: newId('l'), from: from.id, to: to.id, why, evidence, ...(args.sessionId ? { sessionId: args.sessionId } : {}), createdAt: nowIso() }
     this.append(record)
     return record

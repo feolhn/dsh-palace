@@ -44,6 +44,8 @@ test('电弧：要两端证据，同样证据不重复，新证据加股，证�
   assert.match(await call('shelf_link', { from: b.id, to: a.id, why: '又一次', evidence: [kb.id, ka.id] }), /已经连过/)
   const k2 = await core.addCard(store, { id: b.id, type: 'thought', note: '等待让人焦虑' })
   assert.match(await call('shelf_link', { from: b.id, to: a.id, why: '等待的焦虑', evidence: [k2.id, ka.id] }), /2 股/)
+  // 旧证据换个组合不算新联想
+  assert.match(await call('shelf_link', { from: a.id, to: b.id, why: '合起来', evidence: [ka.id, kb.id, k2.id] }), /已经连过/)
   let arcs = memory.arcs()
   assert.equal(arcs.length, 1)
   assert.equal(arcs[0].strands, 2)
@@ -69,6 +71,10 @@ test('剪断：之前的不显示，AI 不能自己重连，用户要求可以',
   appendFileSync(join(store.dir, 'links.jsonl'), '{坏行\n')
   assert.equal(memory.arcs().length, 1)
   assert.equal(readFileSync(join(store.dir, 'links.jsonl'), 'utf8').trim().split('\n').length, 4)
+  // 末尾半行（没换行）：新记录要另起一行，不能被一起吞掉
+  appendFileSync(join(store.dir, 'links.jsonl'), '{"type":"link"')
+  await call('shelf_unlink', { from: a.id, to: b.id })
+  assert.equal(memory.arcs().length, 0)
 })
 
 test('提示：wiki 欠账够多时提示一次；存灵感提示连电弧', async () => {
