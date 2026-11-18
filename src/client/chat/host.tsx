@@ -17,7 +17,10 @@ export interface SessionReference { readonly sessionId: string; release(): void 
 export interface SessionsService {
   create(opts?: { workspaceId?: string; cwd?: string; sessionId?: string; agentPreset?: string }): Promise<string>
   retain(target: string, options: { source: string; signal?: AbortSignal }): SessionReference
-  list?: { getSnapshot(): { byId: Record<string, { archived?: boolean } | undefined> } }
+  list?: {
+    getSnapshot(): { byId: Record<string, { archived?: boolean } | undefined>; phase?: 'pending' | 'ready' }
+    subscribe?(listener: () => void): () => void
+  }
 }
 
 /** 全屏面板拿到的渲染能力（来自 slot 渲染器注入的 props）。 */

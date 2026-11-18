@@ -8,7 +8,7 @@ import { Notebook, type NotebookTab } from '../notebook/Notebook.tsx'
 import { palaceOp } from './data.ts'
 import { Moon } from './Moon.tsx'
 
-export function CellSheet({ palace, cellId, summary, onRead, onClose }: { palace: Palace; cellId: string; summary?: CellSummary; onRead: () => void; onClose: () => void }) {
+export function CellSheet({ palace, cellId, summary, sessionId, onRead, onClose }: { palace: Palace; cellId: string; summary?: CellSummary; sessionId?: string; onRead: () => void; onClose: () => void }) {
   const cell = palace.cells.find(c => c.id === cellId) as Cell
   const [title, setTitle] = useState(cell.title)
   const [subtitle, setSubtitle] = useState(cell.subtitle ?? '')
@@ -42,7 +42,7 @@ export function CellSheet({ palace, cellId, summary, onRead, onClose }: { palace
       <input className="mp-sheet-sub" value={subtitle} placeholder={cell.kind === 'book' ? '作者' : '副标题'} onChange={e => setSubtitle(e.target.value)} onBlur={saveText}
         onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
 
-      <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} tab={tab} onTab={setTab} />
+      <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} sessionId={sessionId} tab={tab} onTab={setTab} />
 
       {error && <p className="mp-error">{error}</p>}
       <div className="mp-sheet-actions">

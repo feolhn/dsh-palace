@@ -70,6 +70,8 @@ export function Palace() {
   const [opError, setOpError] = useState<string>()
   // AI 对话面板开着没有（记在本机，下次打开宫殿还是这样）
   const [chatOpen, setChatOpenState] = useState(() => localStorage.getItem('dsh-shelf:chat-open') === '1')
+  // 「与书对话」的会话：交给阅览室里的笔记本（存灵感、生成目录要往这个对话发消息）
+  const [roomSession, setRoomSession] = useState<{ cellId: string; sessionId: string }>()
   const setChatOpen = (open: boolean) => { localStorage.setItem('dsh-shelf:chat-open', open ? '1' : '0'); setChatOpenState(open) }
 
   useLayoutEffect(() => {
@@ -267,13 +269,15 @@ export function Palace() {
       </footer>
 
       {selected !== undefined && palace !== undefined && palace.cells.some(c => c.id === selected) && (
-        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]} onRead={() => setReading(selected)} onClose={() => setSelected(undefined)} />
+        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]}
+          sessionId={chatOpen && roomSession?.cellId === selected ? roomSession.sessionId : undefined} onRead={() => setReading(selected)} onClose={() => setSelected(undefined)} />
       )}
       {chatOpen && palace !== undefined && (() => {
         // 打开了某本书 / 笔记：和这本书对话；否则和整个宫殿对话
         const room = selected !== undefined ? palace.cells.find(c => c.id === selected) : undefined
         return room !== undefined
-          ? <PalaceChat scope={room.id} itemId={room.id} heading="与书对话" context={`《${room.title}》`} onClose={() => setChatOpen(false)} />
+          ? <PalaceChat key={room.id} scope={room.id} itemId={room.id}
+              onSession={id => setRoomSession(id === undefined ? undefined : { cellId: room.id, sessionId: id })} heading="与书对话" context={`《${room.title}》`} onClose={() => setChatOpen(false)} />
           : <PalaceChat scope="palace" heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setChatOpen(false)} />
       })()}
       {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {

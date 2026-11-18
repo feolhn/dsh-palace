@@ -27,29 +27,44 @@ async function workspaceFor(): Promise<{ workspaceId: string } | { cwd: string }
   return { workspaceId: ws.workspaceId }
 }
 
+/** 等会话列表加载完成（最多 5 秒）；拿不到列表或超时返回 undefined。 */
+async function readyList(sessions: NonNullable<ReturnType<typeof sessionsService>>) {
+  const list = sessions.list
+  if (list === undefined) return undefined
+  const ready = () => { const snap = list.getSnapshot(); return snap.phase === undefined || snap.phase === 'ready' ? snap : undefined }
+  if (ready() !== undefined || list.subscribe === undefined) return ready()
+  return new Promise<ReturnType<typeof ready>>((resolve) => {
+    const done = () => { stop(); clearTimeout(timer); resolve(ready()) }
+    const stop = list.subscribe!(() => { if (ready() !== undefined) done() })
+    const timer = setTimeout(done, 5000)
+  })
+}
+
 /** 这个位置的会话：记过且还在（没被删 / 归档）就接着用，否则新建一个。 */
 async function sessionFor(scope: string, fresh: boolean): Promise<string> {
   const sessions = sessionsService()
   if (sessions === undefined) throw new Error('unsupported')
   const known = fresh ? undefined : remembered()[scope]
   if (known !== undefined) {
-    const summary = sessions.list?.getSnapshot().byId[known]
-    // 列表还没加载完时（拿不到任何会话）相信记下的 id
-    const loaded = Object.keys(sessions.list?.getSnapshot().byId ?? {}).length > 0
-    if (summary !== undefined ? summary.archived !== true : !loaded) return known
+    const list = await readyList(sessions)
+    // 列表加载完成（ready，包括空列表）才能断定会话已被删；一直没加载完就相信记下的 id
+    const summary = list?.byId[known]
+    if (list === undefined ? true : summary !== undefined && summary.archived !== true) return known
   }
   const id = await sessions.create(await workspaceFor())
   remember(scope, id)
   return id
 }
 
-export function PalaceChat({ scope, itemId, heading, context, onClose }: {
+export function PalaceChat({ scope, itemId, heading, context, onSession, onClose }: {
   /** 'palace' 或格子 id：决定用哪个会话 */
   scope: string
   /** 书 / 笔记的 id：AI 记卡片时默认记到这里 */
   itemId?: string
   heading: string
   context?: string
+  /** 当前对话的会话 id（打开 / 换新对话 / 关闭时通知），给旁边的笔记本发消息用 */
+  onSession?: (sessionId: string | undefined) => void
   onClose: () => void
 }) {
   const slots = useChatSlots()
@@ -57,6 +72,8 @@ export function PalaceChat({ scope, itemId, heading, context, onClose }: {
   const [error, setError] = useState<string>()
   const [generation, setGeneration] = useState(0)
   const fresh = useRef(false)
+  const onSessionRef = useRef(onSession)
+  onSessionRef.current = onSession
 
   useEffect(() => {
     if (slots === undefined || sessionsService() === undefined) return
@@ -69,6 +86,7 @@ export function PalaceChat({ scope, itemId, heading, context, onClose }: {
       if (!alive) return
       held = sessionsService()!.retain(id, { source: 'dshShelf', signal: abort.signal })
       setReference(held)
+      onSessionRef.current?.(id)
       void setActive(id, itemId ?? null).catch(() => undefined)
     }).catch((e: Error) => { if (alive) setError(e.message) })
     return () => {
@@ -76,6 +94,7 @@ export function PalaceChat({ scope, itemId, heading, context, onClose }: {
       abort.abort()
       held?.release()
       setReference(undefined)
+      onSessionRef.current?.(undefined)
     }
   }, [scope, itemId, generation, slots])
 

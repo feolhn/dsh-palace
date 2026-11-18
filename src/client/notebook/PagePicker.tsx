@@ -51,7 +51,7 @@ export function PagePicker({ item, title, sessionId, onDone }: {
   const chatOk = canChat(sessionId)
 
   const confirm = () => run(async () => {
-    if (!chatOk || sessionId === undefined) throw new Error('生成目录需要 AI：请在对话旁边打开笔记本（对话标题栏右侧的按钮）再操作。')
+    if (!chatOk || sessionId === undefined) throw new Error('生成目录需要 AI：请在全屏宫殿点右下角「AI」打开这本书的对话，或在对话旁边打开笔记本，再操作。')
     setStatus('检查页面文字…')
     const { scanned } = await pageTexts(item.id, pages)
     const head = `请帮我生成《${title}》的目录（item_id: ${item.id}）。目录在 PDF 第 ${pages.join('、')} 页。`
@@ -86,7 +86,7 @@ export function PagePicker({ item, title, sessionId, onDone }: {
           勾选《{title}》的目录页。按住 Shift 点击可以连选；鼠标移到页面上点「放大」。
           {pages.length > 0 && <> 已选：第 {pages.join('、')} 页 · <button type="button" className="nb-link" onClick={() => { setSelected(new Set()); setError(undefined) }}>清空</button></>}
         </div>
-        {!chatOk && <div className="nb-error" style={{ marginTop: 6 }}>当前不在对话里：生成目录需要 AI，请在对话旁边打开笔记本再操作。</div>}
+        {!chatOk && <div className="nb-error" style={{ marginTop: 6 }}>当前不在对话里：生成目录需要 AI。请点右下角「AI」打开这本书的对话，或在对话旁边打开笔记本，再操作。</div>}
         {error && <div className="nb-error" style={{ marginTop: 6 }}>{error}</div>}
       </div>
 
