@@ -481,7 +481,7 @@ function dropTarget(cells: Cell[], openGroup: string | undefined, tile: { col: n
 
 /**
  * 格子正面（移植自原型的 .cell，规则见 Discussion #37）：左上角不放东西；右上角水彩图标，百分比在图标下面；
- * 左下角大字标题最多两行，上面一行小字（副标题，如中文书名或作者）；右边竖排阅读起止时间。
+ * 左下角大字标题最多两行，上面一行小字（备注：作者、中文名……用户想填什么都行）；右边竖排阅读起止时间。
  */
 function CellFace({ cell, summary, count, groupPercent, onRead }: { cell: Cell; summary?: CellSummary; count: number; groupPercent?: number; onRead: () => void }) {
   const readable = summary?.source !== undefined

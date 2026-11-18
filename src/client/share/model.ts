@@ -35,7 +35,7 @@ export interface ShareDraft {
   showQuote: boolean
   showNote: boolean
   showSource: boolean
-  /** 用户改写过的出处；没有就按书名和作者自动生成。 */
+  /** 用户改写过的出处；没有就按标题和备注自动生成。 */
   source?: string
   /** 选中的段落；basis 是选段时原文的指纹，原文改了旧选段就作废。 */
   ranges: Record<TextKey, Range[]>

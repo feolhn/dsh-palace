@@ -20,7 +20,7 @@ export type NotebookTab = 'progress' | 'cards' | 'inspirations'
 export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
   id: string
   title: string
-  /** 作者 / 副标题，分享卡片的出处用。 */
+  /** 备注（作者、中文名……），分享卡片的出处用。 */
   subtitle?: string
   /** 右侧栏传入当前对话；全屏宫殿没有对话。 */
   sessionId?: string

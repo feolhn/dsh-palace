@@ -41,7 +41,7 @@ dsh-shelf-data/
   "schema": 2,
   "cells": [
     { "id": "c_…", "kind": "group", "parentId": null, "col": 0, "row": 0, "title": "2027 法考", "createdAt": "ISO" },
-    { "id": "c_…", "kind": "book",  "parentId": "c_…", "col": 0, "row": 0, "title": "刑法讲义", "subtitle": "作者", "createdAt": "ISO" },
+    { "id": "c_…", "kind": "book",  "parentId": "c_…", "col": 0, "row": 0, "title": "刑法讲义", "subtitle": "张明楷", "createdAt": "ISO" },
     { "id": "c_…", "kind": "note",  "parentId": null, "col": -1, "row": 2, "title": "十一月的心情", "createdAt": "ISO" }
   ]
 }
@@ -52,7 +52,7 @@ dsh-shelf-data/
 | `kind` | `book`：有原文（PDF、EPUB、视频课……）；`note`：没有原文；`group`：分组 |
 | `parentId` | `null` 表示在宫殿最外层；否则是所在分组的 id |
 | `col`, `row` | 整数坐标。最外层可以是负数；分组里从 0 开始 |
-| `title`, `subtitle` | 格子上显示的文字。subtitle 可选（作者、副标题） |
+| `title`, `subtitle` | 格子上显示的文字。subtitle 是「备注」，可选：标题上方一行小字，用户想填什么都行（作者、另一种语言的书名……） |
 | `icon` | 可选：水彩图标名（`vendor/icons/<icon>.webp`，经 `asset?f=icons/<icon>.webp` 读取）。不填时前端按 id 固定挑一个，分组默认彩虹 |
 
 规则：
@@ -187,7 +187,7 @@ function mountEpub(el: HTMLElement, opts: {
   "size": 50, "noteSize": 36,    // 原文 / 想法字号，纸张像素
   "align": "center",             // left / center
   "showQuote": true, "showNote": true, "showSource": true,
-  "source": "— 《书名》 · 作者",  // 用户改写过才有，否则按书名和作者生成
+  "source": "— 《书名》 · 作者",  // 用户改写过才有，否则按标题和备注生成
   "ranges": { "quote": [[0, 12]], "note": [] },   // 选段，UTF-16 偏移 [start, end)
   "basis": { "quote": "长度:哈希", "note": "…" }  // 选段时原文的指纹，原文改了选段就作废、重新全选
 }

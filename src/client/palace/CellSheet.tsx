@@ -1,6 +1,6 @@
 /**
  * 全屏宫殿里点开书 / 笔记格子后的详情（「阅览室」）：盖在宫殿中间。
- * 改名、作者 / 副标题，右上角月亮进入阅读，下面是笔记本；底部移出分组、删除。
+ * 改标题、备注，右上角图标进入阅读，下面是笔记本；底部移出分组、删除。
  */
 import { useEffect, useState } from 'react'
 import type { Cell, CellSummary, Palace } from '../../shared/palace.ts'
@@ -28,7 +28,7 @@ export function CellSheet({ palace, cellId, summary, sessionId, onRead, onClose 
     if (title.trim() === cell.title && subtitle.trim() === (cell.subtitle ?? '')) return
     void run('updateCell', { title, subtitle: subtitle.trim() === '' ? null : subtitle }).catch(() => setTitle(cell.title))
   }
-  // 关闭前先把还没失焦的标题 / 作者存下（输入框卸载时来不及触发 onBlur）
+  // 关闭前先把还没失焦的标题 / 备注存下（输入框卸载时来不及触发 onBlur）
   const close = () => { saveText(); onClose() }
   return (
     <div className="mp-room" onPointerDown={(e) => { e.stopPropagation(); if (e.target === e.currentTarget) close() }}>
@@ -40,7 +40,7 @@ export function CellSheet({ palace, cellId, summary, sessionId, onRead, onClose 
       {summary?.source !== undefined && <div className="mp-sheet-moon"><Moon icon={iconOf(cell)} percent={summary.percent} label={`阅读《${cell.title}》`} onOpen={onRead} /></div>}
       <input className="mp-sheet-title" value={title} onChange={e => setTitle(e.target.value)} onBlur={saveText}
         onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
-      <input className="mp-sheet-sub" value={subtitle} placeholder={cell.kind === 'book' ? '作者' : '副标题'} onChange={e => setSubtitle(e.target.value)} onBlur={saveText}
+      <input className="mp-sheet-sub" value={subtitle} placeholder="备注（作者、中文名……随便写）" onChange={e => setSubtitle(e.target.value)} onBlur={saveText}
         onKeyDown={e => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
 
       <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} sessionId={sessionId} tab={tab} onTab={setTab} />
