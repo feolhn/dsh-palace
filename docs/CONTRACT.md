@@ -221,6 +221,7 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 | POST | `pick-file` | macOS 弹出文件选择框 |
 | POST | `open` | 用系统程序打开原文或数据目录 |
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |
+| GET | `chat-workspace` | `{ cwd }`：数据目录的绝对路径，前端把它登记成工作区「Memory Palace」，宫殿里的 AI 对话建在这里（见 §7） |
 
 业务错误返回 HTTP 400 和 `{ ok: false, error: "中文说明" }`。
 
@@ -235,4 +236,14 @@ v0.2 的第一个实现（`memory/wiki`）：Karpathy 式 Markdown wiki，`memor
 | `shelf_set_target_dates` | 批量设置目标日期 |
 | `shelf_add_card` | 记一张卡片（摘录 / 想法 / 错题）。格子默认取当前对话打开的那个，节默认取当前节；`image` 填图片路径或 `sha256:` 附件 id |
 | `shelf_add_inspiration` | 把这次对话总结成一条灵感，存到当前格子 |
+| `shelf_remove` | 删除格子（书 / 笔记 / 空分组），连同卡片和灵感，不删原文件；调用前必须得到用户明确同意 |
 | `memory_*` | 由 memory 模块提供 |
+
+## 7. 宫殿里的 AI 对话
+
+全屏宫殿右侧的「与宫殿对话」、打开书 / 笔记后的「与书对话」，嵌入的是 Harness **原生对话界面**，背后是真实的 Harness 会话（用户配好的模型、上面的工具、左侧会话列表里能接着聊）。
+
+- 做法照 Harness 自带的 subagent 侧栏：`main` slot 声明 session 作用域的子 slot `dsh-shelf.chat` → 面板拿到 `SessionProvider` / `renderSlot` → `sessions.retain(id)` 包住子 slot → 子 slot 渲染 `conversation.content`（`variant: 'embedded'`，不显示首页大标题）。代码在 `src/client/chat/`。
+- 会话：宫殿一个、每个书 / 笔记格子各一个，映射记在本机 localStorage（`dsh-shelf:chat-sessions`）；会话被删或归档后自动新建；「新对话」换一个新的，旧的留在会话列表里。新建时用 `workspaces.create({ path: 数据目录 })` 登记工作区再 `sessions.create({ workspaceId })`，不切换主界面。
+- 打开对话时上报 `active`，AI 记卡片、存灵感默认记到这本书。
+- 都是 Harness 的非公开接口：拿不到时面板显示提示，宫殿其他功能不受影响。同一个会话不要同时在两处挂输入框（每个会话只有一个编辑器）。

@@ -42,3 +42,8 @@ export async function setActive(sessionId: string, itemId: string | null): Promi
 export async function pageTexts(id: string, pages: number[]): Promise<{ pages: { page: number; text: string }[]; scanned: number[] }> {
   return readJson(await fetch(apiUrl('page-text', { id, pages: pages.join(',') })))
 }
+
+/** 宫殿 AI 对话所在的工作区目录（绝对路径，只用来新建会话）。 */
+export async function chatWorkspace(): Promise<string> {
+  return (await readJson<{ cwd: string }>(await fetch(apiUrl('chat-workspace')))).cwd
+}

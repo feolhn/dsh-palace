@@ -321,7 +321,7 @@ function InspirationsTab({ item, title, sessionId, onError }: { item: Item; titl
             {sent && <span className="nb-small nb-muted">已经请 AI 总结，稍等片刻</span>}
           </div>
         )
-        : <p className="nb-hint">在对话旁边打开这个笔记本（对话标题栏右侧的按钮），和 AI 聊完后一键存成灵感。</p>}
+        : <p className="nb-hint">和 AI 聊完后一键存成灵感：在全屏宫殿点右下角「AI」打开这本书的对话，或在对话旁边打开这个笔记本（对话标题栏右侧的按钮）。</p>}
       {item.inspirations.length === 0 && chatOk && (
         <p className="nb-hint">和 AI 聊完这本书，点上面的按钮，或者直接说「存成灵感」。AI 会把你的想法总结成一篇短文放在这里。</p>
       )}

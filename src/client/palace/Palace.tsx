@@ -10,6 +10,7 @@ import { AddDialog } from './AddDialog.tsx'
 import { CellSheet } from './CellSheet.tsx'
 import { Moon } from './Moon.tsx'
 import { ReadBook } from './ReadBook.tsx'
+import { PalaceChat } from '../chat/PalaceChat.tsx'
 import { palaceOp, usePalace } from './data.ts'
 
 /** 格子边长（scale = 1 时的像素）。 */
@@ -67,6 +68,11 @@ export function Palace() {
   const [adding, setAdding] = useState(false)
   const [gesture, setGesture] = useState<Gesture>()
   const [opError, setOpError] = useState<string>()
+  // AI 对话面板开着没有（记在本机，下次打开宫殿还是这样）
+  const [chatOpen, setChatOpenState] = useState(() => localStorage.getItem('dsh-shelf:chat-open') === '1')
+  // 「与书对话」的会话：交给阅览室里的笔记本（存灵感、生成目录要往这个对话发消息）
+  const [roomSession, setRoomSession] = useState<{ cellId: string; sessionId: string }>()
+  const setChatOpen = (open: boolean) => { localStorage.setItem('dsh-shelf:chat-open', open ? '1' : '0'); setChatOpenState(open) }
 
   useLayoutEffect(() => {
     const el = rootRef.current
@@ -110,7 +116,7 @@ export function Palace() {
     if (el === null) return
     // 触控板：双指滑动 = 平移，捏合（浏览器报为 ctrl + wheel）= 缩放；鼠标滚轮 + ⌘ 也是缩放
     const onWheel = (e: WheelEvent) => {
-      if ((e.target as HTMLElement).closest('.mp-sheet, .mp-dialog')) return
+      if ((e.target as HTMLElement).closest('.mp-sheet, .mp-dialog, .mp-chat')) return
       e.preventDefault()
       const rect = el.getBoundingClientRect()
       if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - rect.left, e.clientY - rect.top)
@@ -223,7 +229,7 @@ export function Palace() {
   }
 
   return (
-    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''}`}
+    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''}`}
       onPointerDown={onBackgroundDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setGesture(undefined)}>
       <div className="mp-paper" />
       {cam !== undefined && <Grid cam={cam} size={size} />}
@@ -254,6 +260,7 @@ export function Palace() {
 
       <footer className="mp-footer" onPointerDown={e => e.stopPropagation()}>
         <button type="button" className="mp-round" title="添加" onClick={() => setAdding(true)}>＋</button>
+        {!chatOpen && <button type="button" className="mp-round mp-ai-orb" title="和 AI 聊聊（真实的 Harness 对话）" onClick={() => setChatOpen(true)}>AI</button>}
         <div className="mp-zoom">
           <button type="button" onClick={() => zoomAt(1 / 1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) <= MIN_SCALE + 0.001}>−</button>
           <button type="button" className="mp-zoom-reset" title="显示全部" onClick={() => palace && setCam(fitCamera(palace.cells, size))}>{Math.round((cam?.scale ?? 1) * 100)}%</button>
@@ -262,8 +269,17 @@ export function Palace() {
       </footer>
 
       {selected !== undefined && palace !== undefined && palace.cells.some(c => c.id === selected) && (
-        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]} onRead={() => setReading(selected)} onClose={() => setSelected(undefined)} />
+        <CellSheet palace={palace} cellId={selected} summary={summaries[selected]}
+          sessionId={chatOpen && roomSession?.cellId === selected ? roomSession.sessionId : undefined} onRead={() => setReading(selected)} onClose={() => setSelected(undefined)} />
       )}
+      {chatOpen && palace !== undefined && (() => {
+        // 打开了某本书 / 笔记：和这本书对话；否则和整个宫殿对话
+        const room = selected !== undefined ? palace.cells.find(c => c.id === selected) : undefined
+        return room !== undefined
+          ? <PalaceChat key={room.id} scope={room.id} itemId={room.id}
+              onSession={id => setRoomSession(id === undefined ? undefined : { cellId: room.id, sessionId: id })} heading="与书对话" context={`《${room.title}》`} onClose={() => setChatOpen(false)} />
+          : <PalaceChat scope="palace" heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setChatOpen(false)} />
+      })()}
       {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {
         const c = palace.cells.find(x => x.id === reading) as Cell
         return <ReadBook key={c.id} id={c.id} title={c.title} subtitle={c.subtitle} onClose={() => setReading(undefined)} onError={setOpError} />

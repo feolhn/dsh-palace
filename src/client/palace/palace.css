@@ -124,3 +124,21 @@
 .mp-kinds button small { font-size: 10px; line-height: 1.5; opacity: .7; }
 .mp-kinds button.mp-on { background: #ffffff55 !important; border-color: var(--mp-ink) !important; }
 .mp-dialog-actions { display: flex; justify-content: flex-end; margin-top: 22px; }
+
+/* ---------- AI 对话（嵌入 Harness 原生对话，外框按设计稿的「与宫殿对话」） ---------- */
+.mp-ai-orb { font-size: 11px !important; letter-spacing: .14em; padding-left: 2px; box-shadow: inset 0 0 12px #ffffff80, 0 0 13px #ffffff6e; }
+.mp-chat, .mp-chat * { box-sizing: border-box; }
+.mp-chat { position: absolute; z-index: 9; top: 18px; right: 18px; bottom: 18px; width: min(400px, calc(100% - 36px)); display: flex; flex-direction: column;
+  padding: 18px 16px 10px; background: #dce7e3d9; backdrop-filter: blur(9px); border: 1px solid #ffffffb3; border-radius: 18px; box-shadow: 0 8px 30px #38536914; cursor: default; }
+.mp-chat-head { display: flex; align-items: flex-start; gap: 10px; padding: 0 4px 10px; }
+.mp-chat-head > div { flex: 1; min-width: 0; }
+.mp-chat-head h2 { font: 400 16px var(--mp-serif); margin: 6px 0 0; }
+.mp-chat-context { margin: 4px 0 0; font-size: 11px; opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp-chat-close { font-size: 18px; line-height: 1; padding: 0 2px 6px 6px; }
+/* 原生对话自己管滚动：容器要有确定高度 */
+.mp-chat-body { flex: 1; min-height: 0; display: flex; --dsh-chat-content-width: 100%; --dsh-composer-card-max-width: 100%; }
+.mp-chat-body > * { flex: 1; min-width: 0; min-height: 0; }
+.mp-chat-note { font-size: 12px; line-height: 1.8; color: var(--mp-quiet); padding: 8px 4px; }
+/* 对话开着时，阅览室让出右边 */
+.mp-chatting .mp-room { padding-right: min(436px, 50%); }
+.mp-chatting .mp-footer { right: min(436px, calc(100% - 200px)); }

@@ -55,3 +55,15 @@ test('写目录、设目标日期、新建分组和笔记', async () => {
   assert.equal(store.getItem(b.id).chapters[0].sections[0].loc, '3')
   assert.match(await call('shelf_set_target_dates', { items: [{ item_id: b.id, target_date: '2099-01-01' }] }), /《B》→ 2099-01-01/)
 })
+
+test('删除格子：书连同卡片一起删，非空分组不能删', async () => {
+  const { store, call } = setup()
+  const g = await core.addCell(store, { kind: 'group', title: 'G' })
+  const b = await core.addCell(store, { kind: 'note', title: '心情', parentId: g.id })
+  await core.addCard(store, { id: b.id, type: 'thought', note: 'x' })
+  assert.match(await call('shelf_remove', { item_id: g.id }), /分组里还有格子/)
+  assert.match(await call('shelf_remove', { item_id: b.id }), /已删除笔记「心情」（卡片 1 张、灵感 0 条）/)
+  assert.match(await call('shelf_remove', { item_id: g.id }), /已删除分组「G」/)
+  assert.equal(store.getPalace().cells.length, 0)
+  assert.match(await call('shelf_remove', { item_id: 'nope' }), /格子不存在/)
+})
