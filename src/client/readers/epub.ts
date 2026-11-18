@@ -4,6 +4,7 @@
  */
 import type { OutlineInput } from '../../core/ops.ts'
 import { apiUrl } from '../api.ts'
+import { wordFromPoint } from './lookup.ts'
 
 /* epub.js 没有类型包，这里只声明用到的部分 */
 interface EpubLocation { start: { cfi: string; href: string; index: number; percentage?: number }; end?: { cfi: string } }
@@ -17,7 +18,7 @@ export interface EpubPosition {
   /** 这次是不是用户往后翻了一页（而不是跳转、往前翻、刚打开）。 */
   byTurn: boolean
 }
-interface EpubContents { window: Window }
+interface EpubContents { window: Window; document: Document }
 interface NavItem { label: string; href: string; subitems?: NavItem[] }
 interface Rendition {
   display(target?: string): Promise<void>
@@ -26,6 +27,7 @@ interface Rendition {
   on(event: 'relocated', fn: (loc: EpubLocation) => void): void
   on(event: 'selected', fn: (cfi: string, contents: EpubContents) => void): void
   on(event: 'keyup', fn: (e: KeyboardEvent) => void): void
+  hooks: { content: { register(fn: (contents: EpubContents) => void): void } }
   annotations: { highlight(cfi: string, data?: object, cb?: () => void, className?: string, styles?: object): void; remove(cfi: string, type: string): void }
   themes: { default(styles: object): void; override(name: string, value: string, priority?: boolean): void }
   getContents(): EpubContents[]
@@ -125,6 +127,11 @@ export async function mountEpub(el: HTMLElement, opts: {
   onToc(outline: OutlineInput[]): void
   /** 点了书里的一处高亮。 */
   onHighlight(cfi: string): void
+  /** 轻点了一个英文单词（查词，#43）；rect 是单词在外层页面里的位置。lookup() 返回 false 时不查。 */
+  onWord?(word: string, rect: { left: number; right: number; top: number; bottom: number }): void
+  lookup?(): boolean
+  /** 在书里按下了（收起查词弹窗）。 */
+  onPress?(): void
 }): Promise<EpubHandle> {
   const ePub = await loadEpub()
   const book = ePub(opts.data)
@@ -192,6 +199,29 @@ export async function mountEpub(el: HTMLElement, opts: {
     if (e.key === 'ArrowRight') next()
   }
   rendition.on('keyup', onKey)
+
+  // 查词：轻点（不是拖选、不是双击、不在链接上）一个英文单词。移植自原型 word-lookup.js 的 bind()
+  rendition.hooks.content.register((contents) => {
+    const doc = contents.document
+    let press: { x: number; y: number; time: number; moved: boolean } | undefined
+    doc.addEventListener('pointerdown', (e) => {
+      opts.onPress?.()
+      press = e.button === 0 && opts.lookup?.() !== false ? { x: e.clientX, y: e.clientY, time: performance.now(), moved: false } : undefined
+    })
+    doc.addEventListener('pointermove', (e) => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 6) press.moved = true })
+    doc.addEventListener('click', (e) => {
+      const tap = press
+      press = undefined
+      if (!tap || tap.moved || performance.now() - tap.time > 450 || e.detail > 1 || opts.onWord === undefined) return
+      if ((e.target as Element | null)?.closest?.('a, button, input, textarea, select')) return
+      if (doc.getSelection()?.isCollapsed === false) return
+      const found = wordFromPoint(doc, e.clientX, e.clientY)
+      const frame = doc.defaultView?.frameElement
+      if (!found || !frame) return
+      const r = frame.getBoundingClientRect()
+      opts.onWord(found.word, { left: r.left + found.rect.left, right: r.left + found.rect.right, top: r.top + found.rect.top, bottom: r.top + found.rect.bottom })
+    })
+  })
   document.addEventListener('keyup', onKey)
 
   await rendition.display(opts.initialLoc || undefined).catch(() => rendition.display())

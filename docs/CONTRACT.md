@@ -213,6 +213,8 @@ function mountEpub(el: HTMLElement, opts: {
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |
 | GET | `arcs` | `{ rev, arcs }`：电弧，`[{ from, to, strands, why, lastAt, links }]`，按股数排序（见 §8） |
 | POST | `cut-arc` | `{ from, to }`：用户剪断两格之间的电弧 |
+| GET | `lookup?word=` | `{ supported, definition, lemma? }`：查词（#43），用 macOS 自带词典（Dictionary Services，经 osascript JXA，单词作参数传入）；`lemma` 是变形词的原形和释义；非 macOS `supported: false` |
+| POST | `open-dictionary` | `{ word }`：在系统「词典」App 里打开完整词条 |
 | GET | `chat-workspace` | `{ cwd }`：数据目录的绝对路径，前端把它登记成工作区「Memory Palace」，宫殿里的 AI 对话建在这里（见 §7） |
 
 业务错误返回 HTTP 400 和 `{ ok: false, error: "中文说明" }`。

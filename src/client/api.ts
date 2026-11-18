@@ -47,3 +47,14 @@ export async function pageTexts(id: string, pages: number[]): Promise<{ pages: {
 export async function chatWorkspace(): Promise<string> {
   return (await readJson<{ cwd: string }>(await fetch(apiUrl('chat-workspace')))).cwd
 }
+
+export interface WordLookup { supported: boolean; definition: string | null; lemma?: { word: string; definition: string } }
+
+/** 查词（#43）：系统自带词典。 */
+export async function lookupWord(word: string): Promise<WordLookup> {
+  return readJson(await fetch(apiUrl('lookup', { word })))
+}
+
+export async function openDictionary(word: string): Promise<void> {
+  await post('open-dictionary', { word })
+}
