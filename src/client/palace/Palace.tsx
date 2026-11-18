@@ -1,17 +1,20 @@
 /**
  * 宫殿画布（全屏）：无限格子，拖动平移、缩放；拖格子换位置；点分组展开；点书 / 笔记打开详情。
  *
- * 坐标：世界坐标里格子 (col,row) 的左上角在 (col*B, row*B)；屏幕坐标 = 世界坐标 * scale + (x, y)。
- * 视觉参考设计负责人的原型（蓝纸、白色网格线、去封面的标准排版），代码是重写的。
+ * 坐标：世界坐标里格子 (col,row) 的左上角在 (col*B, row*B)；平面屏幕坐标 = 世界坐标 * scale + (x, y)，
+ * 再经过轴测投影（projection.ts，amount = 0 时就是原样）。每个元素用一个 matrix() 放到屏幕上。
+ * 视觉参考设计负责人的原型（蓝纸、白色网格线、去封面的标准排版）；轴测视图（#42）移植自原型代码。
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from 'react'
 import type { Cell, CellSummary } from '../../shared/palace.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { CellSheet } from './CellSheet.tsx'
 import { Moon } from './Moon.tsx'
 import { ReadBook } from './ReadBook.tsx'
 import { PalaceChat } from '../chat/PalaceChat.tsx'
-import { palaceOp, usePalace } from './data.ts'
+import { palaceOp, useArcs, usePalace } from './data.ts'
+import { Arcs } from './Arcs.tsx'
+import { delta, matrixOf, project, spreadDrop, spreadLayout, unproject, type Matrix, type SpreadLayout } from './projection.ts'
 
 /** 格子边长（scale = 1 时的像素）。 */
 const B = 268
@@ -52,6 +55,21 @@ function fitCamera(cells: Cell[], size: Size): Camera {
   return { x: size.w / 2 - (left + right) / 2 * scale, y: size.h / 2 - (top + bottom) / 2 * scale, scale }
 }
 
+/** 轴测视图的镜头：展开后的全部格子落在视野里（投影后宽高按 45° 旋转、54.7° 倾斜估算）。 */
+function spreadCamera(layout: SpreadLayout, cells: Cell[], size: Size): Camera {
+  const roots = layout.roots
+  if (roots.length === 0) return fitCamera(cells, size)
+  const left = Math.min(...roots.map(c => c.col)) * B, right = Math.max(...roots.map(c => c.col + c.w)) * B
+  const top = Math.min(...roots.map(c => c.row)) * B, bottom = Math.max(...roots.map(c => c.row + c.h)) * B
+  const pw = (right - left + bottom - top) / Math.SQRT2, ph = (right - left + bottom - top) / Math.sqrt(6)
+  const scale = clamp(Math.min((size.w - 110) / pw, (size.h - 210) / ph, 1), MIN_SCALE, 1)
+  return { x: size.w / 2 - (left + right) / 2 * scale, y: size.h / 2 + 12 - (top + bottom) / 2 * scale, scale }
+}
+
+interface Proj { amount: number; spread: number }
+const VIEW_KEY = 'dsh-shelf:view'
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+
 type Gesture =
   | { kind: 'pan'; id: number; sx: number; sy: number; cam: Camera; moved: boolean }
   | { kind: 'cell'; id: number; sx: number; sy: number; cell: Cell; moved: boolean; px: number; py: number }
@@ -73,6 +91,13 @@ export function Palace() {
   // 「与书对话」的会话：交给阅览室里的笔记本（存灵感、生成目录要往这个对话发消息）
   const [roomSession, setRoomSession] = useState<{ cellId: string; sessionId: string }>()
   const setChatOpen = (open: boolean) => { localStorage.setItem('dsh-shelf:chat-open', open ? '1' : '0'); setChatOpenState(open) }
+  // 轴测视图（记在本机）。proj 是动画中的当前值：amount 投影程度，spread 分组展开程度
+  const [iso, setIso] = useState(() => localStorage.getItem(VIEW_KEY) === 'iso')
+  const [proj, setProj] = useState<Proj>(() => (iso ? { amount: 1, spread: 1 } : { amount: 0, spread: 0 }))
+  const [hover, setHover] = useState<string>()
+  const live = useRef({ iso, proj, cam, size, m: matrixOf(proj.amount) })
+  const anim = useRef(0)
+  const flatCam = useRef<Camera>()
 
   useLayoutEffect(() => {
     const el = rootRef.current
@@ -83,12 +108,67 @@ export function Palace() {
   }, [])
 
   // 第一次拿到数据和尺寸时，把镜头对准所有格子
+  const cells = palace?.cells ?? []
+  const layout = useMemo(() => spreadLayout(cells), [cells])
+  const m = matrixOf(proj.amount)
+  live.current = { iso, proj, cam, size, m }
+
   useEffect(() => {
-    if (cam === undefined && palace !== undefined && size.w > 0) setCam(fitCamera(palace.cells, size))
-  }, [cam, palace, size])
+    if (cam === undefined && palace !== undefined && size.w > 0) setCam(iso ? spreadCamera(layout, palace.cells, size) : fitCamera(palace.cells, size))
+  }, [cam, palace, size, iso, layout])
+
+  /** 平滑过渡到目标投影（和镜头），650ms；新的过渡会打断旧的。 */
+  const animate = (to: Proj, toCam?: Camera) => {
+    const id = ++anim.current
+    const from = live.current.proj, fromCam = live.current.cam
+    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650
+    const start = performance.now()
+    const frame = (now: number) => {
+      if (id !== anim.current) return
+      const t = duration > 0 ? Math.min(1, (now - start) / duration) : 1, e = ease(t)
+      const p = { amount: from.amount + (to.amount - from.amount) * e, spread: from.spread + (to.spread - from.spread) * e }
+      live.current.proj = p
+      setProj(p)
+      if (toCam !== undefined && fromCam !== undefined) {
+        setCam({ x: fromCam.x + (toCam.x - fromCam.x) * e, y: fromCam.y + (toCam.y - fromCam.y) * e, scale: fromCam.scale + (toCam.scale - fromCam.scale) * e })
+      }
+      if (t < 1) requestAnimationFrame(frame)
+    }
+    requestAnimationFrame(frame)
+  }
+
+  // 进入笔记或阅读时回到平面，出来再回到轴测（分组保持展开）
+  const isoTarget = (on: boolean) => (on && selected === undefined && reading === undefined ? 1 : 0)
+  useEffect(() => {
+    const target = isoTarget(live.current.iso)
+    if (Math.abs(live.current.proj.amount - target) > 0.001) animate({ amount: target, spread: live.current.iso ? 1 : 0 })
+  }, [selected, reading]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleIso = () => {
+    if (palace === undefined || cam === undefined) return
+    const next = !iso
+    localStorage.setItem(VIEW_KEY, next ? 'iso' : 'flat')
+    setIso(next)
+    live.current.iso = next
+    setOpenGroup(undefined)
+    if (next) flatCam.current = cam
+    animate({ amount: isoTarget(next), spread: next ? 1 : 0 }, next ? spreadCamera(layout, cells, size) : (flatCam.current ?? fitCamera(cells, size)))
+  }
+
+  // I 键切换（在输入框、对话里打字时不算）
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== 'i' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (t?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], .mp-chat, .mp-dialog, .mp-sheet')) return
+      e.preventDefault()
+      toggleIso()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   // 打开的分组或选中的格子被删了（比如 AI 删的），就收起
-  const cells = palace?.cells ?? []
   useEffect(() => {
     if (openGroup !== undefined && !cells.some(c => c.id === openGroup)) setOpenGroup(undefined)
     if (selected !== undefined && !cells.some(c => c.id === selected)) setSelected(undefined)
@@ -104,8 +184,10 @@ export function Palace() {
 
   // ---------- 镜头 ----------
 
-  const zoomAt = (factor: number, sx: number, sy: number) => setCam((c) => {
+  const zoomAt = (factor: number, px: number, py: number) => setCam((c) => {
     if (c === undefined) return c
+    const { m, size } = live.current
+    const { x: sx, y: sy } = unproject(m, px, py, size.w, size.h)
     const scale = clamp(c.scale * factor, MIN_SCALE, MAX_SCALE)
     const r = scale / c.scale
     return { scale, x: sx - (sx - c.x) * r, y: sy - (sy - c.y) * r }
@@ -120,7 +202,10 @@ export function Palace() {
       e.preventDefault()
       const rect = el.getBoundingClientRect()
       if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - rect.left, e.clientY - rect.top)
-      else setCam(c => (c === undefined ? c : { ...c, x: c.x - e.deltaX, y: c.y - e.deltaY }))
+      else {
+        const d = delta(live.current.m, e.deltaX, e.deltaY)
+        setCam(c => (c === undefined ? c : { ...c, x: c.x - d.x, y: c.y - d.y }))
+      }
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
@@ -153,7 +238,8 @@ export function Palace() {
     const p = local(e)
     const moved = gesture.moved || Math.hypot(p.x - gesture.sx, p.y - gesture.sy) > DRAG_THRESHOLD
     if (gesture.kind === 'pan') {
-      if (moved) setCam({ ...gesture.cam, x: gesture.cam.x + p.x - gesture.sx, y: gesture.cam.y + p.y - gesture.sy })
+      const d = delta(m, p.x - gesture.sx, p.y - gesture.sy)
+      if (moved) setCam({ ...gesture.cam, x: gesture.cam.x + d.x, y: gesture.cam.y + d.y })
       if (moved !== gesture.moved) setGesture({ ...gesture, moved })
     } else {
       setGesture({ ...gesture, moved, px: p.x, py: p.y })
@@ -173,11 +259,11 @@ export function Palace() {
     }
     const { cell } = gesture
     if (!gesture.moved) {
-      if (cell.kind === 'group') { setOpenGroup(cell.id); setSelected(undefined) } else setSelected(cell.id)
+      // 轴测视图里分组本来就是展开的
+      if (cell.kind === 'group') { if (!spreading) { setOpenGroup(cell.id); setSelected(undefined) } } else setSelected(cell.id)
       return
     }
-    if (cam === undefined) return
-    const target = dropTarget(cells, cam, openGroup, { x: gesture.px, y: gesture.py }, true)
+    const target = dropAt({ x: gesture.px, y: gesture.py })?.target
     if (target === undefined) return
     if (target.parentId === cell.parentId && target.col === cell.col && target.row === cell.row) return
     // 最外层：把书 / 笔记拖到一个分组上 = 放进这个分组
@@ -193,6 +279,39 @@ export function Palace() {
 
   const dragging = gesture?.kind === 'cell' && gesture.moved ? gesture : undefined
   const group = openGroup !== undefined ? cells.find(c => c.id === openGroup) : undefined
+  /** 所有分组原地展开中（轴测视图）。 */
+  const spreading = proj.spread > 0.001 && group === undefined
+  const arcs = useArcs(iso)
+
+  /** 格子显示在哪一格（世界网格坐标，过渡中是小数）。 */
+  const worldCell = (c: Cell): { col: number; row: number } => {
+    if (spreading) {
+      const e = layout.entries.get(c.id)
+      if (e !== undefined) {
+        const from = c.parentId !== null ? e.origin : c, t = proj.spread
+        return { col: from.col + (e.col - from.col) * t, row: from.row + (e.row - from.row) * t }
+      }
+    }
+    if (c.parentId !== null && group !== undefined && c.parentId === group.id) return { col: group.col + c.col, row: group.row + c.row }
+    return { col: c.col, row: c.row }
+  }
+
+  /** 世界坐标里的矩形 → 屏幕上的样式（一个 matrix 同时完成缩放、平移和投影）。 */
+  const rect = (x: number, y: number, w: number, h: number): CSSProperties => {
+    if (cam === undefined) return { display: 'none' }
+    const p = project(m, cam.x + x * cam.scale, cam.y + y * cam.scale, size.w, size.h), s = cam.scale
+    return { left: 0, top: 0, width: w, height: h, transform: `matrix(${m.a * s},${m.b * s},${m.c * s},${m.d * s},${p.x},${p.y})` }
+  }
+
+  /** 屏幕上一点松手：放到哪（存储位置），提示框画在哪（显示位置）。 */
+  const dropAt = (pt: { x: number; y: number }): { target: { parentId: string | null; col: number; row: number }; shown: { col: number; row: number } } | undefined => {
+    if (cam === undefined) return undefined
+    const u = unproject(m, pt.x, pt.y, size.w, size.h)
+    const tile = { col: Math.floor((u.x - cam.x) / cam.scale / B), row: Math.floor((u.y - cam.y) / cam.scale / B) }
+    if (spreading) return proj.spread > 0.999 ? { target: spreadDrop(layout, cells, tile), shown: tile } : undefined
+    const target = dropTarget(cells, openGroup, tile, true)
+    return { target, shown: target.parentId === null || group === undefined ? tile : { col: group.col + target.col, row: group.row + target.row } }
+  }
   const gsize = group !== undefined ? groupSize(cells, group.id, dragging !== undefined) : undefined
   const roots = cells.filter(c => c.parentId === null)
   const children = group !== undefined ? cells.filter(c => c.parentId === group.id) : []
@@ -205,48 +324,64 @@ export function Palace() {
   // 分组展开后，被框盖住的最外层格子先不画（避免透出来）
   const covered = (c: Cell) => group !== undefined && gsize !== undefined
     && c.col >= group.col && c.col < group.col + gsize.cols && c.row >= group.row && c.row < group.row + gsize.rows
-  const target = dragging !== undefined && cam !== undefined ? dropTarget(cells, cam, openGroup, { x: dragging.px, y: dragging.py }, true) : undefined
+  const drop = dragging !== undefined ? dropAt({ x: dragging.px, y: dragging.py }) : undefined
 
-  const place = (col: number, row: number, base?: Cell) => {
-    if (cam === undefined) return {}
-    const ox = base !== undefined ? base.col * B : 0, oy = base !== undefined ? base.row * B : 0
-    return { left: cam.x + (ox + col * B) * cam.scale, top: cam.y + (oy + row * B) * cam.scale, width: B * cam.scale, height: B * cam.scale }
-  }
-
-  const renderCell = (c: Cell, base?: Cell) => {
+  const renderCell = (c: Cell) => {
     const isDragged = dragging?.cell.id === c.id
-    const style = place(c.col, c.row, base)
-    const shifted = isDragged && cam !== undefined
-      ? { ...style, left: (style.left ?? 0) + dragging.px - dragging.sx, top: (style.top ?? 0) + dragging.py - dragging.sy }
-      : style
+    const w = worldCell(c)
+    let x = w.col * B, y = w.row * B
+    if (isDragged && cam !== undefined) {
+      const d = delta(m, dragging.px - dragging.sx, dragging.py - dragging.sy)
+      x += d.x / cam.scale
+      y += d.y / cam.scale
+    }
     return (
       <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''} ${selected === c.id ? 'mp-selected' : ''}`}
-        style={{ ...shifted, fontSize: 16 * (cam?.scale ?? 1) }}
+        style={{ ...rect(x, y, B, B), opacity: spreading && c.parentId !== null ? proj.spread : undefined }}
+        onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
         <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} onRead={() => setReading(c.id)} />
       </div>
     )
   }
 
+  // 立起来的图标：抵消投影的旋转和倾斜，正对镜头，抬高并放大（原型 isometric.js 的 update）
+  const det = m.a * m.d - m.b * m.c
+  const relief = {
+    '--mp-facing': `matrix(${m.d / det},${-m.b / det},${-m.c / det},${m.a / det},0,0)`,
+    '--mp-lift': `${-19 * proj.amount}px`,
+    '--mp-relief-scale': String(1 + 0.8 * proj.amount),
+    '--mp-depth': String(proj.amount),
+  } as CSSProperties
+
   return (
-    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''}`}
+    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''} ${proj.amount > 0.999 ? 'mp-iso' : ''}`}
+      style={relief}
       onPointerDown={onBackgroundDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setGesture(undefined)}>
       <div className="mp-paper" />
-      {cam !== undefined && <Grid cam={cam} size={size} />}
+      {cam !== undefined && <Grid cam={cam} size={size} m={m} />}
 
-      {roots.filter(c => !covered(c)).map(c => renderCell(c))}
+      {spreading && [...layout.frames.values()].map((e) => {
+        const p = worldCell(e.cell), t = proj.spread
+        return <div key={e.cell.id} className="mp-iso-folder" style={{ ...rect(p.col * B, p.row * B, (1 + (e.w - 1) * t) * B, (1 + (e.h - 1) * t) * B), opacity: t }} />
+      })}
+      {spreading && cam !== undefined && proj.amount > 0.001 && (
+        <Arcs arcs={arcs} cells={cells} hover={hover} amount={proj.amount} m={m} cam={cam} size={size} B={B} worldCell={worldCell} />
+      )}
+
+      {spreading
+        ? cells.map(c => renderCell(c))
+        : roots.filter(c => !covered(c)).map(c => renderCell(c))}
 
       {group !== undefined && gsize !== undefined && cam !== undefined && (
         <>
           <div className="mp-dim" />
-          <div className="mp-group-frame" style={{ ...place(0, 0, group), width: gsize.cols * B * cam.scale, height: gsize.rows * B * cam.scale }} />
-          {children.map(c => renderCell(c, group))}
+          <div className="mp-group-frame" style={rect(group.col * B, group.row * B, gsize.cols * B, gsize.rows * B)} />
+          {children.map(c => renderCell(c))}
         </>
       )}
 
-      {target !== undefined && cam !== undefined && (
-        <div className="mp-drop" style={target.parentId === null ? place(target.col, target.row) : place(target.col, target.row, group)} />
-      )}
+      {drop !== undefined && <div className="mp-drop" style={rect(drop.shown.col * B, drop.shown.row * B, B, B)} />}
 
       <header className="mp-masthead">
         <span className="mp-wordmark">Memory Palace</span>
@@ -260,10 +395,14 @@ export function Palace() {
 
       <footer className="mp-footer" onPointerDown={e => e.stopPropagation()}>
         <button type="button" className="mp-round" title="添加" onClick={() => setAdding(true)}>＋</button>
+        <button type="button" className="mp-view-toggle" aria-pressed={iso} aria-keyshortcuts="I" title={iso ? '切换到平面视图（I）' : '切换到轴测视图（I）：看分组和书之间的电弧'} onClick={toggleIso}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 6-10 6L2 9Z M2 13l10 6 10-6 M2 17l10 6 10-6" /></svg>
+          <span>{iso ? '平面' : '轴测'}</span>
+        </button>
         {!chatOpen && <button type="button" className="mp-round mp-ai-orb" title="和 AI 聊聊（真实的 Harness 对话）" onClick={() => setChatOpen(true)}>AI</button>}
         <div className="mp-zoom">
           <button type="button" onClick={() => zoomAt(1 / 1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) <= MIN_SCALE + 0.001}>−</button>
-          <button type="button" className="mp-zoom-reset" title="显示全部" onClick={() => palace && setCam(fitCamera(palace.cells, size))}>{Math.round((cam?.scale ?? 1) * 100)}%</button>
+          <button type="button" className="mp-zoom-reset" title="显示全部" onClick={() => palace && setCam(iso ? spreadCamera(layout, palace.cells, size) : fitCamera(palace.cells, size))}>{Math.round((cam?.scale ?? 1) * 100)}%</button>
           <button type="button" onClick={() => zoomAt(1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) >= MAX_SCALE - 0.001}>＋</button>
         </div>
       </footer>
@@ -306,10 +445,9 @@ function GroupBar({ group, empty, onBack, onError }: { group: Cell; empty: boole
   )
 }
 
-/** 拖动松手时落在哪一格。分组展开时，落在框里 = 组内坐标，落在框外 = 最外层。 */
-function dropTarget(cells: Cell[], cam: Camera, openGroup: string | undefined, p: { x: number; y: number }, spare: boolean): { parentId: string | null; col: number; row: number } | undefined {
-  const wx = (p.x - cam.x) / cam.scale, wy = (p.y - cam.y) / cam.scale
-  const col = Math.floor(wx / B), row = Math.floor(wy / B)
+/** 拖动松手时落在哪一格（平面视图，tile 是世界网格坐标）。分组展开时，落在框里 = 组内坐标，落在框外 = 最外层。 */
+function dropTarget(cells: Cell[], openGroup: string | undefined, tile: { col: number; row: number }, spare: boolean): { parentId: string | null; col: number; row: number } {
+  const { col, row } = tile
   const group = openGroup !== undefined ? cells.find(c => c.id === openGroup) : undefined
   if (group !== undefined) {
     const { cols, rows } = groupSize(cells, group.id, spare)
@@ -339,23 +477,34 @@ function CellFace({ cell, summary, count, onRead }: { cell: Cell; summary?: Cell
   )
 }
 
-/** 网格线和交点。只画视野里的部分。 */
-function Grid({ cam, size }: { cam: Camera; size: Size }) {
+/** 网格线和交点（随投影一起变形）。只画视野里的部分。移植自原型 isometric.js 的 grid()。 */
+function Grid({ cam, size, m }: { cam: Camera; size: Size; m: Matrix }) {
+  const corners = [[0, 0], [size.w, 0], [0, size.h], [size.w, size.h]].map(([x, y]) => unproject(m, x, y, size.w, size.h))
   const step = B * cam.scale
-  const xs: number[] = [], ys: number[] = []
-  for (let i = Math.floor(-cam.x / step); i <= Math.ceil((size.w - cam.x) / step); i++) xs.push(cam.x + i * step)
-  for (let i = Math.floor(-cam.y / step); i <= Math.ceil((size.h - cam.y) / step); i++) ys.push(cam.y + i * step)
+  const minX = Math.floor((Math.min(...corners.map(p => p.x)) - cam.x) / step) - 1
+  const maxX = Math.ceil((Math.max(...corners.map(p => p.x)) - cam.x) / step) + 1
+  const minY = Math.floor((Math.min(...corners.map(p => p.y)) - cam.y) / step) - 1
+  const maxY = Math.ceil((Math.max(...corners.map(p => p.y)) - cam.y) / step) + 1
+  const pt = (i: number, j: number) => project(m, cam.x + i * step, cam.y + j * step, size.w, size.h)
+  const lines: { a: { x: number; y: number }; b: { x: number; y: number } }[] = []
+  const dots: { x: number; y: number }[] = []
+  for (let i = minX; i <= maxX; i++) {
+    lines.push({ a: pt(i, minY), b: pt(i, maxY) })
+    for (let j = minY; j <= maxY; j++) {
+      const p = pt(i, j)
+      if (p.x >= -5 && p.x <= size.w + 5 && p.y >= -5 && p.y <= size.h + 5) dots.push(p)
+    }
+  }
+  for (let j = minY; j <= maxY; j++) lines.push({ a: pt(minX, j), b: pt(maxX, j) })
   const r = clamp(3.1 * Math.sqrt(cam.scale), 1.8, 4.2)
   return (
     <svg className="mp-grid" width={size.w} height={size.h}>
       <g className="mp-lines">
-        {xs.map(x => <line key={`x${x}`} x1={x} x2={x} y1={0} y2={size.h} />)}
-        {ys.map(y => <line key={`y${y}`} y1={y} y2={y} x1={0} x2={size.w} />)}
+        {lines.map((l, i) => <line key={i} x1={l.a.x} y1={l.a.y} x2={l.b.x} y2={l.b.y} />)}
       </g>
       <g className="mp-dots">
-        {xs.flatMap(x => ys.map(y => <circle key={`${x},${y}`} cx={x} cy={y} r={r} />))}
+        {dots.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={r} />)}
       </g>
     </svg>
   )
 }
-

@@ -90,3 +90,21 @@ export function useItem(id: string | undefined): { item?: Item; error?: string }
   }, [id, rev])
   return state.id === id ? state : {}
 }
+
+/** 电弧（#8，由联想算出，见 CONTRACT §8）。 */
+export interface Arc { from: string; to: string; strands: number; why: string; lastAt: string }
+
+/** 电弧列表；宫殿数据变了就重新拉取。enabled 为 false 时不请求（平面视图用不到）。 */
+export function useArcs(enabled: boolean): Arc[] {
+  const { rev } = usePalace()
+  const [arcs, setArcs] = useState<Arc[]>([])
+  useEffect(() => {
+    if (!enabled) return
+    let alive = true
+    fetch(apiUrl('arcs'), { cache: 'no-store' })
+      .then(r => readJson<{ arcs: Arc[] }>(r))
+      .then(r => alive && setArcs(r.arcs), () => undefined)
+    return () => { alive = false }
+  }, [enabled, rev])
+  return arcs
+}
