@@ -12,7 +12,7 @@
 .rd-status { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* 窄面板（右侧栏）：书名和状态收起，目录占剩下的宽度 */
 @container (max-width: 560px) {
-  .rd-title, .rd-status, .rd-spacer { display: none; }
+  .rd-title, .rd-status, .rd-spacer, .rd-lookup-toggle { display: none; }
   .rd-head { gap: 8px; padding: 8px 10px; }
   .rd-head .rd-toc { max-width: none; }
 }
@@ -30,3 +30,17 @@
   padding: 10px 14px; background: #fff; border: 1px solid #e4dcc8; border-radius: 12px; box-shadow: 0 10px 28px rgba(60, 50, 30, .16); }
 .rd-quote { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Songti SC", serif; }
 .rd-btn { padding: 5px 14px !important; border-radius: 999px; background: #294c60 !important; color: #fff !important; white-space: nowrap; }
+
+/* 查词弹窗（#43，移植自原型 #word-lookup） */
+.rd-word { position: absolute; z-index: 5; width: 300px; max-height: min(420px, 70%); padding: 15px 18px 12px; overflow: auto; overscroll-behavior: contain;
+  background: #faf6ebfa; color: #3e514d; border: 1px solid #b9c5b8b3; border-radius: 12px; box-shadow: 0 8px 30px rgba(60, 70, 60, .18); font-size: 13px; line-height: 1.6; }
+.rd-word-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.rd-word-head strong { min-width: 0; overflow-wrap: anywhere; font: 400 26px/1.2 "EB Garamond", Georgia, serif; }
+.rd-word-head button { flex: none; font-size: 20px !important; line-height: 1; opacity: .6; padding: 2px 0 2px 8px !important; }
+.rd-word-phonetic { font: 14px/1.5 "EB Garamond", Georgia, serif; margin: 4px 0 6px; opacity: .7; }
+.rd-word-lemma { font-size: 11px; margin: 10px 0 2px; opacity: .7; letter-spacing: .04em; }
+.rd-word-def p { margin: 6px 0; overflow-wrap: anywhere; }
+.rd-word-eg { display: block; font-size: 12px; opacity: .72; margin-left: .6em; }
+.rd-word-note { margin: 10px 0 4px; opacity: .8; }
+.rd-word-more { display: block; margin-top: 10px; font-size: 11px !important; opacity: .6; text-decoration: underline !important; text-underline-offset: 3px; }
+.rd-lookup-toggle { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #8a8270; cursor: pointer; }

@@ -9,8 +9,10 @@ import { apiUrl } from '../api.ts'
 import { palaceOp } from '../palace/data.ts'
 import { ShareEditor } from '../share/ShareEditor.tsx'
 import { mountEpub, sameFile, type EpubHandle } from './epub.ts'
+import { WordPopup, type WordAnchor } from './WordPopup.tsx'
 
 const FONT_KEY = 'dsh-shelf:epub-font-size'
+const LOOKUP_KEY = 'dsh-shelf:word-lookup'
 
 /** 当前目录项（href 带锚点）对应的节；章级目录项（目录里不是节）落到同一文件的第一节。 */
 function sectionOf(item: Item, anchor: string | undefined): Section | undefined {
@@ -37,6 +39,11 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
   const [fontSize, setFontSize] = useState(() => Number(localStorage.getItem(FONT_KEY)) || 18)
   const pendingPos = useRef<{ loc: string; percent: number }>()
   const posTimer = useRef<ReturnType<typeof setTimeout>>()
+  // 点词查释义（#43），默认开
+  const [lookupOn, setLookupOn] = useState(() => localStorage.getItem(LOOKUP_KEY) !== '0')
+  const lookupRef = useRef(lookupOn)
+  lookupRef.current = lookupOn
+  const [word, setWord] = useState<WordAnchor>()
 
   const savePosition = () => {
     clearTimeout(posTimer.current)
@@ -64,6 +71,7 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
         highlights: item.cards.filter(k => k.type === 'excerpt' && k.loc?.startsWith('epubcfi(')).map(k => k.loc as string),
         fontSize,
         onPosition: (pos) => {
+          setWord(undefined) // 翻页了，释义弹窗不再对着原来的词
           const it = latest.current
           if (pos.percent !== undefined) setPercent(pos.percent)
           const section = sectionOf(it, pos.anchor)
@@ -84,6 +92,9 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
         },
         onSelect: (sel) => { setPicked(undefined); setSelection(sel) },
         onHighlight: (cfi) => { setSelection(undefined); setPicked(cfi) },
+        lookup: () => lookupRef.current,
+        onWord: (w, rect) => setWord({ word: w, ...rect }),
+        onPress: () => setWord(undefined),
         onToc: (outline) => {
           // 第一次打开：用书自带的目录建「进度」里的章节
           if (latest.current.chapters.length === 0 && outline.length > 0) {
@@ -107,12 +118,13 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || sharing) return
+      if (word) { setWord(undefined); return }
       if (selection || picked) { setSelection(undefined); setPicked(undefined); return }
       onClose()
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [onClose, sharing, selection, picked])
+  }, [onClose, sharing, selection, picked, word])
 
   const sections = item.chapters.flatMap(c => c.sections.map(s => ({ s, label: c.title === s.title ? s.title : `${c.title} › ${s.title}` })))
   const current: Section | undefined = sections.find(x => x.s.id === currentId)?.s
@@ -167,16 +179,19 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
         )}
         <span className="rd-spacer" />
         {status && <span className="rd-muted rd-status">{status}</span>}
+        <label className="rd-lookup-toggle" title="轻点英文单词，用系统词典查释义">
+          <input type="checkbox" checked={lookupOn} onChange={(e) => { setLookupOn(e.target.checked); localStorage.setItem(LOOKUP_KEY, e.target.checked ? '1' : '0'); setWord(undefined) }} />点词翻译
+        </label>
         <button type="button" className="rd-text" title="字小一点" onClick={() => changeFont(-1)}>A−</button>
         <button type="button" className="rd-text" title="字大一点" onClick={() => changeFont(1)}>A+</button>
         <span className="rd-muted">{Math.round(percent * 100)}%</span>
       </header>
       <div className="rd-body">
-        <button type="button" className="rd-turn" aria-label="上一页" onClick={() => handle.current?.prev()}>‹</button>
+        <button type="button" className="rd-turn" aria-label="上一页" onClick={() => { setWord(undefined); handle.current?.prev() }}>‹</button>
         <div className="rd-stage" ref={setStage}>
           {error ? <p className="rd-error">{error}</p> : !ready && <p className="rd-muted rd-loading">正在打开…</p>}
         </div>
-        <button type="button" className="rd-turn" aria-label="下一页" onClick={() => handle.current?.next()}>›</button>
+        <button type="button" className="rd-turn" aria-label="下一页" onClick={() => { setWord(undefined); handle.current?.next() }}>›</button>
       </div>
       {selection && (
         <div className="rd-select">
@@ -193,6 +208,7 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
           <button type="button" className="rd-text" aria-label="关闭" onClick={() => setPicked(undefined)}>×</button>
         </div>
       )}
+      {word && <WordPopup anchor={word} onClose={() => setWord(undefined)} />}
       {sharing && <ShareEditor itemId={item.id} card={sharing} title={title} subtitle={subtitle} onClose={() => setSharing(undefined)} />}
     </div>
     </PanelOverlay>

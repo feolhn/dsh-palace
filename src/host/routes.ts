@@ -13,6 +13,7 @@ import { Memory } from '../core/memory.ts'
 import { assertCellId, ShelfError, type PalaceStore } from '../core/store.ts'
 import { findSection, type Item } from '../shared/palace.ts'
 import { addBook } from './books.ts'
+import { lookupWord, WORD } from './dictionary.ts'
 import { pdfjsDistDir, readPageTexts, SCANNED_THRESHOLD } from './pdf.ts'
 
 export const API = '/api/dsh-shelf'
@@ -156,6 +157,17 @@ export function createRoutes(store: PalaceStore, active: ActiveItems, memory = n
     route('POST', 'cut-arc', ({ body }) => {
       memory.cut({ from: body.from, to: body.to })
       return json({ ok: true, rev: store.rev })
+    }),
+
+    // 查词（#43）：系统自带词典
+    route('GET', 'lookup', async ({ url }) => json({ ok: true, ...(await lookupWord(url.searchParams.get('word') ?? '')) })),
+
+    // 在系统「词典」App 里打开这个词（看完整词条）
+    route('POST', 'open-dictionary', ({ body }) => {
+      const word = typeof body.word === 'string' ? body.word : ''
+      if (process.platform !== 'darwin' || !WORD.test(word)) throw new ShelfError('无法打开词典')
+      openExternal(`dict://${encodeURIComponent(word)}`)
+      return json({ ok: true })
     }),
 
     route('GET', 'item', ({ url }) => json({ ok: true, rev: store.rev, item: itemOf(store, url.searchParams.get('id')) })),
