@@ -7,7 +7,7 @@
  * 这些都是 Harness 的非公开接口，版本变了可能失效：拿不到时界面显示提示，不影响宫殿其他功能。
  */
 import { createContext, useContext, type ReactNode } from 'react'
-import { sendText, setDraft } from '../chat.ts'
+import { setDraft } from '../chat.ts'
 
 /** 子 slot 名：一个 session 作用域的对话位置。 */
 export const CHAT_SLOT = 'dsh-shelf.chat'
@@ -88,8 +88,21 @@ export function ChatSlotPanel({ sessionId, useSession, useConversation, useSessi
   const intro = useContext(ChatIntroContext)
   const content = renderFactorySlot('conversation.content', { variant: 'embedded', phase, hero: false }, { slots: { views: FixedChatView } })
   if (intro === undefined || active || session.promptAttempted || settling) return <>{content}</>
-  // 点开头：放进输入框接着写（以「……」结尾的本来就是半句）；不支持放草稿就直接发
-  const pick = (text: string) => { if (!setDraft(sessionId, text)) void sendText(sessionId, text) }
+  // 点开头：放进输入框，光标停在末尾接着写（以「……」结尾的本来就是半句）；不直接发
+  const pick = (button: HTMLElement, text: string) => {
+    if (!setDraft(sessionId, text)) return
+    requestAnimationFrame(() => {
+      const box = button.closest('.mp-chat-shell')?.querySelector<HTMLElement>('[data-composer-seat] textarea, [data-composer-seat] [contenteditable]')
+      if (box === null || box === undefined) return
+      box.focus()
+      if (box instanceof HTMLTextAreaElement) { box.setSelectionRange(box.value.length, box.value.length); return }
+      const range = document.createRange()
+      range.selectNodeContents(box)
+      range.collapse(false)
+      getSelection()?.removeAllRanges()
+      getSelection()?.addRange(range)
+    })
+  }
   return (
     <div className="mp-chat-shell">
       <div className="mp-chat-intro">
@@ -97,7 +110,7 @@ export function ChatSlotPanel({ sessionId, useSession, useConversation, useSessi
         <p>从一个念头开始。</p>
         {intro.context && <p className="mp-chat-context">{intro.context}</p>}
         <span className="mp-chat-example">可以从这里聊起</span>
-        {intro.prompts.map(t => <button key={t} type="button" className="mp-chat-prompt" onClick={() => pick(t)}>{t}</button>)}
+        {intro.prompts.map(t => <button key={t} type="button" className="mp-chat-prompt" onClick={e => pick(e.currentTarget, t)}>{t}</button>)}
       </div>
       {content}
     </div>
