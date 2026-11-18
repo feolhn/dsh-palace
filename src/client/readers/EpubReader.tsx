@@ -21,7 +21,10 @@ function sectionOf(item: Item, anchor: string | undefined): Section | undefined 
   return flat.find(x => x.loc === anchor) ?? flat.find(x => x.loc !== undefined && sameFile(x.loc, anchor))
 }
 
-export function EpubReader({ item, title, subtitle, onClose }: { item: Item; title: string; subtitle?: string; onClose: () => void }) {
+/** 在宫殿阅览室这一格里打开（#29 第三步，原型 #reader-panel）：没有标题栏，菜单收在右上角 ⋯，底部移过去才出现页码和进度条。 */
+export interface Embedded { onNotes: () => void; onChat?: () => void }
+
+export function EpubReader({ item, title, subtitle, onClose, embedded }: { item: Item; title: string; subtitle?: string; onClose: () => void; embedded?: Embedded }) {
   // 浮层第一次渲染时容器还不在，用 state 记住挂载点，出现后再打开书
   const [stage, setStage] = useState<HTMLDivElement | null>(null)
   const handle = useRef<EpubHandle>()
@@ -44,6 +47,12 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
   const lookupRef = useRef(lookupOn)
   lookupRef.current = lookupOn
   const [word, setWord] = useState<WordAnchor>()
+  const [menu, setMenu] = useState(false)
+  const [nav, setNav] = useState(false)
+  const [seekValue, setSeekValue] = useState<number>()
+  const navTimer = useRef<ReturnType<typeof setTimeout>>()
+  const showNav = () => { clearTimeout(navTimer.current); setNav(true) }
+  const hideNavSoon = () => { clearTimeout(navTimer.current); navTimer.current = setTimeout(() => setNav(false), 1200) }
 
   const savePosition = () => {
     clearTimeout(posTimer.current)
@@ -162,37 +171,23 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
     }
   }
 
-  return (
-    <PanelOverlay>
-    <div className="rd-root">
-      <header className="rd-head">
-        <button type="button" className="rd-text" onClick={onClose}>← 返回</button>
-        <span className="rd-title" title={title}>{title}</span>
-        {sections.length > 0 && (
-          <select className="rd-toc" title={current ? sections.find(x => x.s.id === current.id)?.label : '目录'} value={current?.id ?? ''} onChange={(e) => {
-            const loc = sections.find(x => x.s.id === e.target.value)?.s.loc
-            if (loc) handle.current?.goTo(loc)
-          }}>
-            {current === undefined && <option value="">目录</option>}
-            {sections.map(x => <option key={x.s.id} value={x.s.id}>{x.label}</option>)}
-          </select>
-        )}
-        <span className="rd-spacer" />
-        {status && <span className="rd-muted rd-status">{status}</span>}
-        <label className="rd-lookup-toggle" title="轻点英文单词，用系统词典查释义">
-          <input type="checkbox" checked={lookupOn} onChange={(e) => { setLookupOn(e.target.checked); localStorage.setItem(LOOKUP_KEY, e.target.checked ? '1' : '0'); setWord(undefined) }} />点词翻译
-        </label>
-        <button type="button" className="rd-text" title="字小一点" onClick={() => changeFont(-1)}>A−</button>
-        <button type="button" className="rd-text" title="字大一点" onClick={() => changeFont(1)}>A+</button>
-        <span className="rd-muted">{Math.round(percent * 100)}%</span>
-      </header>
-      <div className="rd-body">
-        <button type="button" className="rd-turn" aria-label="上一页" onClick={() => { setWord(undefined); handle.current?.prev() }}>‹</button>
-        <div className="rd-stage" ref={setStage}>
-          {error ? <p className="rd-error">{error}</p> : !ready && <p className="rd-muted rd-loading">正在打开…</p>}
-        </div>
-        <button type="button" className="rd-turn" aria-label="下一页" onClick={() => { setWord(undefined); handle.current?.next() }}>›</button>
-      </div>
+  const pct = (p: number) => (p <= 0 ? '0%' : `${(Math.round(p * 1000) / 10).toFixed(p * 100 >= 10 ? 0 : 1)}%`)
+  const tocSelect = sections.length > 0 && (
+    <select className="rd-toc" title={current ? sections.find(x => x.s.id === current.id)?.label : '目录'} value={current?.id ?? ''} onChange={(e) => {
+      const loc = sections.find(x => x.s.id === e.target.value)?.s.loc
+      if (loc) handle.current?.goTo(loc)
+    }}>
+      {current === undefined && <option value="">目录</option>}
+      {sections.map(x => <option key={x.s.id} value={x.s.id}>{x.label}</option>)}
+    </select>
+  )
+  const lookupToggle = (
+    <label className="rd-lookup-toggle" title="轻点英文单词，用系统词典查释义">
+      <input type="checkbox" checked={lookupOn} onChange={(e) => { setLookupOn(e.target.checked); localStorage.setItem(LOOKUP_KEY, e.target.checked ? '1' : '0'); setWord(undefined) }} />点词翻译
+    </label>
+  )
+  const bars = (
+    <>
       {selection && (
         <div className="rd-select">
           <span className="rd-quote">{selection.quote}</span>
@@ -210,6 +205,73 @@ export function EpubReader({ item, title, subtitle, onClose }: { item: Item; tit
       )}
       {word && <WordPopup anchor={word} onClose={() => setWord(undefined)} />}
       {sharing && <ShareEditor itemId={item.id} card={sharing} title={title} subtitle={subtitle} onClose={() => setSharing(undefined)} />}
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <div className="rd-root rd-embedded">
+        <button type="button" className="rd-menu" aria-label="阅读选项" aria-expanded={menu} onClick={() => setMenu(!menu)}>⋯</button>
+        {menu && (
+          <div className="rd-options">
+            <button type="button" className="rd-text" onClick={embedded.onNotes}>读书笔记 ↗</button>
+            {embedded.onChat && <button type="button" className="rd-text" onClick={() => { setMenu(false); embedded.onChat?.() }}>和书对话</button>}
+            {tocSelect}
+            {lookupToggle}
+            <button type="button" className="rd-text" title="字小一点" onClick={() => changeFont(-1)}>A−</button>
+            <button type="button" className="rd-text" title="字大一点" onClick={() => changeFont(1)}>A+</button>
+            {status && <span className="rd-muted">{status}</span>}
+          </div>
+        )}
+        <div className="rd-paper">
+          <div className="rd-stage" ref={setStage}>
+            {error ? <p className="rd-error">{error}</p> : !ready && <p className="rd-muted rd-loading">正在打开…</p>}
+          </div>
+        </div>
+        <button type="button" className="rd-edge rd-edge-prev" aria-label="上一页" onClick={() => { setWord(undefined); handle.current?.prev() }}>‹</button>
+        <button type="button" className="rd-edge rd-edge-next" aria-label="下一页" onClick={() => { setWord(undefined); handle.current?.next() }}>›</button>
+        {/* 页面底部这一条：鼠标移过去才出现页码和进度条（原型 #reader-navigation） */}
+        <div className="rd-nav-zone" onPointerEnter={showNav} onPointerLeave={hideNavSoon}>
+          {nav && ready && (
+            <nav className="rd-nav" aria-label="页面导航">
+              <button type="button" aria-label="上一页" onClick={() => handle.current?.prev()}>‹</button>
+              <span className="rd-nav-pos">{seekValue !== undefined ? `前往 ${pct(seekValue)}` : pct(percent)}</span>
+              <input type="range" min={0} max={1000} step={1} aria-label="全书阅读位置"
+                value={Math.round((seekValue ?? percent) * 1000)} style={{ '--rd-progress': pct(seekValue ?? percent) } as React.CSSProperties}
+                onChange={e => setSeekValue(Number(e.target.value) / 1000)}
+                onPointerUp={() => { if (seekValue !== undefined && handle.current?.seek(seekValue) === false) setStatus('全书还在计算位置，稍等再拖'); setSeekValue(undefined) }}
+                onKeyUp={() => { if (seekValue !== undefined) handle.current?.seek(seekValue); setSeekValue(undefined) }} />
+              <button type="button" aria-label="下一页" onClick={() => handle.current?.next()}>›</button>
+            </nav>
+          )}
+        </div>
+        {bars}
+      </div>
+    )
+  }
+
+  return (
+    <PanelOverlay>
+    <div className="rd-root">
+      <header className="rd-head">
+        <button type="button" className="rd-text" onClick={onClose}>← 返回</button>
+        <span className="rd-title" title={title}>{title}</span>
+        {tocSelect}
+        <span className="rd-spacer" />
+        {status && <span className="rd-muted rd-status">{status}</span>}
+        {lookupToggle}
+        <button type="button" className="rd-text" title="字小一点" onClick={() => changeFont(-1)}>A−</button>
+        <button type="button" className="rd-text" title="字大一点" onClick={() => changeFont(1)}>A+</button>
+        <span className="rd-muted">{Math.round(percent * 100)}%</span>
+      </header>
+      <div className="rd-body">
+        <button type="button" className="rd-turn" aria-label="上一页" onClick={() => { setWord(undefined); handle.current?.prev() }}>‹</button>
+        <div className="rd-stage" ref={setStage}>
+          {error ? <p className="rd-error">{error}</p> : !ready && <p className="rd-muted rd-loading">正在打开…</p>}
+        </div>
+        <button type="button" className="rd-turn" aria-label="下一页" onClick={() => { setWord(undefined); handle.current?.next() }}>›</button>
+      </div>
+      {bars}
     </div>
     </PanelOverlay>
   )

@@ -9,6 +9,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import type { Cell, CellSummary } from '../../shared/palace.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { Room, RoomTabs } from './Room.tsx'
+import { Orb } from './Orb.tsx'
+import type { OrbView, Rect } from './orb.ts'
+import { EpubReader } from '../readers/EpubReader.tsx'
+import { useItem } from './data.ts'
 import type { NotebookTab } from '../notebook/Notebook.tsx'
 import { Moon, percentText } from './Moon.tsx'
 import { iconOf } from './icons.ts'
@@ -73,11 +77,16 @@ interface Proj { amount: number; spread: number; open: number }
 
 /** 阅览室的大小（原型 dimensions()）和要不要给左边的对话留位置。 */
 const CHAT_W = 300
-function roomSize(size: Size, chat: boolean): { w: number; h: number; beside: boolean } {
+function roomSize(size: Size, chat: boolean, mode: RoomMode): { w: number; h: number; beside: boolean } {
+  // 阅读时书占大部分画面（原型 1140×790），对话不贴边（用光球）
+  if (mode === 'reader') return { w: Math.max(300, Math.min(1140, size.w - 40)), h: Math.max(230, Math.min(790, size.h - 170)), beside: false }
   const beside = chat && size.w >= 760
   const avail = size.w - 40 - (beside ? CHAT_W + 16 : 0)
   return { w: Math.max(300, Math.min(840, avail)), h: Math.max(230, Math.min(730, size.h - 180)), beside }
 }
+type RoomMode = 'notes' | 'reader'
+/** 光球打开的对话面板大小（原型 #palace-ai-chat 是 260×350，嵌原生对话放大一些）。 */
+const ORB_CHAT = { w: 340, h: 520 }
 const VIEW_KEY = 'dsh-shelf:view'
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
@@ -91,7 +100,12 @@ export function Palace() {
   const [size, setSize] = useState<Size>({ w: 0, h: 0 })
   const [cam, setCam] = useState<Camera>()
   /** 正在阅读的格子（点月亮进入）。 */
+  /** 用系统程序打开的原文（PDF、视频）。EPUB 在阅览室这一格里读（roomMode = reader）。 */
   const [reading, setReading] = useState<string>()
+  const [roomMode, setRoomMode] = useState<RoomMode>('notes')
+  /** 光球打开的对话：光球在屏幕上的位置。 */
+  const [orbChat, setOrbChat] = useState<Rect>()
+  const [orbShown, setOrbShown] = useState(false)
   const [openGroup, setOpenGroup] = useState<string>()
   const [selected, setSelected] = useState<string>()
   const [adding, setAdding] = useState(false)
@@ -154,7 +168,7 @@ export function Palace() {
   }
 
   // 进入笔记或阅读时回到平面，出来再回到轴测（分组保持展开）
-  const isoTarget = (on: boolean) => (on && selected === undefined && reading === undefined ? 1 : 0)
+  const isoTarget = (on: boolean) => (on && selected === undefined ? 1 : 0)
   // 打开 / 关上阅览室：这一格在网格里展开，镜头移过去（scale 回到 1）；关上时回到原来的镜头（原型 openCell / roomCamera）
   useEffect(() => {
     const p = live.current.proj
@@ -164,7 +178,7 @@ export function Palace() {
     if (sel !== undefined && live.current.cam !== undefined) {
       if (p.open < 0.001) beforeRoom.current = live.current.cam
       lastRoom.current = sel.id
-      const r = roomSize(size, chatOpen)
+      const r = roomSize(size, chatOpen, roomMode)
       const w = worldCellRef.current(sel)
       const left = r.beside ? 20 + CHAT_W + 16 + (size.w - 40 - CHAT_W - 16 - r.w) / 2 : (size.w - r.w) / 2
       toCam = { scale: 1, x: left - w.col * B, y: (size.h - r.h) / 2 + 10 - w.row * B }
@@ -173,7 +187,13 @@ export function Palace() {
     }
     const same = Math.abs(p.amount - target.amount) < 0.001 && Math.abs(p.open - target.open) < 0.001 && Math.abs(p.spread - target.spread) < 0.001
     if (!same || toCam !== undefined) animate(target, toCam)
-  }, [selected, reading, chatOpen, size.w, size.h]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selected, roomMode, chatOpen, size.w, size.h]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** 点图标「读」：EPUB 在这一格里打开；PDF、视频交给系统程序。 */
+  const read = (id: string) => {
+    if (summaries[id]?.source === 'epub') { setOrbChat(undefined); setRoomMode('reader'); setSelected(id) } else setReading(id)
+  }
+  const closeRoom = () => { setSelected(undefined); setRoomMode('notes'); setOrbChat(undefined) }
 
   const toggleIso = () => {
     if (palace === undefined || cam === undefined) return
@@ -252,8 +272,14 @@ export function Palace() {
 
   const onBackgroundDown = (e: RPointerEvent) => {
     if (e.button !== 0 || cam === undefined) return
-    // 阅览室开着：点外面 = 关上（原型「阅读器外短点击回到卡片」）
-    if (selected !== undefined) { setSelected(undefined); return }
+    // 阅览室开着：点外面 = 关上；阅读时点书外面先回到笔记（原型「阅读器外短点击回到卡片」）
+    if (selected !== undefined) {
+      if (orbChat !== undefined) setOrbChat(undefined)
+      else if (roomMode === 'reader') setRoomMode('notes')
+      else closeRoom()
+      return
+    }
+    if (orbChat !== undefined) { setOrbChat(undefined); return }
     const p = local(e)
     capture(e.currentTarget as Element, e.pointerId)
     setGesture({ kind: 'pan', id: e.pointerId, sx: p.x, sy: p.y, cam, moved: false })
@@ -290,7 +316,7 @@ export function Palace() {
     if (gesture.kind === 'pan') {
       // 在空白处点一下：先收起详情，再收起分组
       if (!gesture.moved) {
-        if (selected !== undefined) setSelected(undefined)
+        if (selected !== undefined) closeRoom()
         else setOpenGroup(undefined)
       }
       return
@@ -339,7 +365,7 @@ export function Palace() {
   // 阅览室展开时，它右边和下面的网格整体让开（原型 axisCoord）：第 i 条线的世界坐标
   const roomCell = (selected ?? lastRoom.current) !== undefined && proj.open > 0.001 ? cells.find(c => c.id === (selected ?? lastRoom.current)) : undefined
   const roomAt = roomCell !== undefined ? worldCell(roomCell) : undefined
-  const rsize = roomSize(size, chatOpen)
+  const rsize = roomSize(size, chatOpen, roomMode)
   const ax = (i: number, axis: 'col' | 'row'): number => {
     if (roomAt === undefined) return i * B
     const at = axis === 'col' ? roomAt.col : roomAt.row
@@ -400,10 +426,27 @@ export function Palace() {
         style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * (1 - proj.open), pointerEvents: proj.open > 0.001 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
-        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => setReading(c.id)} />
+        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => read(c.id)} />
       </div>
     )
   }
+
+  // 光球：宫殿里（平面、没开阅览室）或阅读时出现；打开笔记、轴测、拖动、添加时不出现（原型 palaceOrb.update 的 blocked）
+  const reader = selected !== undefined && roomMode === 'reader'
+  const orbView: OrbView | undefined = (() => {
+    if (cam === undefined || palace === undefined || size.w === 0) return undefined
+    if (proj.amount > 0.001 || dragging !== undefined || adding || gesture?.kind === 'pan') return undefined
+    const exclusions: Rect[] = [{ x: 0, y: 0, w: 280, h: 110 }, { x: size.w - 340, y: size.h - 80, w: 340, h: 80 }]
+    if (reader) {
+      if (proj.open < 0.999 || roomAt === undefined) return undefined
+      const x = cam.x + ax(roomAt.col, 'col') * cam.scale, y = cam.y + ax(roomAt.row, 'row') * cam.scale
+      return { width: size.w, height: size.h, x: cam.x, y: cam.y, spacing: B * cam.scale, occupied: [], exclusions: [exclusions[0]], readerRect: { x, y, w: rsize.w * cam.scale, h: rsize.h * cam.scale } }
+    }
+    if (proj.open > 0.001) return undefined
+    const shownCells = group !== undefined ? [...roots.filter(c => !covered(c)), ...children] : roots
+    if (group !== undefined && gsize !== undefined) exclusions.push({ x: cam.x + group.col * B * cam.scale, y: cam.y + group.row * B * cam.scale, w: gsize.cols * B * cam.scale, h: gsize.rows * B * cam.scale })
+    return { width: size.w, height: size.h, x: cam.x, y: cam.y, spacing: B * cam.scale, occupied: shownCells.map(worldCell), exclusions }
+  })()
 
   // 立起来的图标：抵消投影的旋转和倾斜，正对镜头，抬高并放大（原型 isometric.js 的 update）
   const det = m.a * m.d - m.b * m.c
@@ -454,7 +497,7 @@ export function Palace() {
 
       <header className="mp-masthead">
         <span className="mp-wordmark">Memory Palace</span>
-        {selected !== undefined && <button type="button" className="mp-back" aria-label="回到宫殿" onPointerDown={e => e.stopPropagation()} onClick={() => setSelected(undefined)}><span /></button>}
+        {selected !== undefined && <button type="button" className="mp-back" aria-label={roomMode === 'reader' ? '回到笔记' : '回到宫殿'} onPointerDown={e => e.stopPropagation()} onClick={() => (roomMode === 'reader' ? setRoomMode('notes') : closeRoom())}><span /></button>}
         {group !== undefined && selected === undefined && proj.open < 0.001 && <GroupBar group={group} empty={children.length === 0} onBack={() => setOpenGroup(undefined)} onError={setOpError} />}
       </header>
 
@@ -469,7 +512,8 @@ export function Palace() {
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 6-10 6L2 9Z M2 13l10 6 10-6 M2 17l10 6 10-6" /></svg>
           <span>{iso ? '平面' : '轴测'}</span>
         </button>
-        {!chatOpen && <button type="button" className="mp-round mp-ai-orb" title="和 AI 聊聊（真实的 Harness 对话）" onClick={() => setChatOpen(true)}>AI</button>}
+        {/* 光球没地方放（窗口太小、格子太密）时的备用入口 */}
+        {!orbShown && <button type="button" className="mp-round mp-ai-orb" title="和宫殿对话（真实的 Harness 对话）" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = rootRef.current!.getBoundingClientRect(); setOrbChat({ x: r.left - b.left - 120, y: Math.max(95, size.h - ORB_CHAT.h - 90), w: r.width, h: 0 }) }}>AI</button>}
         <div className="mp-zoom">
           <button type="button" onClick={() => zoomAt(1 / 1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) <= MIN_SCALE + 0.001}>−</button>
           <button type="button" className="mp-zoom-reset" title="显示全部" onClick={() => palace && setCam(iso ? spreadCamera(layout, palace.cells, size) : fitCamera(palace.cells, size))}>{Math.round((cam?.scale ?? 1) * 100)}%</button>
@@ -485,25 +529,37 @@ export function Palace() {
         const sx = cam.x + x * cam.scale, sy = cam.y + y * cam.scale
         return (
           <>
-            <div className="mp-room" style={{ ...rect(x, y, w, h), opacity: proj.open }}>
-              {proj.open > 0.6 && (
+            <div className={`mp-room ${roomMode === 'reader' ? 'mp-room-reader' : ''}`} style={{ ...rect(x, y, w, h), opacity: proj.open }}>
+              {proj.open > 0.6 && roomMode === 'notes' && (
                 <Room key={roomCell.id} palace={palace} cellId={roomCell.id} summary={summaries[roomCell.id]} tab={tab} onTab={setTab}
                   sessionId={chatOpen && roomSession?.cellId === roomCell.id ? roomSession.sessionId : undefined}
-                  onRead={() => setReading(roomCell.id)} onClose={() => setSelected(undefined)} />
+                  onRead={() => read(roomCell.id)} onClose={closeRoom} />
               )}
-              {shown && !chatOpen && <button type="button" className="mp-room-ai" title="和这本书对话" onPointerDown={e => e.stopPropagation()} onClick={() => setChatOpen(true)}>AI</button>}
+              {proj.open > 0.6 && roomMode === 'reader' && (
+                <RoomReader key={roomCell.id} cell={roomCell} onNotes={() => setRoomMode('notes')}
+                  onChat={() => setOrbChat({ x: sx + w * cam.scale - ORB_CHAT.w + 100, y: Math.max(20, sy - ORB_CHAT.h / 2), w: 0, h: 0 })} />
+              )}
+              {shown && roomMode === 'notes' && !chatOpen && <button type="button" className="mp-room-ai" title="和这本书对话" onPointerDown={e => e.stopPropagation()} onClick={() => setChatOpen(true)}>AI</button>}
             </div>
-            {shown && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open }} />}
-            {shown && chatOpen && proj.open > 0.6 && (
+            {shown && roomMode === 'notes' && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open }} />}
+            {shown && roomMode === 'notes' && chatOpen && proj.open > 0.6 && (
               <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={rsize.beside ? { left: sx - 16 - CHAT_W, top: sy, width: CHAT_W, height: h * cam.scale } : undefined}
                 onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} onClose={() => setChatOpen(false)} />
             )}
           </>
         )
       })()}
-      {chatOpen && palace !== undefined && selected === undefined && proj.open < 0.001 && (
-        <PalaceChat scope="palace" heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setChatOpen(false)} />
-      )}
+      <Orb view={orbView} label={reader ? '打开阅读 AI 对话' : '打开宫殿 AI 对话'} open={orbChat !== undefined} onShown={setOrbShown}
+        onToggle={at => setOrbChat(orbChat !== undefined ? undefined : at)} />
+      {orbChat !== undefined && palace !== undefined && (() => {
+        // 面板在光球下方（原型 positionPanel），放不下就往上挪
+        const ch = Math.min(ORB_CHAT.h, size.h - 120), cw = Math.min(ORB_CHAT.w, size.w - 36)
+        const dock = { left: clamp(orbChat.x - 100, 18, size.w - cw - 18), top: clamp(orbChat.y + orbChat.h + 18, 20, size.h - ch - 20), width: cw, height: ch }
+        return reader && roomCell !== undefined
+          ? <PalaceChat key={`orb-${roomCell.id}`} scope={roomCell.id} itemId={roomCell.id} dock={dock} heading="与书对话" context={`《${roomCell.title}》`}
+              onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} onClose={() => setOrbChat(undefined)} />
+          : <PalaceChat key="orb-palace" scope="palace" dock={dock} heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" onClose={() => setOrbChat(undefined)} />
+      })()}
       {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {
         const c = palace.cells.find(x => x.id === reading) as Cell
         return <ReadBook key={c.id} id={c.id} title={c.title} subtitle={c.subtitle} onClose={() => setReading(undefined)} onError={setOpError} />
@@ -511,6 +567,13 @@ export function Palace() {
       {adding && <AddDialog parentId={group?.id} onClose={() => setAdding(false)} />}
     </div>
   )
+}
+
+/** 阅览室这一格里的阅读器（EPUB）。 */
+function RoomReader({ cell, onNotes, onChat }: { cell: Cell; onNotes: () => void; onChat: () => void }) {
+  const { item, error } = useItem(cell.id)
+  if (item === undefined) return <p className="mp-hint mp-room-loading">{error ? `读取失败：${error}` : '正在打开…'}</p>
+  return <EpubReader item={item} title={cell.title} subtitle={cell.subtitle} onClose={onNotes} embedded={{ onNotes, onChat }} />
 }
 
 /** 分组展开时左上角：返回、改名、删除空分组。 */
