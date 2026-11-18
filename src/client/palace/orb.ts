@@ -117,7 +117,7 @@ export function collideCursor(ball: Ball, bounds: Bounds, cursor: Cursor, cruise
   nx /= length; ny /= length
   const closing = (ball.vx - cursor.vx) * nx + (ball.vy - cursor.vy) * ny
   if (closing < 0) { ball.vx -= 1.8 * closing * nx; ball.vy -= 1.8 * closing * ny }
-  const speed = Math.hypot(ball.vx, ball.vy), cap = cruise * 2.6
+  const speed = Math.hypot(ball.vx, ball.vy), cap = cruise * 2.2
   if (speed > cap) { ball.vx *= cap / speed; ball.vy *= cap / speed }
   if (dist < reach) {
     let x = clamp(cursor.x + nx * (reach + 0.5), bounds.radius, bounds.w - bounds.radius)
@@ -150,7 +150,7 @@ export function relaxSpeed(ball: Ball, cruise: number, dt: number): void {
 /** 在格子里放一个光球：位置随机（偏中间），方向随机，速度随格子大小。 */
 export function spawn(cell: Rect, view: OrbView, radius: number, random = Math.random): { ball: Ball; cruise: number } {
   const angle = (0.25 + random() * 0.5) * Math.PI
-  const cruise = clamp(view.spacing * 0.045, 7, 15) * 2.5 * 1.35
+  const cruise = clamp(view.spacing * 0.045, 7, 15) * 2.5 * 0.8
   const travelX = Math.max(1, cell.w - radius * 2), travelY = Math.max(1, cell.h - radius * 2)
   const aspect = view.readerRect !== undefined ? Math.min(1, travelY / travelX) : 1
   const vx = Math.cos(angle), vy = Math.sin(angle) * aspect, length = Math.hypot(vx, vy)

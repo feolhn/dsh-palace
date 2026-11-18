@@ -198,8 +198,8 @@ export function Orb({ view, label, open, onToggle, onShown }: {
           st.rest = false
           st.press = { id: e.pointerId, sx: x, sy: y, ox: x - st.cell.x - st.ball.x, oy: y - st.cell.y - st.ball.y, moved: false }
           try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* 忽略 */ }
-          e.currentTarget.classList.add('mp-orb-holding')
           if (st.view?.readerRect) return // 阅读时不能拖
+          e.currentTarget.classList.add('mp-orb-holding')
           st.hold = setTimeout(() => {
             if (!st.press || st.press.moved || !st.ball || !st.cell) return
             st.drag = { x: st.cell.x + st.ball.x, y: st.cell.y + st.ball.y, drop: st.cell.col !== undefined ? st.cell as Cell : undefined }

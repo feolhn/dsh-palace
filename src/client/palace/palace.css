@@ -195,6 +195,13 @@
 .mp-orb[hidden] { display: none; }
 .mp-orb:hover { background-color: #ffffff20 !important; }
 .mp-orb.mp-orb-holding { border-color: #fff !important; }
+/* 长按：外圈转一圈（0.5 秒）就可以拖了 */
+@property --mp-hold { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.mp-orb::after { content: ''; position: absolute; inset: -9px; border: 1.5px solid #fff; border-radius: 50%; corner-shape: round; opacity: 0; pointer-events: none;
+  mask: conic-gradient(#000 var(--mp-hold), transparent 0); }
+.mp-orb.mp-orb-holding::after { opacity: 1; animation: mp-orb-hold 500ms linear forwards; }
+.mp-orb.mp-orb-dragging::after { opacity: 0; }
+@keyframes mp-orb-hold { to { --mp-hold: 360deg; } }
 .mp-orb.mp-orb-dragging { cursor: grabbing; animation: none; }
 .mp-orb-target { position: absolute; z-index: 6; pointer-events: none; background: #ffffff18; border: 1px solid #ffffffb3; }
 @keyframes mp-orb-arrive { from { opacity: 0; } to { opacity: 1; } }

@@ -84,7 +84,7 @@ export function Room({ palace, cellId, summary, sessionId, tab, onTab, onRead, o
         )}
       </div>
 
-      <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} sessionId={sessionId} tab={current} onTab={onTab} hideTabs />
+      <Notebook id={cell.id} title={cell.title} subtitle={cell.subtitle} sessionId={sessionId} tab={current} onTab={onTab} onRead={onRead} hideTabs />
 
       {error && <p className="mp-error">{error}</p>}
       <div className="mp-room-footer">

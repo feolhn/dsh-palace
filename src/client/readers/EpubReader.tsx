@@ -210,7 +210,7 @@ export function EpubReader({ item, title, subtitle, onClose, embedded }: { item:
 
   if (embedded) {
     return (
-      <div className="rd-root rd-embedded">
+      <div className="rd-root rd-embedded" onPointerDown={e => e.stopPropagation()}>
         <button type="button" className="rd-menu" aria-label="阅读选项" aria-expanded={menu} onClick={() => setMenu(!menu)}>⋯</button>
         {menu && (
           <div className="rd-options">
