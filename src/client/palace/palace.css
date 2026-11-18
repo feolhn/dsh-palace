@@ -141,7 +141,7 @@
 .mp-chat-note { font-size: 12px; line-height: 1.8; color: var(--mp-quiet); padding: 8px 4px; }
 /* 对话开着时，阅览室让出右边 */
 .mp-chatting .mp-room { padding-right: min(436px, 50%); }
-.mp-chatting .mp-footer { right: min(436px, calc(100% - 200px)); }
+.mp-chatting .mp-footer { right: min(436px, calc(100% - 290px)); } /* 290：底栏宽约 266px，最窄 520px 时也不出画布 */
 
 /* 轴测视图（#42，移植自原型 isometric.css / connections.css）。地面是仿射平面，只有图标立起来 */
 .mp-root { --mp-facing: matrix(1,0,0,1,0,0); --mp-lift: 0px; --mp-relief-scale: 1; --mp-depth: 0; }

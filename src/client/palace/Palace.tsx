@@ -249,6 +249,10 @@ export function Palace() {
   const onUp = (e: RPointerEvent) => {
     if (gesture === undefined || e.pointerId !== gesture.id) return
     setGesture(undefined)
+    // 用松手的位置再判断一次（移动事件来得太快、还没重新渲染时，gesture 里的状态可能是旧的）
+    const up = local(e)
+    if (!gesture.moved && Math.hypot(up.x - gesture.sx, up.y - gesture.sy) > DRAG_THRESHOLD) gesture.moved = true
+    if (gesture.kind === 'cell') { gesture.px = up.x; gesture.py = up.y }
     if (gesture.kind === 'pan') {
       // 在空白处点一下：先收起详情，再收起分组
       if (!gesture.moved) {
