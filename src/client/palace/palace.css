@@ -28,7 +28,7 @@
 .mp-dots circle { fill: rgba(255, 255, 250, .94); }
 
 /* 格子：去封面，标准排版。字号随缩放（font-size 由 JS 按 scale 设置，下面用 em） */
-.mp-cell { position: absolute; cursor: pointer; transition: background .25s; }
+.mp-cell { position: absolute; font-size: 16px; transform-origin: 0 0; cursor: pointer; transition: background .25s; }
 .mp-cell:hover { background: rgba(255, 255, 255, .08); }
 .mp-cell.mp-selected { background: rgba(255, 255, 255, .14); }
 .mp-cell.mp-lifted { z-index: 6; cursor: grabbing; background: #abc8d7dd; box-shadow: 0 14px 35px #36536328, 0 0 0 1px #ffffffe0; transition: none; }
@@ -43,8 +43,8 @@
 
 /* 分组展开 */
 .mp-dim { position: absolute; inset: 0; background: rgba(87, 120, 138, .16); pointer-events: none; }
-.mp-group-frame { position: absolute; background: rgba(255, 253, 241, .42); box-shadow: 0 0 0 1px #fffef3, 0 20px 60px #294c6020; pointer-events: none; }
-.mp-drop { position: absolute; border: 1px solid #fffef3; background: #ffffed21; pointer-events: none; z-index: 5; }
+.mp-group-frame { position: absolute; transform-origin: 0 0; background: rgba(255, 253, 241, .42); box-shadow: 0 0 0 1px #fffef3, 0 20px 60px #294c6020; pointer-events: none; }
+.mp-drop { position: absolute; transform-origin: 0 0; border: 1px solid #fffef3; background: #ffffed21; pointer-events: none; z-index: 5; }
 
 /* 顶部、底部 */
 .mp-masthead { position: absolute; z-index: 7; left: 32px; top: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
@@ -91,7 +91,7 @@
 /* 书格子右上角的月亮：进入阅读 + 阅读进度。大小随缩放（em） */
 .mp-moon { position: absolute; right: .9em; top: .8em; width: 3.6em; display: flex; flex-direction: column; align-items: center; gap: .1em; padding: 0; z-index: 1; }
 .mp-moon svg { width: 3.6em; height: 3.6em; display: block; transition: transform .25s; }
-.mp-moon:hover svg { transform: scale(1.08); }
+.mp-moon:hover svg { filter: brightness(1.06) drop-shadow(0 0 6px #fff6d0aa); }
 .mp-moon-wash { fill: none; stroke: #fff5d6; stroke-width: 5; opacity: .5; }
 .mp-moon-ring { fill: none; stroke: #e5ba68; stroke-width: 5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; opacity: .85; }
 .mp-moon-pct { font-family: var(--mp-serif); font-size: .85em; letter-spacing: .03em; line-height: 1; }
@@ -141,4 +141,34 @@
 .mp-chat-note { font-size: 12px; line-height: 1.8; color: var(--mp-quiet); padding: 8px 4px; }
 /* 对话开着时，阅览室让出右边 */
 .mp-chatting .mp-room { padding-right: min(436px, 50%); }
-.mp-chatting .mp-footer { right: min(436px, calc(100% - 200px)); }
+.mp-chatting .mp-footer { right: min(436px, calc(100% - 290px)); } /* 290：底栏宽约 266px，最窄 520px 时也不出画布 */
+
+/* 轴测视图（#42，移植自原型 isometric.css / connections.css）。地面是仿射平面，只有图标立起来 */
+.mp-root { --mp-facing: matrix(1,0,0,1,0,0); --mp-lift: 0px; --mp-relief-scale: 1; --mp-depth: 0; }
+.mp-cell .mp-moon svg { position: relative; transform-origin: 50% 85%; transform: var(--mp-facing) translateY(var(--mp-lift)) scale(var(--mp-relief-scale)); }
+.mp-cell .mp-moon::before { content: ""; position: absolute; left: -.2em; top: .9em; width: 4em; height: 3em; border-radius: 50%; pointer-events: none; opacity: var(--mp-depth);
+  background: radial-gradient(ellipse at center, #36506436 0%, #36506420 30%, #36506409 56%, transparent 74%); filter: blur(6px); transform: translate(.3em, .5em) scale(var(--mp-relief-scale)); }
+.mp-iso .mp-cell-title, .mp-iso .mp-cell-meta, .mp-iso .mp-moon-pct { opacity: .5; }
+.mp-iso-folder { position: absolute; transform-origin: 0 0; border: 1px solid #fffef3b3; background: #fffdf142; pointer-events: none; }
+.mp-view-toggle { display: flex; align-items: center; gap: 7px; height: 35px; padding: 0 12px !important; border: 1px solid #fffffa85 !important; border-radius: 18px; background: #ffffff17 !important;
+  font-family: var(--mp-serif) !important; font-size: 12px; letter-spacing: .08em; }
+.mp-view-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1; }
+.mp-view-toggle[aria-pressed=true] { background: #fff7d638 !important; }
+
+.mp-arcs { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.mp-arc { opacity: .76; transition: opacity 220ms ease; }
+.mp-arc.is-related { opacity: 1; }
+.mp-arc.is-muted { opacity: .12; }
+.mp-arc path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.mp-arc-halo { stroke: #d9eaf3; stroke-width: 7; opacity: .46; filter: blur(3px); }
+.mp-arc-outline { stroke: #7e9aaf; stroke-width: 2.7; opacity: .54; }
+.mp-arc-core { stroke: #f0f7fc; stroke-width: 1.15; }
+.mp-arc-current { stroke: #fff; stroke-width: 1.7; stroke-dasharray: 14 110; opacity: .9; animation: mp-current 3.7s linear infinite, mp-shimmer 4.9s ease-in-out infinite; animation-delay: var(--arc-delay); }
+.mp-arc-branches { stroke: #f6fbff; stroke-width: .65; opacity: .48; }
+.is-related .mp-arc-halo { opacity: .8; }
+.mp-arc-why { position: absolute; z-index: 6; transform: translate(-50%, -130%); max-width: 16em; padding: 5px 10px; pointer-events: none;
+  font: 12px/1.5 var(--mp-serif); letter-spacing: .03em; text-align: center; color: var(--mp-ink); background: #eef4f2e6; border: 1px solid #ffffffd0; border-radius: 12px; box-shadow: 0 4px 16px #294c6018; }
+.mp-arc-why span { color: var(--mp-quiet); }
+@keyframes mp-current { to { stroke-dashoffset: -248; } }
+@keyframes mp-shimmer { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mp-arc-current { animation: none; } .mp-arc { transition: none; } }
