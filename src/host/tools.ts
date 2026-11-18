@@ -4,6 +4,7 @@
  */
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import * as core from '../core/ops.ts'
+import { Memory, PAGE_LIMIT } from '../core/memory.ts'
 import { ShelfError, type PalaceStore } from '../core/store.ts'
 import { findSection, paceOf, progressOf, type Card, type Cell, type Item } from '../shared/palace.ts'
 import { addBook, saveImage } from './books.ts'
@@ -57,7 +58,7 @@ function itemDetail(store: PalaceStore, id: string): string {
     ? '（还没有目录）'
     : item.chapters.map((c, i) => `${i + 1}. ${c.title}\n${c.sections.map(s => `   - ${s.done ? '[x]' : '[ ]'} ${s.title} (section_id=${s.id})`).join('\n')}`).join('\n')
   const cards = item.cards.slice(-20).map(k => `- ${CARD_LABEL[k.type]} ${k.id}：${(k.quote ?? k.note ?? '').slice(0, 60)}`).join('\n')
-  const insps = item.inspirations.slice(-10).map(i => `- ${i.createdAt.slice(0, 10)} ${i.title}`).join('\n')
+  const insps = item.inspirations.slice(-10).map(i => `- ${i.id} ${i.createdAt.slice(0, 10)} ${i.title}`).join('\n')
   return `《${cell.title}》目录：\n${outline}`
     + (cards ? `\n\n最近的卡片：\n${cards}` : '')
     + (insps ? `\n\n灵感：\n${insps}` : '')
@@ -77,7 +78,21 @@ async function guard(run: () => Promise<string>): Promise<string> {
   }
 }
 
-export function createTools(store: PalaceStore, active: ActiveItems) {
+export function createTools(store: PalaceStore, active: ActiveItems, memory = new Memory(store)) {
+  // 顺手维护的提示：每个对话、每格、每种提示只说一次，免得用户只想记张卡片时 AI 去大扫除
+  const nudged = new Set<string>()
+  const nudge = (exec: { agent?: { id: string } }, id: string, kind: 'wiki' | 'link'): string => {
+    const key = `${exec.agent?.id ?? ''}:${id}:${kind}`
+    if (nudged.has(key)) return ''
+    if (kind === 'wiki') {
+      const debt = memory.debt(id)
+      if (debt < 3) return ''
+      nudged.add(key)
+      return `\n（提示：这一格的 wiki 之后新增了 ${debt} 条卡片 / 灵感，聊完方便时用 shelf_wiki_write 更新；不用打断用户。）`
+    }
+    nudged.add(key)
+    return '\n（提示：如果这条和宫殿里别的格子有关——同一个念头、主题或疑问——可以用 shelf_link 连一条电弧。）'
+  }
   const activeOf = (exec: { agent?: { id: string } }) => (exec.agent ? active.get(exec.agent.id) : undefined)
   const targetOf = (given: unknown, exec: { agent?: { id: string } }) => {
     const id = typeof given === 'string' && given !== '' ? given : activeOf(exec)
@@ -279,6 +294,7 @@ export function createTools(store: PalaceStore, active: ActiveItems) {
           const title = store.getPalace().cells.find(c => c.id === id)?.title
           return `已记入《${title}》${where(store.getItem(id), card)}的${CARD_LABEL[card.type]}`
             + (args.image ? (image ? '，原图已保存。' : '。（没有找到原图）') : '。')
+            + nudge(exec, id, 'wiki')
         })
       },
     }),
@@ -300,7 +316,91 @@ export function createTools(store: PalaceStore, active: ActiveItems) {
           const id = targetOf(args.item_id, exec)
           const insp = await core.addInspiration(store, { id, title: args.title, body: args.body, cardIds: args.card_ids, sessionId: exec.agent?.id })
           const title = store.getPalace().cells.find(c => c.id === id)?.title
-          return `已存到《${title}》的灵感：「${insp.title}」`
+          return `已存到《${title}》的灵感：「${insp.title}」 id=${insp.id}` + nudge(exec, id, 'link') + nudge(exec, id, 'wiki')
+        })
+      },
+    }),
+    defineTool({
+      name: 'shelf_wiki_read',
+      description: '读一页记忆：target 填格子 id 读这一格的 wiki（一句话、主题词、正文），填 me 读「关于用户」。当前格子和 me 已经在对话背景里，读别的格子时才需要调用。',
+      parameters: {
+        target: { type: 'string', required: true, description: '格子 id 或 me' },
+      },
+      output: stringOut,
+      async execute(args) {
+        return guard(async () => {
+          const page = memory.readPage(args.target)
+          if (args.target !== 'me') {
+            const cell = store.getPalace().cells.find(c => c.id === args.target)
+            if (cell === undefined || cell.kind === 'group') throw new ShelfError('格子不存在')
+            const debt = memory.debt(cell.id)
+            if (page === undefined) return `《${cell.title}》还没有 wiki。` + (debt > 0 ? `已有 ${debt} 条卡片 / 灵感，可以用 shelf_overview 查看后写一页。` : '')
+            return `《${cell.title}》wiki（${page.writtenAt.slice(0, 10)}）\n一句话：${page.summary ?? '（无）'}\n主题词：${page.topics?.join('、') ?? '（无）'}\n\n${page.body}`
+              + (debt > 0 ? `\n\n（这一页之后新增了 ${debt} 条卡片 / 灵感）` : '')
+          }
+          return page === undefined ? '还没有关于用户的记录。' : `关于用户（${page.writtenAt.slice(0, 10)}）：\n${page.body}`
+        })
+      },
+    }),
+
+    defineTool({
+      name: 'shelf_wiki_write',
+      description: `整页重写一页记忆（会覆盖旧内容，先在旧内容基础上改）。正文最多 ${PAGE_LIMIT} 字，超了会被拒绝：合并相近的、删掉过时的再写。`
+        + 'target=me：关于用户的长期记忆，分「长期」「最近」两段，只记用户说过或做过的事实（喜好、正在经历的事、深入聊过的话题），不贴性格标签。'
+        + 'target=格子 id：这一格的 wiki，只写卡片和灵感里没有的东西（对用户意味着什么、卡在哪、反复出现的主题、没解决的疑问），句末用 [^卡片或灵感 id] 标出依据；'
+        + 'summary 一句话（≤40 字），topics 3–5 个主题词（自由填写，跨格子相通的词更好，比如「等待」「孤独」）。',
+      parameters: {
+        target: { type: 'string', required: true, description: '格子 id 或 me' },
+        body: { type: 'string', required: true, description: 'Markdown 正文' },
+        summary: { type: 'string' },
+        topics: { type: 'array', items: { type: 'string' } },
+      },
+      output: stringOut,
+      async execute(args) {
+        return guard(async () => {
+          const page = memory.writePage(args.target, { body: args.body, summary: args.summary, topics: args.topics })
+          if (args.target === 'me') return '已更新「关于用户」。'
+          const title = store.getPalace().cells.find(c => c.id === args.target)?.title
+          return `已更新《${title}》的 wiki` + (page.topics?.length ? `（主题词：${page.topics.join('、')}）` : '') + '。'
+        })
+      },
+    }),
+
+    defineTool({
+      name: 'shelf_link',
+      description: '在两格之间连一条电弧（联想）：用户的某个想法、主题或疑问把这两格连在一起时调用。不需要两本书互相提及，连的是用户的念头。'
+        + 'why 一句话说清连在哪（≤40 字，例如「都在写等待：盖茨比等绿灯，你在等 offer」）；evidence 填两端各至少一张卡片或一条灵感的 id。'
+        + '同样的证据不能重复连；有新证据就再连一条，电弧会变粗。用户剪断过的两格，除非用户明确要求，否则不要再连。',
+      parameters: {
+        from: { type: 'string', required: true, description: '格子 id' },
+        to: { type: 'string', required: true, description: '格子 id' },
+        why: { type: 'string', required: true },
+        evidence: { type: 'array', items: { type: 'string' }, required: true, description: '卡片 / 灵感 id' },
+        user_asked: { type: 'boolean', description: '用户明确要求连（剪断过的也能重连）' },
+      },
+      output: stringOut,
+      async execute(args, exec) {
+        return guard(async () => {
+          const link = memory.addLink({ from: args.from, to: args.to, why: args.why, evidence: args.evidence, sessionId: exec.agent?.id, userAsked: args.user_asked === true })
+          const cells = store.getPalace().cells
+          const arc = memory.arcs().find(a => a.links.some(l => l.id === link.id))
+          return `已连上《${cells.find(c => c.id === link.from)?.title}》↔《${cells.find(c => c.id === link.to)?.title}》：${link.why}（现在 ${arc?.strands ?? 1} 股）`
+        })
+      },
+    }),
+
+    defineTool({
+      name: 'shelf_unlink',
+      description: '剪断两格之间的电弧（用户说这两个没关系、连错了时调用）。之前的联想都不再显示，以后也不会自动再连。',
+      parameters: {
+        from: { type: 'string', required: true },
+        to: { type: 'string', required: true },
+      },
+      output: stringOut,
+      async execute(args) {
+        return guard(async () => {
+          memory.cut({ from: args.from, to: args.to })
+          return '已剪断。'
         })
       },
     }),
