@@ -431,7 +431,7 @@ export function Palace() {
 
       {spreading && [...layout.frames.values()].map((e) => {
         const p = worldCell(e.cell), t = proj.spread
-        return <div key={e.cell.id} className="mp-iso-folder" style={{ ...rect(p.col * B, p.row * B, (1 + (e.w - 1) * t) * B, (1 + (e.h - 1) * t) * B), opacity: t }} />
+        return <div key={e.cell.id} className="mp-iso-folder" style={{ ...rect(p.col * B, p.row * B, (1 + (e.w - 1) * t) * B, (1 + (e.h - 1) * t) * B), opacity: t * (1 - proj.open) }} />
       })}
       {spreading && cam !== undefined && proj.amount > 0.001 && (
         <Arcs arcs={arcs} cells={cells} hover={hover} amount={proj.amount} m={m} cam={cam} size={size} B={B} worldCell={worldCell} />
