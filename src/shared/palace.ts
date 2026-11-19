@@ -194,8 +194,11 @@ function periodOf(item: Item): CellSummary['period'] {
     ...item.inspirations.map(i => i.createdAt),
   ].filter((t): t is string => typeof t === 'string' && t !== '')
   if (times.length === 0) return item.finishedAt ? { start: monthOf(item.finishedAt), end: monthOf(item.finishedAt) } : undefined
-  const start = monthOf(times.reduce((a, b) => (a < b ? a : b)))
-  return { start, ...(item.finishedAt ? { end: monthOf(item.finishedAt) } : {}) }
+  const first = monthOf(times.reduce((a, b) => (a < b ? a : b)))
+  if (!item.finishedAt) return { start: first }
+  // 读完后才补记卡片：开始不晚于结束
+  const end = monthOf(item.finishedAt)
+  return { start: first < end ? first : end, end }
 }
 
 /** ISO 时间 → 本地 YYYY-MM。 */
