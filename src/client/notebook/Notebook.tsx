@@ -17,7 +17,7 @@ import { EpubReader } from '../readers/EpubReader.tsx'
 
 export type NotebookTab = 'progress' | 'cards' | 'inspirations'
 
-export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
+export function Notebook({ id, title, subtitle, sessionId, tab, onTab, onRead, hideTabs = false }: {
   id: string
   title: string
   /** 备注（作者、中文名……），分享卡片的出处用。 */
@@ -26,6 +26,10 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
   sessionId?: string
   tab: NotebookTab
   onTab: (tab: NotebookTab) => void
+  /** 「继续读」交给宫殿（在这一格里打开阅读器）；不给就自己弹出阅读器。 */
+  onRead?: () => void
+  /** 全屏阅览室里标签是画面顶上的舷窗，这里不画。 */
+  hideTabs?: boolean
 }) {
   const { item, error } = useItem(id)
   const [picking, setPicking] = useState(false)
@@ -43,15 +47,15 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
 
   return (
     <div className="nb">
-      <div className="nb-tabs">
+      {!hideTabs && <div className="nb-tabs">
         {tabs.map(([t, label]) => (
           <button key={t} type="button" className={current === t ? 'nb-on' : ''} onClick={() => onTab(t)}>
             {label}{count(t) ? <small>{count(t)}</small> : null}
           </button>
         ))}
-      </div>
+      </div>}
       {opError && <div className="nb-error" onClick={() => setOpError(undefined)}>{opError}</div>}
-      {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} title={title} subtitle={subtitle} onPick={() => setPicking(true)} onError={setOpError} />}
+      {current === 'progress' && <ProgressTab key={item.targetDate ?? ''} item={item} title={title} subtitle={subtitle} onPick={() => setPicking(true)} onRead={onRead} onError={setOpError} />}
       {current === 'cards' && <CardsTab item={item} title={title} subtitle={subtitle} onError={setOpError} />}
       {current === 'inspirations' && <InspirationsTab item={item} title={title} sessionId={sessionId} onError={setOpError} />}
     </div>
@@ -60,7 +64,7 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab }: {
 
 // ---------- 进度 ----------
 
-function ProgressTab({ item, title, subtitle, onPick, onError }: { item: Item; title: string; subtitle?: string; onPick: () => void; onError: (m: string) => void }) {
+function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item: Item; title: string; subtitle?: string; onPick: () => void; onRead?: () => void; onError: (m: string) => void }) {
   const run = useOp(onError)
   const [reading, setReading] = useState(false)
   const p = progressOf(item)
@@ -99,7 +103,7 @@ function ProgressTab({ item, title, subtitle, onPick, onError }: { item: Item; t
       )}
       {item.source?.type === 'epub' && (
         <div className="nb-row">
-          <button type="button" className="nb-btn nb-primary" onClick={() => setReading(true)}>{item.position ? '继续读' : '开始读'}</button>
+          <button type="button" className="nb-btn nb-primary" onClick={() => (onRead ? onRead() : setReading(true))}>{item.position ? '继续读' : '开始读'}</button>
           {item.position && <span className="nb-small nb-muted">读到 {Math.round(item.position.percent * 100)}%</span>}
         </div>
       )}

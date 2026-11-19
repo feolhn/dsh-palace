@@ -42,7 +42,7 @@ interface EpubBook {
   ready: Promise<void>
   loaded: { navigation: Promise<{ toc: NavItem[] }> }
   spine: { length: number }
-  locations: { generate(chars: number): Promise<unknown>; percentageFromCfi(cfi: string): number; length(): number }
+  locations: { generate(chars: number): Promise<unknown>; percentageFromCfi(cfi: string): number; cfiFromPercentage(p: number): string; length(): number }
   renderTo(el: HTMLElement, opts: object): Rendition
   destroy(): void
 }
@@ -80,6 +80,8 @@ export interface EpubHandle {
   unhighlight(cfi: string): void
   clearSelection(): void
   setFontSize(px: number): void
+  /** 跳到全书 0–1 的位置（全书切分完之前不可用，返回 false）。 */
+  seek(percent: number): boolean
   destroy(): void
 }
 
@@ -263,6 +265,12 @@ export async function mountEpub(el: HTMLElement, opts: {
     unhighlight: (cfi) => { try { rendition.annotations.remove(cfi, 'highlight') } catch { /* 已经没有了 */ } },
     clearSelection: () => { for (const c of rendition.getContents()) c.window.getSelection()?.removeAllRanges() },
     setFontSize: px => rendition.themes.override('font-size', `${px}px`, true),
+    seek: (p) => {
+      if (!locationsReady) return false
+      turning = false
+      void rendition.display(book.locations.cfiFromPercentage(Math.max(0, Math.min(1, p)))).catch(() => undefined)
+      return true
+    },
     destroy: () => {
       observer.disconnect()
       clearTimeout(resizeTimer)
