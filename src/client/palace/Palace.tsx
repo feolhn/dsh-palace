@@ -9,7 +9,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import type { Cell, CellSummary } from '../../shared/palace.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { CellSheet } from './CellSheet.tsx'
-import { Moon } from './Moon.tsx'
+import { Moon, percentText } from './Moon.tsx'
+import { iconOf } from './icons.ts'
 import { ReadBook } from './ReadBook.tsx'
 import { PalaceChat } from '../chat/PalaceChat.tsx'
 import { palaceOp, useArcs, usePalace } from './data.ts'
@@ -324,6 +325,15 @@ export function Palace() {
     for (const c of cells) if (c.parentId !== null) m.set(c.parentId, (m.get(c.parentId) ?? 0) + 1)
     return m
   }, [cells])
+  // 分组的进度环：组里每一格都有进度时取平均（原型 updateMoon）
+  const groupPercent = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const g of cells.filter(c => c.kind === 'group')) {
+      const ps = cells.filter(c => c.parentId === g.id).map(c => summaries[c.id]?.percent)
+      if (ps.length > 0 && ps.every(p => p !== undefined)) m.set(g.id, (ps as number[]).reduce((a, b) => a + b, 0) / ps.length)
+    }
+    return m
+  }, [cells, summaries])
 
   // 分组展开后，被框盖住的最外层格子先不画（避免透出来）
   const covered = (c: Cell) => group !== undefined && gsize !== undefined
@@ -344,7 +354,7 @@ export function Palace() {
         style={{ ...rect(x, y, B, B), opacity: spreading && c.parentId !== null ? proj.spread : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
-        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} onRead={() => setReading(c.id)} />
+        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => setReading(c.id)} />
       </div>
     )
   }
@@ -363,6 +373,14 @@ export function Palace() {
       style={relief}
       onPointerDown={onBackgroundDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setGesture(undefined)}>
       <div className="mp-paper" />
+      <svg className="mp-defs" aria-hidden="true"><defs>
+        {/* 进度环的水彩边（原型 #watercolor-ring） */}
+        <filter id="mp-watercolor-ring" x="-35%" y="-35%" width="170%" height="170%">
+          <feTurbulence type="fractalNoise" baseFrequency=".12" numOctaves="2" seed="11" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.8" />
+          <feGaussianBlur stdDeviation=".45" />
+        </filter>
+      </defs></svg>
       {cam !== undefined && <Grid cam={cam} size={size} m={m} />}
 
       {spreading && [...layout.frames.values()].map((e) => {
@@ -461,22 +479,27 @@ function dropTarget(cells: Cell[], openGroup: string | undefined, tile: { col: n
   return { parentId: null, col, row }
 }
 
-function CellFace({ cell, summary, count, onRead }: { cell: Cell; summary?: CellSummary; count: number; onRead: () => void }) {
-  let meta: string | undefined
-  if (cell.kind === 'group') meta = `${count} 项`
-  else if (summary !== undefined) {
-    if (summary.finished) meta = '读完了'
-    else if (summary.total > 0) meta = `${summary.done} / ${summary.total}${summary.perDay !== undefined && summary.perDay > 0 ? ` · 每天约 ${summary.perDay} 节` : ''}`
-    else if (summary.cards > 0) meta = `${summary.cards} 张卡片`
-  }
+/**
+ * 格子正面（移植自原型的 .cell，规则见 Discussion #37）：左上角不放东西；右上角水彩图标，百分比在图标下面；
+ * 左下角大字标题最多两行，上面一行小字（备注：作者、中文名……用户想填什么都行）；右边竖排阅读起止时间。
+ */
+function CellFace({ cell, summary, count, groupPercent, onRead }: { cell: Cell; summary?: CellSummary; count: number; groupPercent?: number; onRead: () => void }) {
+  const readable = summary?.source !== undefined
+  const percent = cell.kind === 'group' ? groupPercent : summary?.percent
+  // 右边竖排：阅读起止月份，如 2026.11-now、2026.11-2026.12（原型 formatPeriod）
+  const p = summary?.period
+  const period = p === undefined ? undefined : `${p.start.replace('-', '.')}-${p.end !== undefined ? p.end.replace('-', '.') : 'now'}`
   return (
     <>
-      {summary?.source !== undefined && <Moon percent={summary.percent} title={cell.title} onOpen={onRead} />}
-      {meta !== undefined && <span className="mp-cell-meta">{meta}</span>}
+      <Moon icon={iconOf(cell)} percent={percent}
+        label={readable ? `阅读《${cell.title}》${percent !== undefined ? ` · 已读 ${percentText(percent)}` : ''}` : cell.title}
+        onOpen={readable ? onRead : undefined} />
+      {cell.kind === 'group' && <span className="mp-group-count">{count} 项</span>}
       <span className="mp-cell-title">
-        {cell.subtitle !== undefined && <span className="mp-cell-sub">{cell.subtitle}</span>}
-        {cell.title}
+        {cell.subtitle !== undefined && <span className="mp-cell-sub" title={cell.subtitle}>{cell.subtitle}</span>}
+        <span className="mp-cell-main" title={cell.title}>{cell.title}</span>
       </span>
+      {period !== undefined && <span className="mp-period">{period}</span>}
     </>
   )
 }

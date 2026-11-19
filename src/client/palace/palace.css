@@ -15,13 +15,8 @@
 .mp-root button { cursor: pointer; border: 0; background: none; padding: 0; }
 .mp-root button:disabled { opacity: .35; cursor: default; }
 
-/* 蓝纸：上深下浅的渐变 + 很淡的颗粒（SVG 噪点，代码生成） */
-.mp-paper {
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #93b8cf 0%, #a3c3d5 45%, #bcd3de 100%);
-}
+/* 蓝纸：原型的 blue-paper.svg（渐变 + 程序生成的纸纹颗粒，没有位图） */
+.mp-paper { position: absolute; inset: 0; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='1200' viewBox='0 0 1200 1200' preserveAspectRatio='none'%3E %3Cdefs%3E %3ClinearGradient id='blue' x1='0' y1='0' x2='0' y2='1' gradientUnits='objectBoundingBox'%3E %3Cstop offset='0' stop-color='%2393b8cf'/%3E %3Cstop offset='0.24' stop-color='%239abdd1'/%3E %3Cstop offset='0.50' stop-color='%23a9c8d7'/%3E %3Cstop offset='0.76' stop-color='%23b8cfdb'/%3E %3Cstop offset='1' stop-color='%23bfd3de'/%3E %3C/linearGradient%3E %3CradialGradient id='wash' cx='0.14' cy='0.44' r='0.83'%3E %3Cstop offset='0' stop-color='%23c7e0dd' stop-opacity='0.10'/%3E %3Cstop offset='1' stop-color='%23c7e0dd' stop-opacity='0'/%3E %3C/radialGradient%3E %3Cfilter id='paper' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E %3CfeTurbulence type='fractalNoise' baseFrequency='0.008 0.011' numOctaves='3' seed='31' result='mottle'/%3E %3CfeColorMatrix in='mottle' type='matrix' values='0.06 0 0 0 0.47 0.06 0 0 0 0.47 0.06 0 0 0 0.47 0 0 0 0 1' result='softMottle'/%3E %3CfeBlend in='softMottle' in2='SourceGraphic' mode='soft-light' result='pigment'/%3E %3CfeTurbulence type='fractalNoise' baseFrequency='0.105 0.17' numOctaves='3' seed='18' result='fibres'/%3E %3CfeColorMatrix in='fibres' type='matrix' values='0.12 0 0 0 0.44 0.12 0 0 0 0.44 0.12 0 0 0 0.44 0 0 0 0 1' result='softFibres'/%3E %3CfeBlend in='softFibres' in2='pigment' mode='soft-light' result='paperBody'/%3E %3CfeTurbulence type='fractalNoise' baseFrequency='0.48 0.54' numOctaves='3' seed='57' result='grain'/%3E %3CfeColorMatrix in='grain' type='matrix' values='0.22 0 0 0 0.39 0.22 0 0 0 0.39 0.22 0 0 0 0.39 0 0 0 0 1' result='neutralGrain'/%3E %3CfeBlend in='neutralGrain' in2='paperBody' mode='soft-light'/%3E %3C/filter%3E %3C/defs%3E %3Cg filter='url%28%23paper%29'%3E %3Crect width='1200' height='1200' fill='url%28%23blue%29'/%3E %3Crect width='1200' height='1200' fill='url%28%23wash%29'/%3E %3C/g%3E %3C/svg%3E") center / 100% 100% no-repeat; }
 
 .mp-grid { position: absolute; left: 0; top: 0; pointer-events: none; }
 .mp-lines line { stroke: var(--mp-line); stroke-width: .8; }
@@ -32,14 +27,13 @@
 .mp-cell:hover { background: rgba(255, 255, 255, .08); }
 .mp-cell.mp-selected { background: rgba(255, 255, 255, .14); }
 .mp-cell.mp-lifted { z-index: 6; cursor: grabbing; background: #abc8d7dd; box-shadow: 0 14px 35px #36536328, 0 0 0 1px #ffffffe0; transition: none; }
-.mp-cell-title {
-  position: absolute; left: 1.55em; right: 2.4em; bottom: 1.5em;
-  font-family: var(--mp-serif); font-size: 1.85em; line-height: 1.12; letter-spacing: -.02em;
-  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
-}
-.mp-cell-sub { display: block; font-size: .55em; line-height: 1.4; letter-spacing: .06em; margin-bottom: .4em; opacity: .85; }
-.mp-cell-meta { position: absolute; left: 2em; top: 1.7em; font-size: .8em; letter-spacing: .08em; color: var(--mp-quiet); }
-.mp-group .mp-cell-title::before { content: ""; display: block; width: 1.1em; height: 1px; background: currentColor; opacity: .5; margin-bottom: .5em; }
+/* 格子正面：移植原型 style.css 的 .cell-title / .period-label / .group-count（scale = 1 时的像素，整个格子由 transform 缩放） */
+.mp-cell-title { position: absolute; left: 25px; right: 48px; bottom: 24px; font-family: var(--mp-serif); font-weight: 400; overflow-wrap: anywhere; }
+.mp-cell-sub { display: block; font-size: 18px; line-height: 1.4; letter-spacing: 1px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-cell-main { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 30px; line-height: 1.1; letter-spacing: -.4px; max-height: 2.2em; }
+.mp-period { position: absolute; right: 18px; bottom: 24px; transform: rotate(-90deg) translateX(100%); transform-origin: bottom right; font: 400 13px/1 var(--mp-serif); letter-spacing: .75px; white-space: nowrap; padding: 2px 0; opacity: .8; }
+.mp-group-count { position: absolute; left: 25px; bottom: 113px; font: 12px var(--mp-serif); letter-spacing: .7px; opacity: .65; }
+.mp-group:has(.mp-cell-sub) .mp-group-count { bottom: 142px; }
 
 /* 分组展开 */
 .mp-dim { position: absolute; inset: 0; background: rgba(87, 120, 138, .16); pointer-events: none; }
@@ -88,13 +82,21 @@
 .mp-sheet-moon .mp-moon { position: static; font-size: 16px; }
 .mp-sheet:has(.mp-sheet-moon) .mp-sheet-title, .mp-sheet:has(.mp-sheet-moon) .mp-sheet-sub { width: calc(100% - 96px); }
 
-/* 书格子右上角的月亮：进入阅读 + 阅读进度。大小随缩放（em） */
-.mp-moon { position: absolute; right: .9em; top: .8em; width: 3.6em; display: flex; flex-direction: column; align-items: center; gap: .1em; padding: 0; z-index: 1; }
-.mp-moon svg { width: 3.6em; height: 3.6em; display: block; transition: transform .25s; }
-.mp-moon:hover svg { filter: brightness(1.06) drop-shadow(0 0 6px #fff6d0aa); }
-.mp-moon-wash { fill: none; stroke: #fff5d6; stroke-width: 5; opacity: .5; }
-.mp-moon-ring { fill: none; stroke: #e5ba68; stroke-width: 5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; opacity: .85; }
-.mp-moon-pct { font-family: var(--mp-serif); font-size: .85em; letter-spacing: .03em; line-height: 1; }
+/* 水彩图标 + 进度环（移植原型 .moon-button / .moon-halo / .moon-ring） */
+.mp-moon { position: absolute; right: 18px; top: 17px; width: 77px; height: 95px; padding: 0; z-index: 1; }
+.mp-moon-relief { position: absolute; left: 0; top: 0; width: 77px; height: 77px; transform-origin: 38.5px 53px; }
+.mp-moon-relief img { position: absolute; left: -10px; top: -10px; width: 97px; height: 97px; pointer-events: none; transition: filter .25s; }
+.mp-moon:hover .mp-moon-relief img { filter: brightness(1.05) drop-shadow(0 0 6px #fff6d0aa); }
+.mp-moon-halo { position: absolute; inset: 2px 1px 2px; border-radius: 50%; background: radial-gradient(circle, transparent 42%, #fff2b83d 59%, #f7efd137 68%, transparent 74%); filter: blur(2px); opacity: .75; }
+.mp-moon-ring { position: absolute; left: 0; top: 0; width: 77px; height: 77px; overflow: visible; pointer-events: none; opacity: .75; }
+.mp-moon-ring circle { fill: none; stroke-width: 6; filter: url(#mp-watercolor-ring); }
+.mp-ring-wash { stroke: #fff5d6; opacity: .45; }
+.mp-ring-progress { stroke: #e5ba68; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dasharray .5s; }
+.mp-moon-pct { position: absolute; top: 79px; left: 0; width: 100%; text-align: center; font: 15px/1 var(--mp-serif); letter-spacing: .6px; }
+.mp-moon-shadow { position: absolute; left: 6px; top: 18px; width: 74px; height: 57px; border-radius: 50%; pointer-events: none; opacity: var(--mp-depth);
+  background: radial-gradient(ellipse at center, #36506436 0%, #36506420 30%, #36506409 56%, transparent 74%); filter: blur(6px); transform: translate(6px, 10px) scale(var(--mp-relief-scale)); }
+.mp-defs { position: absolute; width: 0; height: 0; }
+
 .mp-sheet-title, .mp-sheet-sub { background: transparent; border: 0; border-bottom: 1px solid transparent; padding: 3px 0; width: 100%; }
 .mp-sheet-title:hover, .mp-sheet-title:focus, .mp-sheet-sub:hover, .mp-sheet-sub:focus { border-bottom-color: #7a99a455; outline: none; }
 .mp-sheet-title { font-family: var(--mp-serif) !important; font-size: 30px !important; line-height: 1.2; letter-spacing: -.01em; }
@@ -145,10 +147,8 @@
 
 /* 轴测视图（#42，移植自原型 isometric.css / connections.css）。地面是仿射平面，只有图标立起来 */
 .mp-root { --mp-facing: matrix(1,0,0,1,0,0); --mp-lift: 0px; --mp-relief-scale: 1; --mp-depth: 0; }
-.mp-cell .mp-moon svg { position: relative; transform-origin: 50% 85%; transform: var(--mp-facing) translateY(var(--mp-lift)) scale(var(--mp-relief-scale)); }
-.mp-cell .mp-moon::before { content: ""; position: absolute; left: -.2em; top: .9em; width: 4em; height: 3em; border-radius: 50%; pointer-events: none; opacity: var(--mp-depth);
-  background: radial-gradient(ellipse at center, #36506436 0%, #36506420 30%, #36506409 56%, transparent 74%); filter: blur(6px); transform: translate(.3em, .5em) scale(var(--mp-relief-scale)); }
-.mp-iso .mp-cell-title, .mp-iso .mp-cell-meta, .mp-iso .mp-moon-pct { opacity: .5; }
+.mp-cell .mp-moon-relief { transform: var(--mp-facing) translateY(var(--mp-lift)) scale(var(--mp-relief-scale)); }
+.mp-iso .mp-cell-title, .mp-iso .mp-period, .mp-iso .mp-group-count, .mp-iso .mp-moon-pct { opacity: .5; }
 .mp-iso-folder { position: absolute; transform-origin: 0 0; border: 1px solid #fffef3b3; background: #fffdf142; pointer-events: none; }
 .mp-view-toggle { display: flex; align-items: center; gap: 7px; height: 35px; padding: 0 12px !important; border: 1px solid #fffffa85 !important; border-radius: 18px; background: #ffffff17 !important;
   font-family: var(--mp-serif) !important; font-size: 12px; letter-spacing: .08em; }

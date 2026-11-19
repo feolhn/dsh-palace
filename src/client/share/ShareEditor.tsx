@@ -169,7 +169,7 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
                 <>
                   <input className="sh-input" value={sourceOf(draft, fallbackSource)} onChange={e => update({ source: e.target.value })} />
                   {draft.source !== undefined && draft.source !== fallbackSource && (
-                    <button type="button" className="sh-link" onClick={() => update({ source: undefined })}>恢复书名和作者</button>
+                    <button type="button" className="sh-link" onClick={() => update({ source: undefined })}>恢复默认出处</button>
                   )}
                 </>
               )}

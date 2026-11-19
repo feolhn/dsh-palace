@@ -117,7 +117,7 @@ export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Ce
   const kind = args.kind
   if (kind !== 'book' && kind !== 'note' && kind !== 'group') throw new ShelfError('格子类型应为 book / note / group')
   const title = text(args.title, '标题')
-  const subtitle = optionalText(args.subtitle, '副标题')
+  const subtitle = optionalText(args.subtitle, '备注')
   const source = kind === 'book' ? sourceOf(args.source) : null
   const targetDate = optionalDate(args.targetDate, '目标日期')
   return store.mutate((tx) => {
@@ -144,13 +144,16 @@ export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Ce
   })
 }
 
-export async function updateCell(store: PalaceStore, args: { id: unknown; title?: unknown; subtitle?: unknown }): Promise<Cell> {
+export async function updateCell(store: PalaceStore, args: { id: unknown; title?: unknown; subtitle?: unknown; icon?: unknown }): Promise<Cell> {
   const title = args.title === undefined ? undefined : text(args.title, '标题')
-  const subtitle = optionalText(args.subtitle, '副标题')
+  const subtitle = optionalText(args.subtitle, '备注')
+  const icon = optionalText(args.icon, '图标')
+  if (icon !== undefined && !/^[a-z][a-z-]{0,30}$/.test(icon)) throw new ShelfError('图标名无效')
   return store.mutate((tx) => {
     const cell = cellOf(tx.palace, args.id)
     if (title !== undefined) cell.title = title
     patch(cell, 'subtitle', subtitle, isClear(args.subtitle))
+    patch(cell, 'icon', icon, isClear(args.icon))
     return cell
   })
 }
