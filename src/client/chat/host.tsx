@@ -9,8 +9,9 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { setDraft } from '../chat.ts'
 
-/** 子 slot 名：一个 session 作用域的对话位置。 */
+/** 子 slot 名：一个 session 作用域的对话位置。Harness 要求子 slot 名全局唯一，全屏和右侧栏各用一个。 */
 export const CHAT_SLOT = 'dsh-shelf.chat'
+export const SIDEBAR_CHAT_SLOT = 'dsh-shelf.sidebar-chat'
 
 /** 会话引用：用完必须 release。 */
 export interface SessionReference { readonly sessionId: string; release(): void }
@@ -28,6 +29,8 @@ export interface SessionsService {
 export interface ChatSlots {
   SessionProvider: (props: { session: SessionReference; children?: ReactNode }) => ReactNode
   renderSlot: (name: string, props: Record<string, unknown>) => ReactNode
+  /** 这个面板声明的对话子 slot 名 */
+  chatSlot: string
 }
 
 /** 工作区服务：把数据目录登记成工作区（重复登记会返回同一个）。 */

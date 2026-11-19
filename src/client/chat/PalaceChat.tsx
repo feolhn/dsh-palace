@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { chatWorkspace, setActive } from '../api.ts'
-import { CHAT_SLOT, ChatIntroProvider, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
+import { ChatIntroProvider, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
 
 const STORE_KEY = 'dsh-shelf:chat-sessions'
 
@@ -124,7 +124,7 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, onS
             : reference === undefined
               ? <p className="mp-chat-note">正在打开对话…</p>
               : <ChatIntroProvider value={{ context, prompts }}>
-                <slots.SessionProvider session={reference}>{slots.renderSlot(CHAT_SLOT, {})}</slots.SessionProvider>
+                <slots.SessionProvider session={reference}>{slots.renderSlot(slots.chatSlot, {})}</slots.SessionProvider>
               </ChatIntroProvider>}
       </div>
     </aside>

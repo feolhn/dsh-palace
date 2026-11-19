@@ -12,7 +12,7 @@ import readerCss from './readers/reader.css?raw'
 import { Palace } from './palace/Palace.tsx'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
-import { bindSessions, CHAT_SLOT, ChatSlotPanel, ChatSlotsProvider, type ChatSlots } from './chat/host.tsx'
+import { bindSessions, CHAT_SLOT, ChatSlotPanel, SIDEBAR_CHAT_SLOT, ChatSlotsProvider, type ChatSlots } from './chat/host.tsx'
 
 export const name = 'dsh-shelf'
 export const inject = ['slots', 'sidebarRightTabs', 'sidebarRight']
@@ -62,14 +62,18 @@ class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
  * 全屏面板和右侧栏页面：同一个宫殿。渲染器注入 SessionProvider / renderSlot（因为声明了 session 作用域的子 slot），
  * 交给宫殿里的 AI 对话用。data-mp-host：阅读器等浮层盖在这个容器上，不盖住 Harness 的界面。
  */
-function MainPanel(props: Partial<ChatSlots>) {
-  const slots = props.SessionProvider && props.renderSlot ? { SessionProvider: props.SessionProvider, renderSlot: props.renderSlot } : undefined
-  return (
-    <div data-mp-host style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
-      <ChatSlotsProvider value={slots}><Guard><Palace /></Guard></ChatSlotsProvider>
-    </div>
-  )
+function palacePanel(chatSlot: string) {
+  return function PalacePanel(props: Partial<ChatSlots>) {
+    const slots = props.SessionProvider && props.renderSlot ? { SessionProvider: props.SessionProvider, renderSlot: props.renderSlot, chatSlot } : undefined
+    return (
+      <div data-mp-host style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+        <ChatSlotsProvider value={slots}><Guard><Palace /></Guard></ChatSlotsProvider>
+      </div>
+    )
+  }
 }
+const MainPanel = palacePanel(CHAT_SLOT)
+const SidebarPanel = palacePanel(SIDEBAR_CHAT_SLOT)
 
 function HeaderButton(props: { openShelf?: () => void }) {
   return (
@@ -118,8 +122,8 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
     name: 'sidebar.right.pane.tab',
     key: TAB_ID,
-    children: { [CHAT_SLOT]: { kind: 'single', scope: 'session' } },
-  }, MainPanel))
+    children: { [SIDEBAR_CHAT_SLOT]: { kind: 'single', scope: 'session' } },
+  }, SidebarPanel))
 
   ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
     name: 'conversation.session.header.utilities',
@@ -133,7 +137,7 @@ export function apply(ctx: ClientContext): void {
     key: PANEL_ID,
     children: { [CHAT_SLOT]: { kind: 'single', scope: 'session' } },
   }, MainPanel))
-  ctx.slots.inject(CHAT_SLOT, () => ctx.slots.register({ name: CHAT_SLOT }, ChatSlotPanel))
+  for (const slot of [CHAT_SLOT, SIDEBAR_CHAT_SLOT]) ctx.slots.inject(slot, () => ctx.slots.register({ name: slot }, ChatSlotPanel))
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
     name: 'sidebar.panellist',
     id: PANEL_ID,
