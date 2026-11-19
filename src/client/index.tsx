@@ -1,6 +1,6 @@
 /**
  * dsh-shelf（Memory Palace）前端入口。注册四个位置：
- * 1. 右侧栏页面：当前格子的笔记本（和对话并排，AI 功能在这里用）
+ * 1. 右侧栏页面：和全屏同一个宫殿（窄一点而已，不维护两套界面）
  * 2. 右侧栏引导页里的入口卡片
  * 3. 对话标题栏右侧的书本按钮
  * 4. 左侧导航「学习」→ 全屏宫殿（v0.2，Memory Palace）
@@ -12,7 +12,6 @@ import readerCss from './readers/reader.css?raw'
 import { Palace } from './palace/Palace.tsx'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
-import { Sidebar } from './notebook/Sidebar.tsx'
 import { bindSessions, CHAT_SLOT, ChatSlotPanel, ChatSlotsProvider, type ChatSlots } from './chat/host.tsx'
 
 export const name = 'dsh-shelf'
@@ -59,12 +58,10 @@ class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
   }
 }
 
-function ShelfTab(props: { sessionId?: string }) {
-  // data-mp-host：阅读器盖在这个容器上，不盖住 Harness 的界面
-  return <div data-mp-host data-single style={{ position: 'relative', height: '100%' }}><Guard><Sidebar sessionId={props.sessionId} /></Guard></div>
-}
-
-/** 全屏面板：渲染器注入 SessionProvider / renderSlot（因为声明了 session 作用域的子 slot），交给宫殿里的 AI 对话用。 */
+/**
+ * 全屏面板和右侧栏页面：同一个宫殿。渲染器注入 SessionProvider / renderSlot（因为声明了 session 作用域的子 slot），
+ * 交给宫殿里的 AI 对话用。data-mp-host：阅读器等浮层盖在这个容器上，不盖住 Harness 的界面。
+ */
 function MainPanel(props: Partial<ChatSlots>) {
   const slots = props.SessionProvider && props.renderSlot ? { SessionProvider: props.SessionProvider, renderSlot: props.renderSlot } : undefined
   return (
@@ -115,10 +112,14 @@ export function apply(ctx: ClientContext): void {
     id: TAB_ID,
     kind: TAB_KIND,
     title: () => 'Memory Palace',
-    guide: [{ id: 'dsh-shelf', order: 40, title: () => 'Memory Palace', description: () => '书的进度、卡片和灵感' }],
+    guide: [{ id: 'dsh-shelf', order: 40, title: () => 'Memory Palace', description: () => '记忆宫殿：书、笔记和灵感' }],
   }), 'dsh-shelf: tab type')
 
-  ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({ name: 'sidebar.right.pane.tab', key: TAB_ID }, ShelfTab))
+  ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab',
+    key: TAB_ID,
+    children: { [CHAT_SLOT]: { kind: 'single', scope: 'session' } },
+  }, MainPanel))
 
   ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
     name: 'conversation.session.header.utilities',
