@@ -218,6 +218,9 @@ export function Palace() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() !== 'i' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return
+      // 全屏和右侧栏可能各有一个宫殿：只切鼠标所在 / 有焦点的那个
+      const root = rootRef.current
+      if (root === null || !(root.matches(':hover') || root.contains(document.activeElement))) return
       const t = e.target as HTMLElement | null
       if (t?.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], .mp-chat, .mp-dialog, .mp-sheet')) return
       e.preventDefault()
