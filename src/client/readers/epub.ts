@@ -113,9 +113,9 @@ function outlineOf(toc: NavItem[]): OutlineInput[] {
     }))
 }
 
-/** 双页只在宽面板（全屏）里用；右侧栏固定单页（容器带 data-single）。 */
+/** 双页只在宽面板里用（右侧栏窄，自然是单页）。 */
 function spreadFor(el: HTMLElement): 'auto' | 'none' {
-  return el.closest('[data-single]') === null && el.clientWidth >= 760 ? 'auto' : 'none'
+  return el.clientWidth >= 760 ? 'auto' : 'none'
 }
 
 export async function mountEpub(el: HTMLElement, opts: {

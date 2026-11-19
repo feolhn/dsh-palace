@@ -1,5 +1,5 @@
 /*
- * 笔记本（右侧栏 + 全屏详情里共用）。前缀 nb-。
+ * 笔记本（宫殿阅览室里的进度 / 卡片 / 灵感）。前缀 nb-。
  * 颜色用 Harness 主题变量，右侧栏和 Harness 自己的界面保持一致；标题用衬线字体呼应宫殿。
  */
 .nb-root {
@@ -31,17 +31,6 @@
 .nb-btn:disabled { opacity: .4; cursor: default; }
 
 /* 列表（右侧栏首页） */
-.nb-title { font-family: var(--nb-serif); font-weight: 400; font-size: 24px; line-height: 1.25; margin: 4px 0 2px; }
-.nb-wordmark { margin-bottom: 14px; }
-.nb-subtitle { color: var(--nb-muted); font-size: 12px; margin-bottom: 4px; }
-.nb-back { display: block; margin-bottom: 8px; }
-.nb-list { display: flex; flex-direction: column; }
-.nb-item { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; text-align: left; padding: 10px 2px !important; border-bottom: 1px solid var(--nb-line) !important; }
-.nb-item:hover { background: var(--nb-soft) !important; }
-.nb-item small { display: block; color: var(--nb-muted); font-size: 11px; }
-.nb-group { margin-top: 14px; display: flex; flex-direction: column; }
-.nb-group-title { font-size: 11px; letter-spacing: .12em; color: var(--nb-muted); padding-bottom: 2px; }
-.nb-group .nb-item { padding-left: 12px !important; }
 
 /* 标签 */
 .nb { margin-top: 10px; }
