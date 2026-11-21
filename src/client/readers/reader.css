@@ -1,5 +1,5 @@
 /* EPUB 阅读界面（盖在所在面板上，data-mp-host）。前缀 rd-。纸色偏暖，和分享卡片的默认纸一致。 */
-.rd-root { position: absolute; inset: 0; z-index: 1900; display: flex; flex-direction: column; background: #f7f3e8; color: #2b2a24; font-size: 13px; }
+.rd-root { color-scheme: light; position: absolute; inset: 0; z-index: 1900; display: flex; flex-direction: column; background: #f7f3e8; color: #2b2a24; font-size: 13px; }
 .rd-root * { box-sizing: border-box; }
 .rd-root *, .rd-root *::before, .rd-root *::after { corner-shape: round; }
 .rd-root button, .rd-root select { font: inherit; color: inherit; }

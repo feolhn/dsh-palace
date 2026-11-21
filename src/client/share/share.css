@@ -1,7 +1,7 @@
 /*
  * 分享卡片编辑器（盖在整个窗口上）。前缀 sh-。配色跟宫殿一致：浅蓝灰底、深蓝字。
  */
-.sh-backdrop { position: absolute; inset: 0; z-index: 2000; background: rgba(41, 76, 96, .45); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.sh-backdrop { color-scheme: light; position: absolute; inset: 0; z-index: 2000; background: rgba(41, 76, 96, .45); display: flex; align-items: center; justify-content: center; padding: 20px; }
 .sh-dialog {
   --sh-text: #1f3a4a; --sh-muted: #6b8593; --sh-line: #cfdade; --sh-accent: #294c60;
   width: min(1240px, 100%); height: min(780px, 100%); display: flex; flex-direction: column;
