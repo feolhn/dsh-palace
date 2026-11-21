@@ -56,7 +56,7 @@ async function sessionFor(scope: string, fresh: boolean): Promise<string> {
   return id
 }
 
-export function PalaceChat({ scope, itemId, heading, context, prompts, dock, onSession, onClose }: {
+export function PalaceChat({ scope, itemId, heading, context, prompts, dock, side = false, onSession, onClose }: {
   /** 'palace' 或格子 id：决定用哪个会话 */
   scope: string
   /** 书 / 笔记的 id：AI 记卡片时默认记到这里 */
@@ -67,6 +67,8 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, onS
   prompts: readonly string[]
   /** 阅览室旁边的对话：贴在阅览室左边（屏幕坐标）。不给就是靠右的面板。 */
   dock?: { left: number; top: number; width: number; height: number }
+  /** 贴在阅览室左边的窄条（设计稿 #ai-dock 样式）；光球弹窗不是 */
+  side?: boolean
   /** 当前对话的会话 id（打开 / 换新对话 / 关闭时通知），给旁边的笔记本发消息用 */
   onSession?: (sessionId: string | undefined) => void
   onClose: () => void
@@ -105,7 +107,7 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, onS
   const unsupported = slots === undefined || sessionsService() === undefined || error === 'unsupported'
 
   return (
-    <aside className={`mp-chat ${dock ? 'mp-chat-dock' : ''}`} aria-label={heading} style={dock}
+    <aside className={`mp-chat ${dock ? 'mp-chat-dock' : ''} ${side ? 'mp-chat-side' : ''}`} aria-label={heading} style={dock}
       onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
       <header className="mp-chat-head">
         <div>

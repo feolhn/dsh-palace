@@ -619,7 +619,7 @@ export function Palace() {
             </div>
             {shown && roomMode === 'notes' && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open, left: sx + w * cam.scale / 2 }} />}
             {shown && roomMode === 'notes' && chatOpen && proj.open > 0.6 && (
-              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={besideDock(rsize.beside, sx, sy, h * cam.scale)}
+              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={besideDock(rsize.beside, sx, sy, h * cam.scale)} side={rsize.beside}
                 onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} prompts={BOOK_PROMPTS} onClose={() => setChatOpen(false)} />
             )}
           </>
