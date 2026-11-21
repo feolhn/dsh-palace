@@ -141,7 +141,8 @@
   .mp-room-panel .nb-sec-title { font-size: 12px; }
 }
 .mp-room-panel .nb-outline { border-top: 1px solid #ffffff99; }
-.mp-room-panel .nb-chapter, .mp-room-panel .nb-sec { min-height: 44px; padding: 9px 4px !important; border-bottom: 1px solid #ffffff4d; }
+.mp-room-panel .nb-chapter, .mp-room-panel .nb-sec { border-bottom: 1px solid #ffffff4d; }
+.mp-room-panel .nb-chapter { min-height: 44px; padding: 9px 4px !important; }
 .mp-room-panel .nb-chapter { font-weight: 400; font-family: var(--mp-serif); font-size: 15px; align-items: center; }
 .mp-room-panel .nb-sec.nb-cur { background: #ffffff1c; }
 .mp-room-panel .nb-sec input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 15px; height: 15px; margin: 0; flex-shrink: 0; border: 1px solid #f6f5e4; border-radius: 1px; cursor: pointer; display: grid; place-items: center; }
