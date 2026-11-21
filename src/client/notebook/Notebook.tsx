@@ -110,7 +110,7 @@ function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item:
 
       {item.source?.type === 'epub' && (
         <div className="nb-row">
-          <button type="button" className="nb-btn nb-primary" onClick={() => (onRead ? onRead() : setReading(true))}>{item.position ? '继续读' : '开始读'}</button>
+          <button type="button" className="nb-btn" onClick={() => (onRead ? onRead() : setReading(true))}>{item.position ? '继续读' : '开始读'}</button>
         </div>
       )}
       {reading && <EpubReader item={item} title={title} subtitle={subtitle} onClose={() => setReading(false)} />}
