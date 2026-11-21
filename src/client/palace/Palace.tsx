@@ -87,10 +87,11 @@ function roomSize(size: Size, chat: boolean, mode: RoomMode): { w: number; h: nu
   return { w: Math.max(300, Math.min(840, avail)), h: Math.max(230, Math.min(730, size.h - 180)), beside }
 }
 type RoomMode = 'notes' | 'reader'
-/** 阅览室左边那一列网格里放对话（左右各留 12px，对齐网格线）。窄屏（beside = false）不贴边，改成浮层。
- *  展开动画中 column 还在变；阅览室最后总是 scale 1（一列 B 宽，放得下），所以只按 beside 决定，不按动画中的宽度，免得中途从浮层跳到贴边（#66）。 */
-function besideDock(beside: boolean, sx: number, sy: number, height: number, column: number) {
-  return beside ? { left: sx - column + 12, top: sy, width: Math.max(0, column - 24), height } : undefined
+/** 阅览室左边的对话（#40 设计稿 #ai-dock）：宽 236、离阅览室 16px，从阅览室顶部往下 98px 开始，高 270–510。窄屏（beside = false）不贴边，改成浮层。
+ *  只按 beside 决定，不按展开动画中途的宽度，免得中途从浮层跳到贴边（#66）。 */
+const DOCK = { w: 236, gap: 16, top: 98, min: 270, max: 510 }
+function besideDock(beside: boolean, sx: number, sy: number, height: number) {
+  return beside ? { left: sx - DOCK.gap - DOCK.w, top: sy + DOCK.top, width: DOCK.w, height: Math.min(DOCK.max, Math.max(DOCK.min, height - DOCK.top)) } : undefined
 }
 /** 光球打开的对话面板大小（原型 #palace-ai-chat 是 260×350，嵌原生对话放大一些）。 */
 const ORB_CHAT = { w: 340, h: 520 }
@@ -618,7 +619,7 @@ export function Palace() {
             </div>
             {shown && roomMode === 'notes' && <RoomTabs summary={summaries[roomCell.id]} tab={tab} onTab={setTab} style={{ opacity: proj.open, left: sx + w * cam.scale / 2 }} />}
             {shown && roomMode === 'notes' && chatOpen && proj.open > 0.6 && (
-              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={besideDock(rsize.beside, sx, sy, h * cam.scale, B * cam.scale)}
+              <PalaceChat key={roomCell.id} scope={roomCell.id} itemId={roomCell.id} dock={besideDock(rsize.beside, sx, sy, h * cam.scale)} side={rsize.beside}
                 onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} heading="与书对话" context={`《${roomCell.title}》`} prompts={BOOK_PROMPTS} onClose={() => setChatOpen(false)} />
             )}
           </>
