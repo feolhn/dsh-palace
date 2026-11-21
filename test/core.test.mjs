@@ -74,6 +74,27 @@ test('拖成组：在被拖到的格子位置新建分组，两格放进去；�
   assert.equal(new Set(keys).size, keys.length)
 })
 
+test('分组的最后一格移出或删掉后，分组自动消失；新建的空分组保留', async () => {
+  const store = fresh()
+  const empty = await ops.addCell(store, { kind: 'group', title: 'E' })
+  const g = await ops.addCell(store, { kind: 'group', title: 'G' })
+  const a = await ops.addCell(store, { kind: 'note', title: 'A', parentId: g.id })
+  const b = await ops.addCell(store, { kind: 'note', title: 'B', parentId: g.id })
+  await ops.moveCell(store, { id: a.id, col: 9, row: 9 })
+  assert.ok(store.getPalace().cells.some(c => c.id === g.id))
+  await ops.deleteCell(store, { id: b.id })
+  const ids = store.getPalace().cells.map(c => c.id)
+  assert.ok(!ids.includes(g.id))
+  assert.ok(ids.includes(empty.id) && ids.includes(a.id))
+  // 组里唯一一格拖出来和外层的格子组成新分组：原分组消失
+  const h = await ops.addCell(store, { kind: 'group', title: 'H' })
+  const c = await ops.addCell(store, { kind: 'note', title: 'C', parentId: h.id })
+  const n = await ops.groupCells(store, { id: c.id, ontoId: a.id })
+  const after = store.getPalace().cells
+  assert.ok(!after.some(x => x.id === h.id))
+  assert.equal(after.filter(x => x.parentId === n.id).length, 2)
+})
+
 test('删除：非空分组不能删；书连同内容文件和卡片原图一起删', async () => {
   const store = fresh()
   const g = await ops.addCell(store, { kind: 'group', title: 'G' })
@@ -84,7 +105,10 @@ test('删除：非空分组不能删；书连同内容文件和卡片原图一�
   await ops.deleteCell(store, { id: b.id })
   assert.ok(!existsSync(join(store.itemsDir, `${b.id}.json`)))
   assert.ok(!existsSync(join(store.imagesDir, 'k_1.png')))
-  await ops.deleteCell(store, { id: g.id })
+  // 删掉最后一格，分组自动消失
+  assert.equal(store.getPalace().cells.length, 0)
+  const empty = await ops.addCell(store, { kind: 'group', title: 'E' })
+  await ops.deleteCell(store, { id: empty.id })
   assert.equal(store.getPalace().cells.length, 0)
 })
 

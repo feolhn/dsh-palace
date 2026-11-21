@@ -63,7 +63,7 @@ test('删除格子：书连同卡片一起删，非空分组不能删', async ()
   await core.addCard(store, { id: b.id, type: 'thought', note: 'x' })
   assert.match(await call('shelf_remove', { item_id: g.id }), /分组里还有格子/)
   assert.match(await call('shelf_remove', { item_id: b.id }), /已删除笔记「心情」（卡片 1 张、灵感 0 条）/)
-  assert.match(await call('shelf_remove', { item_id: g.id }), /已删除分组「G」/)
+  // 删掉最后一格，分组自动消失
   assert.equal(store.getPalace().cells.length, 0)
   assert.match(await call('shelf_remove', { item_id: 'nope' }), /格子不存在/)
 })

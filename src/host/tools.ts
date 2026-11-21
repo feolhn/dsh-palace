@@ -150,7 +150,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
 
     defineTool({
       name: 'shelf_remove',
-      description: '从宫殿里删掉一个格子（书、笔记或空分组），连同它的进度、卡片和灵感，不删电脑上的原文件。'
+      description: '从宫殿里删掉一个格子（书、笔记或空分组），连同它的进度、卡片和灵感，不删电脑上的原文件。分组里最后一格删掉或移出后，分组会自动消失，不用再删。'
         + '不可撤销：调用前必须先说清要删的是哪一个、会丢掉多少卡片和灵感，等用户明确同意后再调用。分组里还有东西时不能删。',
       parameters: {
         item_id: { type: 'string', required: true },
