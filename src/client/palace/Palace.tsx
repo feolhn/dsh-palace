@@ -21,6 +21,7 @@ import { PalaceChat } from '../chat/PalaceChat.tsx'
 import { palaceOp, useArcs, usePalace } from './data.ts'
 import { Arcs } from './Arcs.tsx'
 import { delta, matrixOf, project, spreadDrop, spreadLayout, unproject, type Matrix, type SpreadLayout } from './projection.ts'
+import { lightScheme } from './light.ts'
 
 /** 格子边长（scale = 1 时的像素）。 */
 const B = 268
@@ -85,10 +86,10 @@ function roomSize(size: Size, chat: boolean, mode: RoomMode): { w: number; h: nu
   return { w: Math.max(300, Math.min(840, avail)), h: Math.max(230, Math.min(730, size.h - 180)), beside }
 }
 type RoomMode = 'notes' | 'reader'
-/** 阅览室左边那一列网格里放对话（左右各留 12px，对齐网格线）；太窄就不贴边，改成浮层。 */
+/** 阅览室左边那一列网格里放对话（左右各留 12px，对齐网格线）。窄屏（beside = false）不贴边，改成浮层。
+ *  展开动画中 column 还在变；阅览室最后总是 scale 1（一列 B 宽，放得下），所以只按 beside 决定，不按动画中的宽度，免得中途从浮层跳到贴边（#66）。 */
 function besideDock(beside: boolean, sx: number, sy: number, height: number, column: number) {
-  const width = column - 24
-  return beside && width >= 220 ? { left: sx - column + 12, top: sy, width, height } : undefined
+  return beside ? { left: sx - column + 12, top: sy, width: Math.max(0, column - 24), height } : undefined
 }
 /** 光球打开的对话面板大小（原型 #palace-ai-chat 是 260×350，嵌原生对话放大一些）。 */
 const ORB_CHAT = { w: 340, h: 520 }
@@ -335,7 +336,7 @@ export function Palace() {
     const { cell } = gesture
     if (!gesture.moved) {
       // 轴测视图里分组本来就是展开的
-      if (cell.kind === 'group') { if (!spreading) { setOpenGroup(cell.id); setSelected(undefined) } } else setSelected(cell.id)
+      if (cell.kind === 'group') { if (!spreading) { setOpenGroup(cell.id); setSelected(undefined) } } else { setOrbChat(undefined); setSelected(cell.id) } // 首页的光球对话先收起，不和「与书对话」同时出现（#66）
       return
     }
     const target = dropAt({ x: gesture.px, y: gesture.py })?.target
@@ -472,7 +473,7 @@ export function Palace() {
 
   return (
     <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''} ${proj.amount > 0.999 ? 'mp-iso' : ''}`}
-      style={relief}
+      style={{ ...lightScheme(), ...relief }}
       onPointerDown={onBackgroundDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setGesture(undefined)}>
       <div className="mp-paper" />
       <svg className="mp-defs" aria-hidden="true"><defs>
