@@ -98,6 +98,12 @@ function checkPosition(parentId: string | null, col: number, row: number): void 
 
 // ---------- 格子 ----------
 
+/** 像手机主屏幕的文件夹：最后一格移出（或删掉）后，原来的分组自动消失。新建的空分组不受影响。 */
+function pruneGroup(palace: Palace, groupId: string | null): void {
+  if (groupId === null || palace.cells.some(c => c.parentId === groupId)) return
+  palace.cells = palace.cells.filter(c => c.id !== groupId)
+}
+
 export interface AddCellArgs {
   kind: unknown
   title: unknown
@@ -175,8 +181,10 @@ export async function moveCell(store: PalaceStore, args: { id: unknown; parentId
       ;({ col, row } = firstEmptySlot(tx.palace, parentId))
     }
     checkPosition(parentId, col, row)
+    const before = [cell.parentId]
     const other = occupant(tx.palace, parentId, col, row)
     if (other !== undefined && other.id !== cell.id) {
+      before.push(other.parentId)
       if (other.kind === 'group' && cell.parentId !== null) throw new ShelfError('分组不能换进另一个分组里')
       other.parentId = cell.parentId
       other.col = cell.col
@@ -185,7 +193,30 @@ export async function moveCell(store: PalaceStore, args: { id: unknown; parentId
     cell.parentId = parentId
     cell.col = col
     cell.row = row
+    for (const g of before) pruneGroup(tx.palace, g)
     return cell
+  })
+}
+
+/**
+ * 拖成组（#40）：把格子 id 拖到最外层的另一个格子 ontoId 上，就在 ontoId 的位置新建一个分组，两格放进去（ontoId 在前）。
+ * 两格都不能是分组；一次写入完成。返回新分组，之后由界面弹出命名框。
+ */
+export async function groupCells(store: PalaceStore, args: { id: unknown; ontoId: unknown; title?: unknown }): Promise<Cell> {
+  const title = args.title === undefined ? '新分组' : text(args.title, '标题')
+  return store.mutate((tx) => {
+    const cell = cellOf(tx.palace, args.id)
+    const onto = cellOf(tx.palace, args.ontoId)
+    if (cell.id === onto.id) throw new ShelfError('不能和自己组成分组')
+    if (cell.kind === 'group' || onto.kind === 'group') throw new ShelfError('分组不能再放进分组')
+    if (onto.parentId !== null) throw new ShelfError('只能在最外层拖成分组')
+    const group: Cell = { id: newId('c'), kind: 'group', parentId: null, col: onto.col, row: onto.row, title, createdAt: nowIso() }
+    tx.palace.cells.push(group)
+    onto.parentId = group.id; onto.col = 0; onto.row = 0
+    const from = cell.parentId
+    cell.parentId = group.id; cell.col = 1; cell.row = 0
+    pruneGroup(tx.palace, from)
+    return group
   })
 }
 
@@ -200,6 +231,7 @@ export async function deleteCell(store: PalaceStore, args: { id: unknown }): Pro
       tx.deleteItem(cell.id)
     }
     tx.palace.cells = tx.palace.cells.filter(c => c.id !== cell.id)
+    pruneGroup(tx.palace, cell.parentId)
   })
 }
 
