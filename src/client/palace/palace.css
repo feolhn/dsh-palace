@@ -109,6 +109,7 @@
 .mp-moon-relief { position: absolute; left: 0; top: 0; width: 77px; height: 77px; transform-origin: 38.5px 53px; }
 .mp-moon-relief img { position: absolute; left: -10px; top: -10px; width: 97px; height: 97px; pointer-events: none; transition: filter .25s; }
 .mp-moon:hover .mp-moon-relief img { filter: brightness(1.05) drop-shadow(0 0 6px #fff6d0aa); }
+.mp-moon-ground { position: absolute; left: 0; top: 0; width: 77px; height: 77px; pointer-events: none; }
 .mp-moon-halo { position: absolute; inset: 2px 1px 2px; border-radius: 50%; background: radial-gradient(circle, transparent 42%, #fff2b83d 59%, #f7efd137 68%, transparent 74%); filter: blur(2px); opacity: .75; }
 .mp-moon-ring { position: absolute; left: 0; top: 0; width: 77px; height: 77px; overflow: visible; pointer-events: none; opacity: .75; }
 .mp-moon-ring circle { fill: none; stroke-width: 6; filter: url(#mp-watercolor-ring); }
@@ -175,7 +176,13 @@
 
 /* 轴测视图（#42，移植自原型 isometric.css / connections.css）。地面是仿射平面，只有图标立起来 */
 .mp-root { --mp-facing: matrix(1,0,0,1,0,0); --mp-lift: 0px; --mp-relief-scale: 1; --mp-depth: 0; }
+/* 地面上的环：轴测时移到图标脚下、比图标略小 */
+.mp-root { --mp-ground-y: 0px; --mp-ground-scale: 1; }
+.mp-cell .mp-moon-ground { transform: translateY(var(--mp-ground-y)) scale(var(--mp-ground-scale)); } /* 只作用于宫殿格子，阅览室里的图标不跟着动 */
+.mp-cell .mp-moon-pct { transform: translateY(calc(var(--mp-ground-y) * 1.2)); }
 .mp-cell .mp-moon-relief { transform: var(--mp-facing) translateY(var(--mp-lift)) scale(var(--mp-relief-scale)); }
+/* 立起来的图标有体积：投影随轴测程度加深 */
+.mp-cell .mp-moon-relief img { filter: drop-shadow(0 calc(7px * var(--mp-depth)) calc(6px * var(--mp-depth)) rgb(40 62 78 / calc(.32 * var(--mp-depth)))); }
 .mp-iso .mp-cell-title, .mp-iso .mp-period, .mp-iso .mp-group-count, .mp-iso .mp-moon-pct { opacity: .5; }
 .mp-iso-folder { position: absolute; transform-origin: 0 0; border: 1px solid #fffef3b3; background: #fffdf142; pointer-events: none; }
 .mp-view-toggle { display: flex; align-items: center; gap: 7px; height: 35px; padding: 0 12px !important; border: 1px solid #fffffa85 !important; border-radius: 18px; background: #ffffff17 !important;

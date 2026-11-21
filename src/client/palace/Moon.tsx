@@ -1,6 +1,6 @@
 /**
  * 格子右上角的水彩图标 + 进度环 + 百分比（移植自原型的 .moon-button）。书点它进入阅读，其他格子点它和点格子一样。
- * 框固定 77×95（scale = 1 时的像素，整个格子由外层 transform 缩放），轴测时图标立起来（palace.css）。
+ * 框固定 77×95（scale = 1 时的像素，整个格子由外层 transform 缩放）。轴测时图标立起来、带投影，进度环留在地面（#40，palace.css）。
  */
 import { iconUrl } from './icons.ts'
 
@@ -16,12 +16,15 @@ export function Moon({ icon, percent, label, onOpen }: { icon: string; percent?:
       onPointerDown={onOpen ? e => e.stopPropagation() : undefined}
       onClick={onOpen ? (e) => { e.stopPropagation(); onOpen() } : undefined}>
       <span className="mp-moon-shadow" aria-hidden="true" />
-      <span className="mp-moon-relief">
-        <span className="mp-moon-halo" aria-hidden="true" />
-        <svg className="mp-moon-ring" viewBox="0 0 100 100" aria-hidden="true">
+      {/* 光晕和进度环贴在地面上（轴测时跟着地面变成椭圆），只有图标立起来 */}
+      <span className="mp-moon-ground" aria-hidden="true">
+        <span className="mp-moon-halo" />
+        <svg className="mp-moon-ring" viewBox="0 0 100 100">
           <circle className="mp-ring-wash" cx="50" cy="50" r="42" />
           {pct !== undefined && <circle className="mp-ring-progress" cx="50" cy="50" r="42" pathLength="100" strokeDasharray={`${pct} 100`} />}
         </svg>
+      </span>
+      <span className="mp-moon-relief">
         <img src={iconUrl(icon)} alt="" draggable={false} />
       </span>
       {percent !== undefined && <span className="mp-moon-pct">{percentText(percent)}</span>}
