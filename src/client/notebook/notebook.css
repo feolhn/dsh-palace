@@ -70,9 +70,10 @@
 .nb-chips button { padding: 3px 10px !important; border-radius: 999px; font-size: 12px; border: 1px solid var(--nb-line, #d6dde0) !important; }
 .nb-chips button.nb-on { background: var(--nb-accent, #294c60) !important; color: #fff !important; border-color: transparent !important; }
 .nb-cards { display: flex; flex-direction: column; gap: 10px; }
-.nb-card, .nb-insp { padding: 12px 14px; border: 1px solid var(--nb-line, #e4e8ea); border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+.nb-card, .nb-insp { min-width: 0; overflow-wrap: anywhere; padding: 12px 14px; border: 1px solid var(--nb-line, #e4e8ea); border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
 .nb-card.nb-mastered { opacity: .6; }
 .nb-card header select { flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; font-size: 12px; }
+.nb-card img { max-width: 100%; height: auto; }
 .nb-card blockquote { margin: 0; padding-left: 10px; border-left: 2px solid var(--nb-accent, #294c60); font-family: var(--nb-serif); font-size: 15px; line-height: 1.75; white-space: pre-wrap; }
 .nb-card.nb-mistake blockquote { font-family: inherit; font-size: 13px; }
 .nb-note, .nb-answer { margin: 0; white-space: pre-wrap; }
@@ -157,7 +158,7 @@
 .mp-room-panel .nb-chips button { border-color: #ffffff99 !important; }
 .mp-room-panel .nb-btn { border-color: #ffffffb0 !important; }
 .mp-room-panel .nb-btn.nb-primary { border-color: transparent !important; }
-@container (max-width: 560px) { .mp-room-panel .nb-cards { grid-template-columns: 1fr; } }
+@container (max-width: 560px) { .mp-room-panel .nb-cards { grid-template-columns: minmax(0, 1fr); } }
 /* 原型 .thought-card 的字：卡片标题宋体、正文 12px、批注上方细线 */
 .mp-room-panel .nb-card blockquote { font-size: 15px; line-height: 1.8; }
 .mp-room-panel .nb-card .nb-note { font-size: 12px; line-height: 1.9; border-top: 1px solid #fff8; padding-top: 10px; }
