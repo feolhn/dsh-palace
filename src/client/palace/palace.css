@@ -109,13 +109,13 @@
 .mp-moon-relief { position: absolute; left: 0; top: 0; width: 77px; height: 77px; transform-origin: 38.5px 53px; }
 .mp-moon-relief img { position: absolute; left: -10px; top: -10px; width: 97px; height: 97px; pointer-events: none; transition: filter .25s; }
 .mp-moon:hover .mp-moon-relief img { filter: brightness(1.05) drop-shadow(0 0 6px #fff6d0aa); }
-.mp-moon-ground { position: absolute; left: 0; top: 0; width: 77px; height: 77px; pointer-events: none; transform: translateY(var(--mp-ground-y)) scale(var(--mp-ground-scale)); }
+.mp-moon-ground { position: absolute; left: 0; top: 0; width: 77px; height: 77px; pointer-events: none; }
 .mp-moon-halo { position: absolute; inset: 2px 1px 2px; border-radius: 50%; background: radial-gradient(circle, transparent 42%, #fff2b83d 59%, #f7efd137 68%, transparent 74%); filter: blur(2px); opacity: .75; }
 .mp-moon-ring { position: absolute; left: 0; top: 0; width: 77px; height: 77px; overflow: visible; pointer-events: none; opacity: .75; }
 .mp-moon-ring circle { fill: none; stroke-width: 6; filter: url(#mp-watercolor-ring); }
 .mp-ring-wash { stroke: #fff5d6; opacity: .45; }
 .mp-ring-progress { stroke: #e5ba68; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dasharray .5s; }
-.mp-moon-pct { position: absolute; top: 79px; left: 0; width: 100%; text-align: center; font: 15px/1 var(--mp-serif); letter-spacing: .6px; transform: translateY(calc(var(--mp-ground-y) * 1.2)); }
+.mp-moon-pct { position: absolute; top: 79px; left: 0; width: 100%; text-align: center; font: 15px/1 var(--mp-serif); letter-spacing: .6px; }
 .mp-moon-shadow { position: absolute; left: 6px; top: 18px; width: 74px; height: 57px; border-radius: 50%; pointer-events: none; opacity: var(--mp-depth);
   background: radial-gradient(ellipse at center, #36506436 0%, #36506420 30%, #36506409 56%, transparent 74%); filter: blur(6px); transform: translate(6px, 10px) scale(var(--mp-relief-scale)); }
 .mp-defs { position: absolute; width: 0; height: 0; }
@@ -178,6 +178,8 @@
 .mp-root { --mp-facing: matrix(1,0,0,1,0,0); --mp-lift: 0px; --mp-relief-scale: 1; --mp-depth: 0; }
 /* 地面上的环：轴测时移到图标脚下、比图标略小 */
 .mp-root { --mp-ground-y: 0px; --mp-ground-scale: 1; }
+.mp-cell .mp-moon-ground { transform: translateY(var(--mp-ground-y)) scale(var(--mp-ground-scale)); } /* 只作用于宫殿格子，阅览室里的图标不跟着动 */
+.mp-cell .mp-moon-pct { transform: translateY(calc(var(--mp-ground-y) * 1.2)); }
 .mp-cell .mp-moon-relief { transform: var(--mp-facing) translateY(var(--mp-lift)) scale(var(--mp-relief-scale)); }
 /* 立起来的图标有体积：投影随轴测程度加深 */
 .mp-cell .mp-moon-relief img { filter: drop-shadow(0 calc(7px * var(--mp-depth)) calc(6px * var(--mp-depth)) rgb(40 62 78 / calc(.32 * var(--mp-depth)))); }
