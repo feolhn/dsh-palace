@@ -192,8 +192,8 @@
 .mp-chat.mp-chat-dock { right: auto; bottom: auto; padding: 19px 10px 10px; background: #dce7e3d9; backdrop-filter: blur(7px); }
 /* 设计稿 #40 第 3 点。只用 Harness 公开的 data-* 钩子和 CSS 变量改外观，不动对话控件本身（官方更新时最多样式失效，不会坏） */
 /* 阅览室旁的窄条（#ai-dock）：乳白半透明；光球弹窗保持实一点的底色，叠在书页上也看得清 */
-.mp-chat.mp-chat-side { padding: 19px 17px 13px; background: #e5eee63d; border-color: #ffffffb3; box-shadow: 0 8px 30px #3853690c; backdrop-filter: blur(7px); --dsh-content-font-size: 12px; }
-.mp-chat-side [data-composer-seat] { background: none !important; backdrop-filter: blur(8px); } /* 半透明面板上不要实色渐隐；滚到输入框下面的消息被模糊掉 */
+.mp-chat.mp-chat-side { padding: 19px 17px 13px; background: #e5eee63d; border-color: #ffffffb3; box-shadow: 0 8px 30px #3853690c; backdrop-filter: blur(7px); }
+.mp-chat-side [data-composer-seat] { background: linear-gradient(180deg, #d9e5e300 0, #d9e5e3 24px) !important; } /* 输入区（含用量条）用实色挡住滚到下面的消息，只在上缘渐隐 */
 /* 所有宫殿对话：能滚动不露滚动条、方形输入框、自己的消息用白框，字号和 AI 回复一致 */
 .mp-chat [data-conversation-scroll] { scrollbar-width: none; }
 .mp-chat [data-conversation-scroll]::-webkit-scrollbar { display: none; }
