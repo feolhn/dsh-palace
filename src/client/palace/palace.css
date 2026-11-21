@@ -194,11 +194,10 @@
 /* 阅览室旁的窄条（#ai-dock）：乳白半透明；光球弹窗保持实一点的底色，叠在书页上也看得清 */
 .mp-chat.mp-chat-side { padding: 19px 17px 13px; background: #e5eee63d; border-color: #ffffffb3; box-shadow: 0 8px 30px #3853690c; backdrop-filter: blur(7px); }
 .mp-chat-side [data-composer-seat] { background: linear-gradient(180deg, #c8d7dd00 0, #c8d7dd 24px) !important; } /* 输入区（含用量条）用和面板相近的蓝灰实色挡住滚到下面的消息，只在上缘渐隐 */
-.mp-chat.mp-chat-side [data-composer-card] { background: transparent !important; } /* 输入框不填色，透出底栏的蓝灰，只留细边线 */
 /* 所有宫殿对话：能滚动不露滚动条、方形输入框、自己的消息用白框，字号和 AI 回复一致 */
 .mp-chat [data-conversation-scroll] { scrollbar-width: none; }
 .mp-chat [data-conversation-scroll]::-webkit-scrollbar { display: none; }
-.mp-chat [data-composer-card] { border-radius: 0 !important; background: #fffcf2b3 !important; } /* 乳白 70% */
+.mp-chat [data-composer-card] { border-radius: 0 !important; background: transparent !important; } /* 方形、不填色：透出下面输入区的底色，和面板融为一体，只留细边线 */
 .mp-chat [data-message-bubble] { border-radius: 0 !important; border: 1px solid #ffffffcc; background: #fffcf21a !important; font-size: var(--dsh-content-font-size, 14px) !important; }
 
 /* 轴测视图（#42，移植自原型 isometric.css / connections.css）。地面是仿射平面，只有图标立起来 */
