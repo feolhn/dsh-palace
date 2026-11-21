@@ -120,6 +120,23 @@
   background: radial-gradient(ellipse at center, #36506436 0%, #36506420 30%, #36506409 56%, transparent 74%); filter: blur(6px); transform: translate(6px, 10px) scale(var(--mp-relief-scale)); }
 .mp-defs { position: absolute; width: 0; height: 0; }
 
+/* 新分组命名框（原型 #group-name-dialog：毛玻璃、圆角 24、圆角输入框） */
+.mp-glass-backdrop { background: #4c6d7e1a; backdrop-filter: blur(4px); }
+.mp-root .mp-dialog.mp-glass { width: min(476px, calc(100% - 36px)); padding: 28px 32px; border: 1px solid #ffffff80; border-radius: 24px;
+  background: radial-gradient(ellipse at 8% 0%, #ffffff4d, transparent 65%), linear-gradient(140deg, #e3efed94, #cee1e575);
+  backdrop-filter: blur(22px) saturate(115%);
+  box-shadow: inset 0 1px 0 #ffffffbf, inset 0 0 20px #ffffff40, 0 0 14px #ffffff59, 0 0 38px #ffffff26, 0 18px 60px #3658662b; }
+.mp-glass-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 26px; }
+.mp-glass-head h2 { margin: 7px 0 0; font: 400 23px var(--mp-serif); }
+.mp-root .mp-glass-head > button { font-size: 24px; line-height: 1; padding: 0; }
+.mp-glass label { margin: 19px 0 8px; }
+.mp-glass label small { margin-left: 8px; }
+.mp-root .mp-glass input { border: 1px solid #ffffff66; border-radius: 10px; background: #ffffff24; box-shadow: inset 0 1px 6px #ffffff26; padding: 9px 10px; }
+.mp-root .mp-glass input:focus { border-color: #fffffff0; box-shadow: inset 0 0 9px #ffffff40, 0 0 0 3px #ffffff26, 0 0 13px #ffffff66; }
+.mp-glass-actions { display: flex; justify-content: flex-end; margin-top: 26px; }
+.mp-root .mp-glass-actions button { border-bottom: 1px solid #5f7c8a77; padding: 5px 0; font-size: 13px; }
+.mp-root .mp-glass-actions button:disabled { opacity: .45; cursor: default; }
+
 /* 添加 */
 .mp-dialog-backdrop { position: absolute; inset: 0; z-index: 10; background: #57788a33; backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; cursor: default; }
 .mp-dialog {

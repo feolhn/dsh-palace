@@ -22,6 +22,7 @@ import { palaceOp, useArcs, usePalace } from './data.ts'
 import { Arcs } from './Arcs.tsx'
 import { delta, matrixOf, project, spreadDrop, spreadLayout, unproject, type Matrix, type SpreadLayout } from './projection.ts'
 import { lightScheme } from './light.ts'
+import { GroupNameDialog } from './GroupNameDialog.tsx'
 
 /** 格子边长（scale = 1 时的像素）。 */
 const B = 268
@@ -116,6 +117,11 @@ export function Palace() {
   const [orbChat, setOrbChat] = useState<Rect>()
   const [orbShown, setOrbShown] = useState(false)
   const [openGroup, setOpenGroup] = useState<string>()
+  /** 分组展开程度 0–1（进出分组时镜头推近 / 拉远，约 650ms，原型 groupProgress）。 */
+  const [gp, setGp] = useState(0)
+  const groupReturn = useRef<Camera>()
+  /** 刚拖成的新分组：弹出命名框。 */
+  const [naming, setNaming] = useState<Cell>()
   const [selected, setSelected] = useState<string>()
   const [adding, setAdding] = useState(false)
   const [gesture, setGesture] = useState<Gesture>()
@@ -134,7 +140,7 @@ export function Palace() {
   /** 正在关上的阅览室（动画结束前还要画）。 */
   const lastRoom = useRef<string>()
   const [hover, setHover] = useState<string>()
-  const live = useRef({ iso, proj, cam, size, m: matrixOf(proj.amount) })
+  const live = useRef({ iso, proj, cam, size, m: matrixOf(proj.amount), gp: 0 })
   const anim = useRef(0)
   const flatCam = useRef<Camera>()
 
@@ -150,7 +156,7 @@ export function Palace() {
   const cells = palace?.cells ?? []
   const layout = useMemo(() => spreadLayout(cells), [cells])
   const m = matrixOf(proj.amount)
-  live.current = { iso, proj, cam, size, m }
+  live.current = { iso, proj, cam, size, m, gp: live.current.gp }
 
   useEffect(() => {
     if (cam === undefined && palace !== undefined && size.w > 0) setCam(iso ? spreadCamera(layout, palace.cells, size) : fitCamera(palace.cells, size))
@@ -175,6 +181,49 @@ export function Palace() {
     }
     requestAnimationFrame(frame)
   }
+
+  /** 进出分组：分组框从一格长到整组、镜头推到 100%；退出时反过来，结束后才真正收起（#40）。 */
+  const tweenGroup = (to: 0 | 1, toCam: Camera | undefined, done?: () => void) => {
+    const id = ++anim.current
+    const from = live.current.gp, fromCam = live.current.cam
+    const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650
+    const start = performance.now()
+    const frame = (now: number) => {
+      if (id !== anim.current) return
+      const t = duration > 0 ? Math.min(1, (now - start) / duration) : 1, e = ease(t)
+      const g = from + (to - from) * e
+      live.current.gp = g
+      setGp(g)
+      if (toCam !== undefined && fromCam !== undefined) {
+        setCam({ x: fromCam.x + (toCam.x - fromCam.x) * e, y: fromCam.y + (toCam.y - fromCam.y) * e, scale: fromCam.scale + (toCam.scale - fromCam.scale) * e })
+      }
+      if (t < 1) requestAnimationFrame(frame)
+      else done?.()
+    }
+    requestAnimationFrame(frame)
+  }
+  const enterGroup = (g: Cell) => {
+    const c = live.current.cam, sz = live.current.size
+    if (c === undefined) return
+    groupReturn.current = c
+    setOpenGroup(g.id)
+    setSelected(undefined)
+    // 原型 groupCamera：缩放回到 100%，从分组原来那一格的位置展开（放不下才往里挪），不重新居中
+    const { cols, rows } = groupSize(cells, g.id, false)
+    const w = cols * B, h = rows * B
+    const ax0 = c.x + g.col * B * c.scale, ay0 = c.y + g.row * B * c.scale
+    const left = clamp(ax0, 30, Math.max(30, sz.w - 30 - (w <= sz.w - 60 ? w : B)))
+    const top = clamp(ay0, 100, Math.max(100, sz.h - 90 - (h <= sz.h - 190 ? h : B)))
+    live.current.gp = 0
+    setGp(0)
+    tweenGroup(1, { x: left - g.col * B, y: top - g.row * B, scale: 1 })
+  }
+  const closeGroup = () => {
+    if (openGroup === undefined) return
+    tweenGroup(0, groupReturn.current, () => { setOpenGroup(undefined); groupReturn.current = undefined })
+  }
+  /** 不要动画、立刻收起（切换轴测、分组被删）。 */
+  const dropGroup = () => { setOpenGroup(undefined); live.current.gp = 0; setGp(0); groupReturn.current = undefined }
 
   // 进入笔记或阅读时回到平面，出来再回到轴测（分组保持展开）
   const isoTarget = (on: boolean) => (on && selected === undefined ? 1 : 0)
@@ -210,7 +259,7 @@ export function Palace() {
     localStorage.setItem(VIEW_KEY, next ? 'iso' : 'flat')
     setIso(next)
     live.current.iso = next
-    setOpenGroup(undefined)
+    dropGroup()
     if (next) flatCam.current = cam
     animate({ amount: isoTarget(next), spread: next ? 1 : 0, open: live.current.proj.open }, next ? spreadCamera(layout, cells, size) : (flatCam.current ?? fitCamera(cells, size)))
   }
@@ -233,7 +282,7 @@ export function Palace() {
 
   // 打开的分组或选中的格子被删了（比如 AI 删的），就收起
   useEffect(() => {
-    if (openGroup !== undefined && !cells.some(c => c.id === openGroup)) setOpenGroup(undefined)
+    if (openGroup !== undefined && !cells.some(c => c.id === openGroup)) dropGroup()
     if (selected !== undefined && !cells.some(c => c.id === selected)) setSelected(undefined)
   }, [cells, openGroup, selected])
 
@@ -329,14 +378,14 @@ export function Palace() {
       // 在空白处点一下：先收起详情，再收起分组
       if (!gesture.moved) {
         if (selected !== undefined) closeRoom()
-        else setOpenGroup(undefined)
+        else closeGroup()
       }
       return
     }
     const { cell } = gesture
     if (!gesture.moved) {
       // 轴测视图里分组本来就是展开的
-      if (cell.kind === 'group') { if (!spreading) { setOpenGroup(cell.id); setSelected(undefined) } } else { setOrbChat(undefined); setSelected(cell.id) } // 首页的光球对话先收起，不和「与书对话」同时出现（#66）
+      if (cell.kind === 'group') { if (!spreading && openGroup !== cell.id) enterGroup(cell) } else { setOrbChat(undefined); setSelected(cell.id) } // 首页的光球对话先收起，不和「与书对话」同时出现（#66）
       return
     }
     const target = dropAt({ x: gesture.px, y: gesture.py })?.target
@@ -346,6 +395,12 @@ export function Palace() {
     const onto = cells.find(c => c.parentId === target.parentId && c.col === target.col && c.row === target.row)
     if (onto?.kind === 'group' && cell.kind !== 'group' && target.parentId === null) {
       void run('moveCell', { id: cell.id, parentId: onto.id })
+      return
+    }
+    // 最外层：两个独立的格子拖到重叠 = 新建分组，然后给它起名（#40）
+    if (onto !== undefined && onto.kind !== 'group' && cell.kind !== 'group' && target.parentId === null && onto.id !== cell.id) {
+      void palaceOp<Cell>('groupCells', { id: cell.id, ontoId: onto.id })
+        .then(g => setNaming(g)).catch((e: Error) => setOpError(e.message))
       return
     }
     void run('moveCell', { id: cell.id, ...target })
@@ -501,9 +556,9 @@ export function Palace() {
       {group !== undefined && gsize !== undefined && cam !== undefined && (
         <>
           {/* 阅览室展开时分组框和遮罩跟格子一起淡出，关上后回到原来的分组 */}
-          <div className="mp-dim" style={{ opacity: 1 - proj.open }} />
-          <div className="mp-group-frame" style={{ ...rect(group.col * B, group.row * B, gsize.cols * B, gsize.rows * B), opacity: 1 - proj.open }} />
-          {children.map(c => renderCell(c))}
+          <div className="mp-dim" style={{ opacity: gp * (1 - proj.open) }} />
+          <div className="mp-group-frame" style={{ ...rect(group.col * B, group.row * B, B + (gsize.cols - 1) * B * gp, B + (gsize.rows - 1) * B * gp), opacity: 1 - proj.open }} />
+          {gp > 0.6 && children.map(c => renderCell(c))}
         </>
       )}
 
@@ -512,7 +567,7 @@ export function Palace() {
       <header className="mp-masthead">
         <span className="mp-wordmark">Memory Palace</span>
         {selected !== undefined && <button type="button" className="mp-back" aria-label={roomMode === 'reader' ? '回到笔记' : '回到宫殿'} onPointerDown={e => e.stopPropagation()} onClick={() => (roomMode === 'reader' ? setRoomMode('notes') : closeRoom())}><span /></button>}
-        {group !== undefined && selected === undefined && proj.open < 0.001 && <GroupBar group={group} empty={children.length === 0} onBack={() => setOpenGroup(undefined)} onError={setOpError} />}
+        {group !== undefined && selected === undefined && proj.open < 0.001 && <GroupBar group={group} empty={children.length === 0} onBack={closeGroup} onError={setOpError} />}
       </header>
 
       {palace !== undefined && cells.length === 0 && (
@@ -579,6 +634,7 @@ export function Palace() {
         return <ReadBook key={c.id} id={c.id} title={c.title} subtitle={c.subtitle} onClose={() => setReading(undefined)} onError={setOpError} />
       })()}
       {adding && <AddDialog parentId={group?.id} onClose={() => setAdding(false)} />}
+      {naming !== undefined && <GroupNameDialog group={naming} onClose={() => setNaming(undefined)} />}
     </div>
   )
 }

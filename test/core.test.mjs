@@ -57,6 +57,23 @@ test('移动：空位直接移，有格子就互换（可以跨层）；分组�
   assert.equal(new Set(keys).size, keys.length)
 })
 
+test('拖成组：在被拖到的格子位置新建分组，两格放进去；分组不参与', async () => {
+  const store = fresh()
+  const a = await ops.addCell(store, { kind: 'note', title: 'A' })
+  const b = await ops.addCell(store, { kind: 'note', title: 'B' })
+  const where = { col: b.col, row: b.row }
+  const g = await ops.groupCells(store, { id: a.id, ontoId: b.id })
+  const cells = store.getPalace().cells
+  assert.deepEqual([g.kind, g.parentId, g.col, g.row, g.title], ['group', null, where.col, where.row, '新分组'])
+  const B = cells.find(c => c.id === b.id), A = cells.find(c => c.id === a.id)
+  assert.deepEqual([B.parentId, B.col, B.row], [g.id, 0, 0])
+  assert.deepEqual([A.parentId, A.col, A.row], [g.id, 1, 0])
+  await assert.rejects(ops.groupCells(store, { id: a.id, ontoId: g.id }), /分组不能再放进分组/)
+  await assert.rejects(ops.groupCells(store, { id: a.id, ontoId: b.id }), /只能在最外层/)
+  const keys = store.getPalace().cells.map(c => `${c.parentId}:${c.col}:${c.row}`)
+  assert.equal(new Set(keys).size, keys.length)
+})
+
 test('删除：非空分组不能删；书连同内容文件和卡片原图一起删', async () => {
   const store = fresh()
   const g = await ops.addCell(store, { kind: 'group', title: 'G' })

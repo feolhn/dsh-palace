@@ -42,6 +42,7 @@ const OPS: Record<string, Op> = {
   addCell,
   updateCell: core.updateCell,
   moveCell: core.moveCell,
+  groupCells: core.groupCells,
   deleteCell: core.deleteCell,
   updateItem: core.updateItem,
   setPosition: core.setPosition,
