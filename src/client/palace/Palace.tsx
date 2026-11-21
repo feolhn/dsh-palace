@@ -466,6 +466,8 @@ export function Palace() {
     '--mp-lift': `${-19 * proj.amount}px`,
     '--mp-relief-scale': String(1 + 0.8 * proj.amount),
     '--mp-depth': String(proj.amount),
+    '--mp-ground-y': `${14.5 * proj.amount}px`,
+    '--mp-ground-scale': String(1 + 0.1 * proj.amount),
   } as CSSProperties
 
   return (
