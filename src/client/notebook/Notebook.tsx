@@ -2,7 +2,7 @@
  * 笔记本：一个书 / 笔记格子的内容，三个标签：进度 / 卡片 / 灵感。
  * 右侧栏（有对话，AI 功能能用）和全屏宫殿的详情里共用。
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   findSection, paceOf, progressOf, summaryOf, today,
   type Card, type CardType, type Inspiration, type Item, type Section,
@@ -65,7 +65,7 @@ export function Notebook({ id, title, subtitle, sessionId, tab, onTab, onRead, h
 
 // ---------- 进度 ----------
 
-/** 目标日期按设计稿写成 YYYY.MM.DD，存的时候换回 YYYY-MM-DD。 */
+/** 目标日期按设计稿显示成 YYYY.MM.DD。 */
 const dotted = (d?: string) => (d ?? '').replaceAll('-', '.')
 
 function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item: Item; title: string; subtitle?: string; onPick: () => void; onRead?: () => void; onError: (m: string) => void }) {
@@ -77,14 +77,8 @@ function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item:
   const percent = summaryOf(item).percent
   const video = item.source?.type === 'video'
   const unit = video ? '集' : '节'
-  const [date, setDate] = useState(dotted(item.targetDate))
-  useEffect(() => setDate(dotted(item.targetDate)), [item.targetDate])
-  const saveDate = () => {
-    const value = date.trim().replace(/[./]/g, '-')
-    if (value === (item.targetDate ?? '')) return
-    if (value !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(value)) { setDate(dotted(item.targetDate)); onError('日期请写成 YYYY.MM.DD'); return }
-    void run('updateItem', { id: item.id, targetDate: value || null })
-  }
+  const picker = useRef<HTMLInputElement>(null)
+  const saveDate = (value: string) => { if (value !== (item.targetDate ?? '')) void run('updateItem', { id: item.id, targetDate: value || null }) }
 
   let paceText = ''
   if (!finished && pace !== undefined && p.total > 0) {
@@ -103,11 +97,15 @@ function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item:
           <p className="nb-pct">{finished ? '已读完' : percent !== undefined ? percentText(percent) : '尚未记录进度'}</p>
           <small>{current !== undefined && !finished ? `${p.done === 0 ? '从这里开始' : '正在阅读'} · ${current}` : '每一页，都是走过的一小段路。'}</small>
         </div>
-        <label className="nb-target">目标完成日期
-          <input type="text" inputMode="decimal" placeholder="YYYY.MM.DD" maxLength={10} autoComplete="off" value={date}
-            onChange={e => setDate(e.target.value)} onBlur={saveDate} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }} />
+        {/* 点日期弹出系统日历（和原来一样），显示按设计稿写成 YYYY.MM.DD */}
+        <div className="nb-target">目标完成日期
+          <button type="button" className={item.targetDate ? '' : 'nb-target-empty'}
+            onClick={() => { const el = picker.current; if (!el) return; try { el.showPicker() } catch { el.focus(); el.click() } }}>
+            {item.targetDate ? dotted(item.targetDate) : 'YYYY.MM.DD'}
+          </button>
+          <input ref={picker} type="date" className="nb-target-picker" tabIndex={-1} aria-label="目标完成日期" value={item.targetDate ?? ''} onChange={e => saveDate(e.target.value)} />
           {paceText !== '' && <small className={pace?.overdue ? 'nb-danger' : undefined}>{paceText}</small>}
-        </label>
+        </div>
       </div>
 
       {item.source?.type === 'epub' && (

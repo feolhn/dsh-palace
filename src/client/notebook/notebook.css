@@ -116,9 +116,12 @@
 .nb-eyebrow { display: block; font: 9px/1.5 Arial, sans-serif; letter-spacing: 2.2px; color: var(--nb-muted, #6b7b84); }
 .nb-pct { font: 400 30px/1.1 var(--nb-serif); letter-spacing: -.5px; margin: 10px 0 9px; }
 .nb-journey-main small { font-size: 10px; opacity: .72; }
-.nb-target { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; font-size: 9px; line-height: 1.5; letter-spacing: 1px; text-align: right; }
-.nb-target input { display: block; margin-top: 10px; width: 135px; font: 15px var(--nb-serif); text-align: right; border: 0; border-radius: 0; background: transparent; padding: 5px 0; color: inherit; outline: none; }
-.nb-target input::placeholder { color: inherit; opacity: .55; }
+.nb-target { position: relative; display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; font-size: 11px; line-height: 1.5; letter-spacing: 1px; text-align: right; }
+.nb-target button { margin-top: 8px; padding: 4px 0 !important; border: 0 !important; background: none !important; font: 19px var(--nb-serif); color: inherit; cursor: pointer; }
+.nb-target button:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.nb-target .nb-target-empty { opacity: .55; }
+/* 系统日历的锚点：看不见，弹窗出现在日期下方 */
+.nb-target-picker { position: absolute; right: 0; top: 30px; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
 .nb-target small { font-size: 10px; letter-spacing: 0; opacity: .72; }
 .nb-progress-foot { display: flex; align-items: center; gap: 14px; padding-top: 14px; font-size: 10px; opacity: .85; }
 .nb-progress-foot button { font-size: 11px; }
@@ -132,8 +135,8 @@
 @container (max-width: 520px) {
   .nb-journey { gap: 10px; }
   .nb-pct { font-size: 24px; }
-  .nb-target { font-size: 8px; letter-spacing: 0; }
-  .nb-target input { width: 118px; font-size: 13px; }
+  .nb-target { font-size: 10px; letter-spacing: 0; }
+  .nb-target button { font-size: 16px; }
   .mp-room-panel .nb-sec { gap: 10px; min-height: 49px; }
   .mp-room-panel .nb-sec-title { font-size: 12px; }
 }
