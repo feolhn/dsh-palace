@@ -73,8 +73,9 @@ export function fontCss(draft: ShareDraft, size: number): string {
 }
 
 /** 等字体可用后再量字宽，否则断行会按回退字体算错。 */
-export async function loadFont(draft: ShareDraft): Promise<void> {
-  try { await document.fonts.load(fontCss(draft, 50), '字') } catch { /* 系统字体不需要加载 */ }
+export async function loadFont(draft: ShareDraft, text = '字'): Promise<void> {
+  // 自带的思源宋体按字切片：要把画到纸上的字都传进去，对应的片才会下载
+  try { await document.fonts.load(fontCss(draft, 50), text || '字') } catch { /* 系统字体不需要加载 */ }
 }
 
 export function measurer(ctx: CanvasRenderingContext2D, draft: ShareDraft) {

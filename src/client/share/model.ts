@@ -11,9 +11,9 @@ const SOURCE_SIZE = 27
 const SOURCE_LEADING = 38
 
 export type FontId = 'song' | 'kai' | 'fang' | 'hei'
-/** 先用系统自带字体；字体包（汇文明朝体等）定下来后在这里加。 */
+/** 宋体用插件自带的思源宋体（#10）；其他先用系统自带，分享页再加汇文明朝体等。 */
 export const FONTS: Record<FontId, { label: string; family: string }> = {
-  song: { label: '宋体', family: '"Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif' },
+  song: { label: '宋体', family: '"Shelf Source Han Serif", "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif' },
   kai: { label: '楷体', family: '"Kaiti SC", STKaiti, KaiTi, serif' },
   fang: { label: '仿宋', family: 'STFangsong, FangSong, serif' },
   hei: { label: '黑体', family: '"PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", sans-serif' },

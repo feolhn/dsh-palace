@@ -117,7 +117,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     defineTool({
       name: 'shelf_add',
       description: '往宫殿里放东西。kind=group 新建分组（title）；kind=note 新建笔记格子（title，用于没有原文的东西：日记、心情、追剧）；'
-        + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或 B 站视频课（url），可选 title、subtitle（备注：格子上标题上方的一行小字，用户想填什么都行，常见是作者或另一种语言的书名）、target_date（YYYY-MM-DD）。'
+        + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或 B 站视频课（url），可选 title、subtitle（备注：格子上标题上方的一行小字，用户想填什么都行，常见是作者或另一种语言的书名）。title 用书的原名，大小写照原书（如 Invention of Nature），不带文件名里的 - _ 《》 等符号；外文书可把中文译名放 subtitle、target_date（YYYY-MM-DD）。'
         + 'parent_id 填分组 id 可以直接放进分组（分组里不能再放分组）。',
       parameters: {
         kind: { type: 'string', enum: ['group', 'note', 'book'], required: true },

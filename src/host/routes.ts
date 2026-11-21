@@ -226,6 +226,15 @@ export function createRoutes(store: PalaceStore, active: ActiveItems, memory = n
         response.headers.set('cache-control', 'public, max-age=86400')
         return response
       }
+      // 界面字体（#10）：vendor/fonts/<名字>.woff2（scripts/make-fonts.mjs 生成）
+      const font = /^fonts\/([a-z0-9][a-z0-9-]{0,60})\.woff2$/.exec(rel)?.[1]
+      if (font !== undefined) {
+        const file = join(vendorDir(), 'fonts', `${font}.woff2`)
+        if (!existsSync(file)) return new Response('not found', { status: 404 })
+        const response = streamFile(file, 'font/woff2')
+        response.headers.set('cache-control', 'public, max-age=31536000, immutable')
+        return response
+      }
       const allowed = ['cmaps', 'standard_fonts', 'wasm', 'iccs']
       if (!allowed.some(dir => rel.startsWith(dir + sep)) || rel.includes('..')) return new Response('not found', { status: 404 })
       const file = join(pdfjsDistDir(), rel)

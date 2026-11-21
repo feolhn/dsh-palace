@@ -78,9 +78,11 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
   const close = () => { void flush().then(ok => { if (ok) onClose() }) }
 
   // 排版 + 画图
+  // 导出前要等最新一次绘制完成（自带字体切片可能还在下载，canvas 上仍是旧图）
+  const rendering = useRef<Promise<void>>(Promise.resolve())
   useEffect(() => {
     let stale = false
-    void loadFont(draft).then(() => {
+    rendering.current = loadFont(draft, Object.values(texts).join('') + sourceOf(draft, fallbackSource)).then(() => {
       const ctx = canvasEl?.getContext('2d')
       if (stale || !ctx) return
       const result = layout(draft, texts, sourceOf(draft, fallbackSource), measurer(ctx, draft))
@@ -98,6 +100,7 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
 
   const exportPng = async () => {
     void flush()
+    await rendering.current
     const el = canvas.current
     const blob = el ? await new Promise<Blob | null>(resolve => el.toBlob(resolve, 'image/png')) : null
     if (!blob) { setStatus('图片导出失败，请重试'); return }
