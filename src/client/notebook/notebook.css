@@ -55,7 +55,7 @@
 .nb-chapter small { margin-left: auto; color: var(--nb-muted, #6b7b84); font-weight: 400; }
 .nb-sec { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .nb-sec.nb-indent { padding-left: 14px; }
-.nb-sec-title { flex: 1; cursor: pointer; }
+.nb-sec-title { flex: 0 1 auto; min-width: 0; cursor: pointer; }
 .nb-sec.nb-done .nb-sec-title { color: var(--nb-muted, #6b7b84); }
 .nb-sec.nb-cur .nb-sec-title { font-weight: 600; }
 .nb-sec-actions { display: none; gap: 10px; }
@@ -110,12 +110,39 @@
 .mp-room-panel .nb-tabs button.nb-on::before { background: radial-gradient(circle, #fffdeef0 0 14px, #fff 14.5px 15.5px, #f9f7e85c 16px); box-shadow: 0 0 12px #ffffffc0; }
 .mp-room-panel .nb-tabs small { margin: 0 0 0 3px; }
 /* 进度 */
-.mp-room-panel .nb-stat b { font-size: 36px; letter-spacing: -.02em; }
-.mp-room-panel .nb-bar { height: 2px; background: #ffffff66; }
-.mp-room-panel .nb-current { background: #ffffff26; border: 1px solid #ffffff73; border-radius: 0; }
-.mp-room-panel .nb-row input[type=date] { font-family: var(--mp-serif); font-size: 14px; }
+/* 进度页（移植设计稿 .progress-summary / .chapter-row / .progress-footer，#40） */
+.nb-journey { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 8px 0 14px; }
+.nb-journey-main { min-width: 0; }
+.nb-eyebrow { display: block; font: 9px/1.5 Arial, sans-serif; letter-spacing: 2.2px; color: var(--nb-muted, #6b7b84); }
+.nb-pct { font: 400 30px/1.1 var(--nb-serif); letter-spacing: -.5px; margin: 10px 0 9px; }
+.nb-journey-main small { font-size: 10px; opacity: .72; }
+.nb-target { position: relative; display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; font-size: 11px; line-height: 1.5; letter-spacing: 1px; text-align: right; }
+.nb-target button { margin-top: 8px; padding: 4px 0 !important; border: 0 !important; background: none !important; font: 19px var(--nb-serif); color: inherit; cursor: pointer; }
+.nb-target button:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.nb-target .nb-target-empty { opacity: .55; }
+/* 系统日历的锚点：看不见，弹窗出现在日期下方 */
+.nb-target-picker { position: absolute; right: 0; top: 30px; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+.nb-target small { font-size: 10px; letter-spacing: 0; opacity: .72; }
+.nb-progress-foot { display: flex; align-items: center; gap: 14px; padding-top: 14px; font-size: 10px; opacity: .85; }
+.nb-progress-foot button { font-size: 11px; }
+.nb-upto { display: grid; place-items: center; width: 18px; height: 18px; padding: 0 !important; border: 0 !important; background: none !important; cursor: pointer; }
+/* 和 Memory Palace 旁返回三角一样大（宽 10、高 8），白色、外发光 */
+.nb-upto i { width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 8px solid #fff; filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px #ffffffb0); }
+.nb-upto:hover i { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px #fff); }
+.mp-room-panel .nb-sec { gap: 15px; min-height: 53px; padding: 11px 3px !important; }
+.mp-room-panel .nb-sec-title { font-size: 13px; line-height: 1.8; }
+.mp-room-panel .nb-sec small { font: 13px var(--nb-serif); opacity: .65; white-space: nowrap; }
+@container (max-width: 520px) {
+  .nb-journey { gap: 10px; }
+  .nb-pct { font-size: 24px; }
+  .nb-target { font-size: 10px; letter-spacing: 0; }
+  .nb-target button { font-size: 16px; }
+  .mp-room-panel .nb-sec { gap: 10px; min-height: 49px; }
+  .mp-room-panel .nb-sec-title { font-size: 12px; }
+}
 .mp-room-panel .nb-outline { border-top: 1px solid #ffffff99; }
-.mp-room-panel .nb-chapter, .mp-room-panel .nb-sec { min-height: 44px; padding: 9px 4px !important; border-bottom: 1px solid #ffffff4d; }
+.mp-room-panel .nb-chapter, .mp-room-panel .nb-sec { border-bottom: 1px solid #ffffff4d; }
+.mp-room-panel .nb-chapter { min-height: 44px; padding: 9px 4px !important; }
 .mp-room-panel .nb-chapter { font-weight: 400; font-family: var(--mp-serif); font-size: 15px; align-items: center; }
 .mp-room-panel .nb-sec.nb-cur { background: #ffffff1c; }
 .mp-room-panel .nb-sec input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 15px; height: 15px; margin: 0; flex-shrink: 0; border: 1px solid #f6f5e4; border-radius: 1px; cursor: pointer; display: grid; place-items: center; }
