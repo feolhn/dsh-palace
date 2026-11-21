@@ -122,6 +122,8 @@ export function Palace() {
   const groupReturn = useRef<Camera>()
   /** 刚拖成的新分组：弹出命名框。 */
   const [naming, setNaming] = useState<Cell>()
+  /** 刚松手、还在保存的格子：先停在放下的位置，等数据刷新回来再按正式坐标画（不在原位闪一下）。 */
+  const [settling, setSettling] = useState<{ id: string; col: number; row: number }>()
   const [selected, setSelected] = useState<string>()
   const [adding, setAdding] = useState(false)
   const [gesture, setGesture] = useState<Gesture>()
@@ -388,22 +390,26 @@ export function Palace() {
       if (cell.kind === 'group') { if (!spreading && openGroup !== cell.id) enterGroup(cell) } else { setOrbChat(undefined); setSelected(cell.id) } // 首页的光球对话先收起，不和「与书对话」同时出现（#66）
       return
     }
-    const target = dropAt({ x: gesture.px, y: gesture.py })?.target
-    if (target === undefined) return
+    const dropped = dropAt({ x: gesture.px, y: gesture.py })
+    const target = dropped?.target
+    if (dropped === undefined || target === undefined) return
     if (target.parentId === cell.parentId && target.col === cell.col && target.row === cell.row) return
+    // 保存完成（成功会先刷新数据；失败就回到原位并提示）再放开
+    setSettling({ id: cell.id, ...dropped.shown })
+    const settle = () => setSettling(s => (s?.id === cell.id ? undefined : s))
     // 最外层：把书 / 笔记拖到一个分组上 = 放进这个分组
     const onto = cells.find(c => c.parentId === target.parentId && c.col === target.col && c.row === target.row)
     if (onto?.kind === 'group' && cell.kind !== 'group' && target.parentId === null) {
-      void run('moveCell', { id: cell.id, parentId: onto.id })
+      void run('moveCell', { id: cell.id, parentId: onto.id }).finally(settle)
       return
     }
     // 最外层：两个独立的格子拖到重叠 = 新建分组，然后给它起名（#40）
     if (onto !== undefined && onto.kind !== 'group' && cell.kind !== 'group' && target.parentId === null && onto.id !== cell.id) {
       void palaceOp<Cell>('groupCells', { id: cell.id, ontoId: onto.id })
-        .then(g => setNaming(g)).catch((e: Error) => setOpError(e.message))
+        .then(g => setNaming(g)).catch((e: Error) => setOpError(e.message)).finally(settle)
       return
     }
-    void run('moveCell', { id: cell.id, ...target })
+    void run('moveCell', { id: cell.id, ...target }).finally(settle)
   }
 
   // ---------- 渲染 ----------
@@ -481,7 +487,7 @@ export function Palace() {
 
   const renderCell = (c: Cell) => {
     const isDragged = dragging?.cell.id === c.id
-    const w = worldCell(c)
+    const w = settling?.id === c.id ? settling : worldCell(c)
     let x = ax(w.col, 'col'), y = ax(w.row, 'row')
     if (isDragged && cam !== undefined) {
       const d = delta(m, dragging.px - dragging.sx, dragging.py - dragging.sy)
