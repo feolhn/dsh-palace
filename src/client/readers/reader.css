@@ -7,7 +7,7 @@
 .rd-root { container-type: inline-size; }
 .rd-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #e4dcc8; min-width: 0; }
 .rd-head > * { flex-shrink: 0; white-space: nowrap; }
-.rd-title { font-family: "Songti SC", serif; font-size: 15px; flex: 0 1 auto; min-width: 0; max-width: 30%; overflow: hidden; text-overflow: ellipsis; }
+.rd-title { font-family: "Shelf EB Garamond", "Shelf Source Han Serif", "EB Garamond", "Source Han Serif SC", "Songti SC", Georgia, serif; font-size: 15px; flex: 0 1 auto; min-width: 0; max-width: 30%; overflow: hidden; text-overflow: ellipsis; }
 .rd-head .rd-toc { flex: 1 1 auto; min-width: 60px; max-width: 280px; text-overflow: ellipsis; padding: 3px 6px; border: 1px solid #e4dcc8; border-radius: 6px; background: #fbf8f0; }
 .rd-spacer { flex: 1 1 0; min-width: 0; }
 .rd-status { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -29,7 +29,7 @@
 .rd-error { color: #934b39; }
 .rd-select { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: min(640px, 90%);
   padding: 10px 14px; background: #fff; border: 1px solid #e4dcc8; border-radius: 12px; box-shadow: 0 10px 28px rgba(60, 50, 30, .16); }
-.rd-quote { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Songti SC", serif; }
+.rd-quote { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Shelf EB Garamond", "Shelf Source Han Serif", "EB Garamond", "Source Han Serif SC", "Songti SC", Georgia, serif; }
 .rd-btn { padding: 5px 14px !important; border-radius: 999px; background: #294c60 !important; color: #fff !important; white-space: nowrap; }
 
 /* 查词弹窗（#43，移植自原型 #word-lookup） */

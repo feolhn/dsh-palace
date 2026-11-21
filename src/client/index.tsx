@@ -9,6 +9,8 @@ import notebookCss from './notebook/notebook.css?raw'
 import palaceCss from './palace/palace.css?raw'
 import shareCss from './share/share.css?raw'
 import readerCss from './readers/reader.css?raw'
+import fontsCss from '../../vendor/fonts/fonts.css?raw'
+import { apiUrl } from './api.ts'
 import { Palace } from './palace/Palace.tsx'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
@@ -105,7 +107,9 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = 'dsh-shelf'
-    style.textContent = [notebookCss, palaceCss, shareCss, readerCss].join('\n')
+    // 字体（#10）：随插件发布、默认加载；fonts.css 里的相对路径换成插件的资源接口
+    const fonts = fontsCss.replace(/url\(fonts\/([^)]+)\)/g, (_, f: string) => `url("${apiUrl('asset', { f: `fonts/${f}` })}")`)
+    style.textContent = [fonts, notebookCss, palaceCss, shareCss, readerCss].join('\n')
     document.head.appendChild(style)
     return () => style.remove()
   }, 'dsh-shelf: styles')

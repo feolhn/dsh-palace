@@ -80,7 +80,7 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
   // 排版 + 画图
   useEffect(() => {
     let stale = false
-    void loadFont(draft).then(() => {
+    void loadFont(draft, Object.values(texts).join('') + sourceOf(draft, fallbackSource)).then(() => {
       const ctx = canvasEl?.getContext('2d')
       if (stale || !ctx) return
       const result = layout(draft, texts, sourceOf(draft, fallbackSource), measurer(ctx, draft))
