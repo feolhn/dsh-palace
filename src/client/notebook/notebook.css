@@ -28,8 +28,6 @@
 .nb-btn { align-self: flex-start; padding: 6px 14px !important; border: 1px solid var(--nb-line, #d6dde0) !important; border-radius: 999px; font-size: 12px; white-space: nowrap; }
 .nb-btn:hover { background: var(--nb-soft, #f3f5f6) !important; }
 .nb-btn.nb-primary { background: var(--nb-accent, #294c60) !important; border-color: transparent !important; color: #fff !important; }
-/* 和「继续读」同样的描边胶囊，只是字小 2px（#71） */
-.nb-btn.nb-btn-small { font-size: 10px; }
 .nb-btn:disabled { opacity: .4; cursor: default; }
 
 /* 列表（右侧栏首页） */
@@ -157,8 +155,10 @@
 .mp-room-panel .nb-card, .mp-room-panel .nb-insp { background: #f9f5e842; border: 1px solid #ffffff59; border-radius: 0; padding: 18px 20px; }
 .mp-room-panel .nb-card blockquote { border-left-color: #e5ba68; }
 .mp-room-panel .nb-compose textarea { background: #ffffff28; border: 0; border-bottom: 1px solid #7a99a455; border-radius: 0; }
-.mp-room-panel .nb-chips button { border-color: #ffffff99 !important; }
-.mp-room-panel .nb-btn { border-color: #ffffffb0 !important; }
+/* 阅览室里的按钮统一成描边胶囊（继续读、全部 / 摘录 / 想法 / 错题、存成灵感），11px */
+.mp-room-panel .nb-btn:not(.nb-primary), .mp-room-panel .nb-chips button { padding: 6px 14px !important; border: 1px solid #ffffffb0 !important; border-radius: 999px; font-size: 11px; background: transparent !important; color: inherit !important; }
+.mp-room-panel .nb-btn:not(.nb-primary):hover, .mp-room-panel .nb-chips button:hover { background: #ffffff26 !important; }
+.mp-room-panel .nb-chips button.nb-on { background: #ffffff40 !important; }
 .mp-room-panel .nb-btn.nb-primary { border-color: transparent !important; }
 @container (max-width: 560px) { .mp-room-panel .nb-cards { grid-template-columns: minmax(0, 1fr); } }
 /* 原型 .thought-card 的字：卡片标题宋体、正文 12px、批注上方细线 */

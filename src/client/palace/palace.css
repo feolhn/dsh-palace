@@ -231,8 +231,9 @@
 .mp-arc-current { stroke: #fff; stroke-width: 1.7; stroke-dasharray: 14 110; opacity: .9; animation: mp-current 3.7s linear infinite, mp-shimmer 4.9s ease-in-out infinite; animation-delay: var(--arc-delay); }
 .mp-arc-branches { stroke: #f6fbff; stroke-width: .65; opacity: .48; }
 .is-related .mp-arc-halo { opacity: .8; }
-.mp-arc-why { position: absolute; z-index: 6; transform: translate(-50%, -130%); max-width: 16em; padding: 5px 10px; pointer-events: none;
-  font: 12px/1.5 var(--mp-serif); letter-spacing: .03em; text-align: center; color: var(--mp-ink); background: #eef4f2e6; border: 1px solid #ffffffd0; border-radius: 12px; box-shadow: 0 4px 16px #294c6018; }
+.mp-arc-why { position: absolute; z-index: 6; transform: translate(-50%, -130%); max-width: 16em; pointer-events: none;
+  font: 12px/1.5 var(--mp-serif); letter-spacing: .03em; text-align: center; color: var(--mp-ink); border: 1px solid #ffffffb0; border-radius: 999px; padding: 6px 14px; }
+/* 电弧备注和阅览室按钮同一个描边胶囊样式，字号不变 */
 .mp-arc-why span { color: var(--mp-quiet); }
 @keyframes mp-current { to { stroke-dashoffset: -248; } }
 @keyframes mp-shimmer { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
