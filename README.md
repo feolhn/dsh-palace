@@ -10,6 +10,15 @@
 
 > Memory Palace：DeepSeek Harness 的读书插件。把书、视频课和笔记放进一座水彩宫殿，你只管记，AI 帮你整理。
 
+<p align="center">
+  <img src="assets/demo-1.gif" width="49%" alt="轴测视图：书与书之间的电弧">
+  <img src="assets/demo-3.gif" width="49%" alt="阅览室：进度与灵感">
+</p>
+<p align="center">
+  <img src="assets/demo-4.gif" width="49%" alt="卡片与和书对话">
+  <img src="assets/demo-5.gif" width="49%" alt="在格子里读 EPUB、摘录成分享卡片">
+</p>
+
 装好后，它在 Harness 里显示为 **Memory Palace**（记忆宫殿）。`dsh-palace` 是它在 npm 上的包名，安装时要输入这个名字。
 
 它适合任何「边读边记」的人：读闲书、啃教材、看网课、备考刷题都行。你不用操心怎么分类、怎么排计划，记下来就好，剩下的交给 AI。
