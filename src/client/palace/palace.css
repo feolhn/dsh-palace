@@ -232,8 +232,8 @@
 .mp-arc-branches { stroke: #f6fbff; stroke-width: .65; opacity: .48; }
 .is-related .mp-arc-halo { opacity: .8; }
 .mp-arc-why { position: absolute; z-index: 6; transform: translate(-50%, -130%); max-width: 16em; pointer-events: none;
-  font: 12px/1.5 var(--mp-serif); letter-spacing: .03em; text-align: center; color: var(--mp-ink); border: 1px solid #ffffffb0; border-radius: 999px; padding: 6px 14px; }
-/* 电弧备注和阅览室按钮同一个描边胶囊样式，字号不变 */
+  font: 12px/1.5 var(--mp-serif); letter-spacing: .03em; text-align: center; color: var(--mp-ink); border: 1px solid #ffffffb0; border-radius: 10px; padding: 6px 14px; }
+/* 电弧备注和阅览室按钮同样的白色细边、无填充；备注常有两行，圆角用小一点的 10px */
 .mp-arc-why span { color: var(--mp-quiet); }
 @keyframes mp-current { to { stroke-dashoffset: -248; } }
 @keyframes mp-shimmer { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
