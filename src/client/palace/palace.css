@@ -37,8 +37,8 @@
 .mp-group:has(.mp-cell-sub) .mp-group-count { bottom: 142px; }
 
 /* 分组展开 */
-.mp-dim { position: absolute; inset: 0; background: rgba(87, 120, 138, .16); pointer-events: none; }
-.mp-group-frame { position: absolute; transform-origin: 0 0; background: rgba(255, 253, 241, .42); box-shadow: 0 0 0 1px #fffef3, 0 20px 60px #294c6020; pointer-events: none; }
+/* 原型 #group-frame：只有一层奶白，没有外框阴影，也不压暗周围 */
+.mp-group-frame { position: absolute; transform-origin: 0 0; background: rgba(255, 253, 241, .4); pointer-events: none; }
 .mp-drop { position: absolute; transform-origin: 0 0; border: 1px solid #fffef3; background: #ffffed21; pointer-events: none; z-index: 5; }
 
 /* 顶部、底部 */

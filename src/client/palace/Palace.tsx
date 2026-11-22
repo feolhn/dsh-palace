@@ -583,8 +583,7 @@ export function Palace() {
 
       {group !== undefined && gsize !== undefined && cam !== undefined && (
         <>
-          {/* 阅览室打开时分组框和遮罩跟格子一起收起；框的边跟着网格线走（原型用 axisCoord），缩回途中不和网格错开 */}
-          <div className="mp-dim" style={{ opacity: gp * outside }} />
+          {/* 阅览室打开时分组框跟格子一起收起；框的边跟着网格线走（原型用 axisCoord），缩回途中不和网格错开 */}
           <div className="mp-group-frame" style={{ ...rect(ax(group.col, 'col'), ax(group.row, 'row'), B + (ax(group.col + gsize.cols, 'col') - ax(group.col, 'col') - B) * gp, B + (ax(group.row + gsize.rows, 'row') - ax(group.row, 'row') - B) * gp), opacity: outside }} />
           {/* 进出分组时透明度渐变：分组那一格从有到无，组里的格子从无到有；退出时反过来 */}
           {gp < 0.999 && renderCell(group, 1 - gp)}
