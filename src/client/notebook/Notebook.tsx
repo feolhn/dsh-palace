@@ -95,7 +95,11 @@ function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item:
         <div className="nb-journey-main">
           <span className="nb-eyebrow">THE JOURNEY</span>
           <p className="nb-pct">{finished ? '已读完' : percent !== undefined ? percentText(percent) : '尚未记录进度'}</p>
-          <small>{current !== undefined && !finished ? `${p.done === 0 ? '从这里开始' : '接下来'} · ${current}` : '每一页，都是走过的一小段路。'}</small>
+          {/* 单行显示，放不下的部分省略；鼠标停留可看全文 */}
+          {(() => {
+            const line = current !== undefined && !finished ? `${p.done === 0 ? '从这里开始' : '接下来'} · ${current}` : '每一页，都是走过的一小段路。'
+            return <small title={line}>{line}</small>
+          })()}
         </div>
         {/* 点日期弹出系统日历（和原来一样），显示按设计稿写成 YYYY.MM.DD */}
         <div className="nb-target">目标完成日期
@@ -331,7 +335,7 @@ function InspirationsTab({ item, title, sessionId, onError }: { item: Item; titl
       {chatOk
         ? (
           <div className="nb-row">
-            <button type="button" className="nb-btn nb-primary" onClick={save}>把这次对话存成灵感</button>
+            <button type="button" className="nb-btn" onClick={save}>把这次对话存成灵感</button>
             {sent && <span className="nb-small nb-muted">已经请 AI 总结，稍等片刻</span>}
           </div>
         )
