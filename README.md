@@ -1,12 +1,9 @@
 # dsh-palace
 
 [![npm](https://img.shields.io/npm/v/dsh-palace)](https://www.npmjs.com/package/dsh-palace)
-[![downloads](https://img.shields.io/npm/dm/dsh-palace)](https://www.npmjs.com/package/dsh-palace)
 [![license](https://img.shields.io/github/license/feolhn/dsh-palace)](LICENSE)
 [![DeepSeek Harness](https://img.shields.io/badge/DeepSeek%20Harness-0.2.x-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
-[![platform](https://img.shields.io/badge/platform-desktop%20(web%20UI)-lightgrey)](#安装)
 [![Awesome DSH Plugin](https://img.shields.io/badge/Awesome-DSH%20Plugin-fc60a8)](https://awesome-dsh-plugin.com/)
-[![standard-readme](https://img.shields.io/badge/readme%20style-standard-brightgreen)](https://github.com/RichardLitt/standard-readme)
 
 > Memory Palace：DeepSeek Harness 的读书插件。把书、视频课和笔记放进一座水彩宫殿，你只管记，AI 帮你整理。
 
