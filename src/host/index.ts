@@ -2,7 +2,7 @@
  * dsh-palace Host 入口：注册 AI 工具 + 前端用的 HTTP 接口。
  * 数据目录默认 ~/Documents/dsh-palace-data，可在 profile 的 cordis.patch.yml 里用 config.dataDir 修改。
  */
-import { existsSync, renameSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Memory } from '../core/memory.ts'
@@ -32,19 +32,13 @@ interface PromptAgent { id: string; session?: { header?: { cwd?: string } } }
 
 /**
  * 默认数据目录 ~/Documents/dsh-palace-data。
- * 插件以前叫 dsh-shelf（beta），数据在 ~/Documents/dsh-shelf-data：新目录还没有时把老目录改名过去；改名失败就继续用老目录，不丢数据。
+ * 插件以前叫 dsh-shelf（beta），数据在 ~/Documents/dsh-shelf-data：新目录里还没有宫殿时继续用老目录。
+ * 不搬家：老对话的工作目录就在老目录下，搬走了续聊会找不到（#74）。
  */
 function defaultDataDir(): string {
   const dir = join(homedir(), 'Documents', 'dsh-palace-data')
   const old = join(homedir(), 'Documents', 'dsh-shelf-data')
-  if (existsSync(dir) || !existsSync(old)) return dir
-  try {
-    renameSync(old, dir)
-    return dir
-  } catch (error) {
-    console.warn('[dsh-palace] 旧数据目录改名失败，继续使用', old, error)
-    return old
-  }
+  return !existsSync(join(dir, 'palace.json')) && existsSync(join(old, 'palace.json')) ? old : dir
 }
 
 export function apply(ctx: HostContext, config: Config = {}): void {

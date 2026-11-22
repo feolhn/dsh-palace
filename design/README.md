@@ -48,17 +48,17 @@ GitHub 是放代码和讨论的网站。注册要收邮箱验证码、做人机�
 
 **不用自己看下面的步骤**，把这段话整段复制给 GPT，它会全程自己装好：
 
-> 帮我在这台电脑的 DeepSeek Harness 里装好 dsh-palace 插件的内测版（包名 `dsh-palace@beta`），说明在 https://github.com/feolhn/dsh-palace/blob/main/design/README.md 的「第一步：装上内测版」。请你全程自己操作完成，包括卸载旧版、安装、启用、重启 Harness，中间不要问我、不要让我确认。只有需要我登录或输入密码时才叫我。装好后告诉我一句「装好了」。
+> 帮我在这台电脑的 DeepSeek Harness 里装好 dsh-palace 插件（包名 `dsh-palace`），说明在 https://github.com/feolhn/dsh-palace/blob/main/design/README.md 的「第一步：装上内测版」。请你全程自己操作完成，包括卸载旧版、安装、启用、重启 Harness，中间不要问我、不要让我确认。只有需要我登录或输入密码时才叫我。装好后告诉我一句「装好了」。
 
 （下面是给 ChatGPT 看的步骤。）
 
 1. 下载安装 **DeepSeek Harness** 桌面版（0.2.x）。
 2. 打开 Harness → **设置** → **插件** → **添加插件** → 选「安装第三方插件」。
-3. 在「包名或地址」里输入 `dsh-palace@beta` → **安装** → 装好后点 **立即启用**。
+3. 在「包名或地址」里输入 `dsh-palace` → **安装** → 装好后点 **立即启用**。
 4. 完全退出 Harness（⌘Q）再打开。左侧导航出现「Memory Palace」、对话标题栏右上角出现书本图标，就装好了。
 
 **有新的内测版时**（feolhn 会在置顶讨论里说版本号）：在插件列表里先**卸载** dsh-palace，再按第 2、3 步重新装一次，然后重启。
-如果提示「安装的是旧版本」：这是 Harness 的安全策略，新发布的版本要过一段观察期。在包名里直接写版本号就行，比如 `dsh-palace@0.2.0-beta.1`。
+如果提示「安装的是旧版本」：这是 Harness 的安全策略，新发布的版本要过一段观察期。在包名里直接写版本号就行，比如 `dsh-palace@1.0.0`。
 
 **遇到问题**：附上截图，把这段话复制给 GPT：「帮我把这个问题回复到 https://github.com/feolhn/dsh-palace/discussions/34 ：写清楚我做了什么、看到了什么、本来以为会怎样。全程你自己做完，不要问我。截图里有真名、聊天记录或文件路径的话先打码。」
 
