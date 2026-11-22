@@ -507,7 +507,7 @@ export function Palace() {
 
   // 阅览室打开时格子、分组框、电弧立刻收起，只留网格跟着镜头展开（原型 render 里 opened 就 hidden）；关上时随缩回渐渐出现
   const outside = selected !== undefined ? 0 : 1 - proj.open
-  const renderCell = (c: Cell) => {
+  const renderCell = (c: Cell, fade = 1) => {
     const isDragged = dragging?.cell.id === c.id
     const w = settling?.id === c.id ? settling : worldCell(c)
     let x = ax(w.col, 'col'), y = ax(w.row, 'row')
@@ -518,7 +518,7 @@ export function Palace() {
     }
     return (
       <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''}`}
-        style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * outside, pointerEvents: proj.open > 0.001 ? 'none' : undefined }}
+        style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * outside * fade, pointerEvents: proj.open > 0.001 || fade < 1 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
         <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => read(c.id)} />
@@ -586,7 +586,9 @@ export function Palace() {
           {/* 阅览室打开时分组框和遮罩跟格子一起收起；框的边跟着网格线走（原型用 axisCoord），缩回途中不和网格错开 */}
           <div className="mp-dim" style={{ opacity: gp * outside }} />
           <div className="mp-group-frame" style={{ ...rect(ax(group.col, 'col'), ax(group.row, 'row'), B + (ax(group.col + gsize.cols, 'col') - ax(group.col, 'col') - B) * gp, B + (ax(group.row + gsize.rows, 'row') - ax(group.row, 'row') - B) * gp), opacity: outside }} />
-          {gp > 0.6 && children.map(c => renderCell(c))}
+          {/* 进出分组时透明度渐变：分组那一格从有到无，组里的格子从无到有；退出时反过来 */}
+          {gp < 0.999 && renderCell(group, 1 - gp)}
+          {gp > 0.3 && children.map(c => renderCell(c, Math.min(1, (gp - 0.3) / 0.6)))}
         </>
       )}
 
