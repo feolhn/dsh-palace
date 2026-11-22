@@ -11,8 +11,8 @@ import { ShareEditor } from '../share/ShareEditor.tsx'
 import { mountEpub, sameFile, type EpubHandle } from './epub.ts'
 import { WordPopup, type WordAnchor } from './WordPopup.tsx'
 
-const FONT_KEY = 'dsh-shelf:epub-font-size'
-const LOOKUP_KEY = 'dsh-shelf:word-lookup'
+const FONT_KEY = 'dsh-palace:epub-font-size'
+const LOOKUP_KEY = 'dsh-palace:word-lookup'
 
 /** 当前目录项（href 带锚点）对应的节；章级目录项（目录里不是节）落到同一文件的第一节。 */
 function sectionOf(item: Item, anchor: string | undefined): Section | undefined {

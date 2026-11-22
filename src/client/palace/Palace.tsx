@@ -98,7 +98,7 @@ const ORB_CHAT = { w: 340, h: 520 }
 /** 空对话时可以点的开头（设计稿原文；宫殿的第二条是新加的）。 */
 const BOOK_PROMPTS = ['这段文字，让我想起……', '这个想法与我读过的书，有什么联系？']
 const PALACE_PROMPTS = ['这个想法与我读过的书，有什么联系？', '最近读的几本书，可以放在一起看吗？']
-const VIEW_KEY = 'dsh-shelf:view'
+const VIEW_KEY = 'dsh-palace:view'
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
 type Gesture =
@@ -134,10 +134,10 @@ export function Palace() {
   const [gesture, setGesture] = useState<Gesture>()
   const [opError, setOpError] = useState<string>()
   // AI 对话面板开着没有（记在本机，下次打开宫殿还是这样）
-  const [chatOpen, setChatOpenState] = useState(() => localStorage.getItem('dsh-shelf:chat-open') === '1')
+  const [chatOpen, setChatOpenState] = useState(() => localStorage.getItem('dsh-palace:chat-open') === '1')
   // 「与书对话」的会话：交给阅览室里的笔记本（存灵感、生成目录要往这个对话发消息）
   const [roomSession, setRoomSession] = useState<{ cellId: string; sessionId: string }>()
-  const setChatOpen = (open: boolean) => { localStorage.setItem('dsh-shelf:chat-open', open ? '1' : '0'); setChatOpenState(open) }
+  const setChatOpen = (open: boolean) => { localStorage.setItem('dsh-palace:chat-open', open ? '1' : '0'); setChatOpenState(open) }
   // 轴测视图（记在本机）。proj 是动画中的当前值：amount 投影程度，spread 分组展开程度
   const [iso, setIso] = useState(() => localStorage.getItem(VIEW_KEY) === 'iso')
   const [proj, setProj] = useState<Proj>(() => (iso ? { amount: 1, spread: 1, open: 0 } : { amount: 0, spread: 0, open: 0 }))

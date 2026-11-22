@@ -11,7 +11,7 @@ let sharedWorker: PDFWorker | undefined
 function pdfWorker(): PDFWorker {
   if (sharedWorker === undefined) {
     const url = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }))
-    sharedWorker = new PDFWorker({ port: new Worker(url, { type: 'module', name: 'dsh-shelf-pdf' }) as never })
+    sharedWorker = new PDFWorker({ port: new Worker(url, { type: 'module', name: 'dsh-palace-pdf' }) as never })
   }
   return sharedWorker
 }

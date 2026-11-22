@@ -13,8 +13,8 @@ const out = join(root, 'vendor/fonts')
 
 // [npm 包, 取哪个 css, 只保留哪些 @font-face（按注释名过滤）, 插件里的字体名]
 const SOURCES = [
-  ['@fontsource/noto-serif-sc@5', '400.css', () => true, 'Shelf Source Han Serif'],
-  ['@fontsource/eb-garamond@5', '400.css', name => /-latin(-ext)?-400-normal$/.test(name), 'Shelf EB Garamond'],
+  ['@fontsource/noto-serif-sc@5', '400.css', () => true, 'Palace Source Han Serif'],
+  ['@fontsource/eb-garamond@5', '400.css', name => /-latin(-ext)?-400-normal$/.test(name), 'Palace EB Garamond'],
 ]
 
 const tmp = await mkdtemp(join(tmpdir(), 'shelf-fonts-'))

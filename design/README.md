@@ -4,7 +4,7 @@
 
 ## 这个项目是什么
 
-**dsh-shelf（学习书架）** 是 DeepSeek Harness 里的一个插件。Harness 是一个 AI 桌面应用，类似 ChatGPT 客户端，可以装插件扩展功能。
+**dsh-palace（学习书架）** 是 DeepSeek Harness 里的一个插件。Harness 是一个 AI 桌面应用，类似 ChatGPT 客户端，可以装插件扩展功能。
 
 我们想把**一本书从读到用**的过程串起来：
 
@@ -38,33 +38,33 @@ GitHub 是放代码和讨论的网站。注册要收邮箱验证码、做人机�
 
 **（可选）让 ChatGPT 连上 GitHub**：连上之后，GPT 可以直接读项目代码，你就不用每次下载 ZIP。同样可以让 GPT 带你操作：
 
-> 我想在 ChatGPT 里连接我的 GitHub 账号，让你能读 feolhn/dsh-shelf 这个仓库。请一步一步带我做。
+> 我想在 ChatGPT 里连接我的 GitHub 账号，让你能读 feolhn/dsh-palace 这个仓库。请一步一步带我做。
 
 连不上也没关系，用下面的「下载 ZIP」一样可以。
 
 ## 第一步：装上内测版
 
-你装的是**内测版**（beta），只给 feolhn 和你两个人用，比正式版新，可能有 bug。正式版用户装的是 `dsh-shelf`（不带 `@beta`），两者不要混装。
+你装的是**内测版**（beta），只给 feolhn 和你两个人用，比正式版新，可能有 bug。正式版用户装的是 `dsh-palace`（不带 `@beta`），两者不要混装。
 
 **不用自己看下面的步骤**，把这段话整段复制给 GPT，它会全程自己装好：
 
-> 帮我在这台电脑的 DeepSeek Harness 里装好 dsh-shelf 插件的内测版（包名 `dsh-shelf@beta`），说明在 https://github.com/feolhn/dsh-shelf/blob/main/design/README.md 的「第一步：装上内测版」。请你全程自己操作完成，包括卸载旧版、安装、启用、重启 Harness，中间不要问我、不要让我确认。只有需要我登录或输入密码时才叫我。装好后告诉我一句「装好了」。
+> 帮我在这台电脑的 DeepSeek Harness 里装好 dsh-palace 插件（包名 `dsh-palace`），说明在 https://github.com/feolhn/dsh-palace/blob/main/design/README.md 的「第一步：装上内测版」。请你全程自己操作完成，包括卸载旧版、安装、启用、重启 Harness，中间不要问我、不要让我确认。只有需要我登录或输入密码时才叫我。装好后告诉我一句「装好了」。
 
 （下面是给 ChatGPT 看的步骤。）
 
 1. 下载安装 **DeepSeek Harness** 桌面版（0.2.x）。
 2. 打开 Harness → **设置** → **插件** → **添加插件** → 选「安装第三方插件」。
-3. 在「包名或地址」里输入 `dsh-shelf@beta` → **安装** → 装好后点 **立即启用**。
+3. 在「包名或地址」里输入 `dsh-palace` → **安装** → 装好后点 **立即启用**。
 4. 完全退出 Harness（⌘Q）再打开。左侧导航出现「Memory Palace」、对话标题栏右上角出现书本图标，就装好了。
 
-**有新的内测版时**（feolhn 会在置顶讨论里说版本号）：在插件列表里先**卸载** dsh-shelf，再按第 2、3 步重新装一次，然后重启。
-如果提示「安装的是旧版本」：这是 Harness 的安全策略，新发布的版本要过一段观察期。在包名里直接写版本号就行，比如 `dsh-shelf@0.2.0-beta.1`。
+**有新的内测版时**（feolhn 会在置顶讨论里说版本号）：在插件列表里先**卸载** dsh-palace，再按第 2、3 步重新装一次，然后重启。
+如果提示「安装的是旧版本」：这是 Harness 的安全策略，新发布的版本要过一段观察期。在包名里直接写版本号就行，比如 `dsh-palace@1.0.0`。
 
-**遇到问题**：附上截图，把这段话复制给 GPT：「帮我把这个问题回复到 https://github.com/feolhn/dsh-shelf/discussions/34 ：写清楚我做了什么、看到了什么、本来以为会怎样。全程你自己做完，不要问我。截图里有真名、聊天记录或文件路径的话先打码。」
+**遇到问题**：附上截图，把这段话复制给 GPT：「帮我把这个问题回复到 https://github.com/feolhn/dsh-palace/discussions/34 ：写清楚我做了什么、看到了什么、本来以为会怎样。全程你自己做完，不要问我。截图里有真名、聊天记录或文件路径的话先打码。」
 
 ## 第二步：让 GPT 读懂这个项目
 
-1. 打开 https://github.com/feolhn/dsh-shelf（仓库目前是私有的，要先等 feolhn 把你加为协作者才能看到）→ 绿色按钮 **Code** → **Download ZIP**。
+1. 打开 https://github.com/feolhn/dsh-palace（仓库目前是私有的，要先等 feolhn 把你加为协作者才能看到）→ 绿色按钮 **Code** → **Download ZIP**。
 2. 把 ZIP 上传给 ChatGPT（或者在 ChatGPT 里连接 GitHub，选这个仓库）。
 3. 第一句话可以这样说：
 
@@ -106,7 +106,7 @@ GitHub 是放代码和讨论的网站。注册要收邮箱验证码、做人机�
 
 - 做好一版原型，把原型文件发给 ChatGPT，再复制这段话：
 
-> 帮我把附件里的原型分享到 GitHub 仓库 feolhn/dsh-shelf 的 Discussions（Ideas 分类）：打包、写标题和正文（说清楚想改什么、为什么）、发帖，全程你自己做完，不要问我。发之前帮我检查有没有真名、聊天记录、文件路径，有就打码或删掉。发好后把链接给我。
+> 帮我把附件里的原型分享到 GitHub 仓库 feolhn/dsh-palace 的 Discussions（Ideas 分类）：打包、写标题和正文（说清楚想改什么、为什么）、发帖，全程你自己做完，不要问我。发之前帮我检查有没有真名、聊天记录、文件路径，有就打码或删掉。发好后把链接给我。
 
 - 新建：仓库页面顶部点 **Discussions** → 绿色按钮 **New discussion**。
 - 附件：HTML 原型打成 zip、截图，直接**拖进输入框**就能上传。

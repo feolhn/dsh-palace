@@ -3,7 +3,7 @@
  * 宫殿数据的读取和刷新在 palace/data.ts。
  */
 export function apiUrl(path: string, query?: Record<string, string>): string {
-  const url = new URL(`api/dsh-shelf/${path}`, document.baseURI)
+  const url = new URL(`api/dsh-palace/${path}`, document.baseURI)
   if (query) for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v)
   return url.href
 }

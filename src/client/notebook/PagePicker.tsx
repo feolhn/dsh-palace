@@ -13,7 +13,7 @@ import { Overlay, useAction } from './common.tsx'
 /** 扫描页要作为图片发送，一次别太多。 */
 const MAX_IMAGE_PAGES = 12
 const RULES = '要求：只要两级（章 › 节），更细的小标题忽略；标题照原书写，去掉页码和省略号；'
-  + '用 shelf_set_outline 写入，写完用一句话告诉我共几章几节。'
+  + '用 palace_set_outline 写入，写完用一句话告诉我共几章几节。'
 
 export function PagePicker({ item, title, sessionId, onDone }: {
   item: Item
@@ -56,14 +56,14 @@ export function PagePicker({ item, title, sessionId, onDone }: {
     const { scanned } = await pageTexts(item.id, pages)
     const head = `请帮我生成《${title}》的目录（item_id: ${item.id}）。目录在 PDF 第 ${pages.join('、')} 页。`
     if (scanned.length === 0) {
-      await sendText(sessionId, `${head}请用 shelf_read 读取这些页的文字。${RULES}`)
+      await sendText(sessionId, `${head}请用 palace_read 读取这些页的文字。${RULES}`)
     } else {
       if (scanned.length > MAX_IMAGE_PAGES) throw new Error(`这几页是扫描版，需要作为图片发给 AI，一次最多 ${MAX_IMAGE_PAGES} 页。请分两次生成，或只选最关键的目录页。`)
       setStatus(`正在把 ${scanned.length} 页转成图片…`)
       const files = await pagesToFiles(item.id, scanned, title)
       const textPages = pages.filter(p => !scanned.includes(p))
       const text = `${head}其中第 ${scanned.join('、')} 页是扫描件，页面图片附在这条消息里，请直接看图识别`
-        + (textPages.length > 0 ? `；第 ${textPages.join('、')} 页用 shelf_read 读取文字` : '')
+        + (textPages.length > 0 ? `；第 ${textPages.join('、')} 页用 palace_read 读取文字` : '')
         + `。${RULES}`
       if (!sendWithImages(sessionId, text, files)) {
         await sendText(sessionId, `${head}这些页是扫描件，书架没能把页面图片附到对话里。请提示我把这几页截图发给你，再生成目录。${RULES}`)

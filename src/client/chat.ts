@@ -62,7 +62,7 @@ export function sendWithImages(sessionId: string, text: string, files: File[]): 
     input.submit()
     return true
   } catch (error) {
-    console.warn('[dsh-shelf] 附图发送失败，改用纯文字', error)
+    console.warn('[dsh-palace] 附图发送失败，改用纯文字', error)
     return false
   }
 }

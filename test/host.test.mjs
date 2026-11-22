@@ -12,10 +12,10 @@ import { addBook } from '../src/host/books.ts'
 const fresh = () => new PalaceStore(mkdtempSync(join(tmpdir(), 'dsh-host-')))
 
 function api(store, active = new Map()) {
-  const routes = Object.fromEntries(createRoutes(store, active).map(r => [r.path.replace('/api/dsh-shelf/', ''), r]))
+  const routes = Object.fromEntries(createRoutes(store, active).map(r => [r.path.replace('/api/dsh-palace/', ''), r]))
   return async (name, { query = '', body } = {}) => {
     const r = routes[name]
-    const res = await r.fetch(new Request(`http://x/api/dsh-shelf/${name}${query}`, body === undefined ? {} : { method: 'POST', body: JSON.stringify(body) }))
+    const res = await r.fetch(new Request(`http://x/api/dsh-palace/${name}${query}`, body === undefined ? {} : { method: 'POST', body: JSON.stringify(body) }))
     const type = res.headers.get('content-type') ?? ''
     return { status: res.status, body: type.includes('json') ? await res.json() : await res.text() }
   }

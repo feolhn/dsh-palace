@@ -16,7 +16,7 @@ import { addBook } from './books.ts'
 import { lookupWord, WORD } from './dictionary.ts'
 import { pdfjsDistDir, readPageTexts, SCANNED_THRESHOLD } from './pdf.ts'
 
-export const API = '/api/dsh-shelf'
+export const API = '/api/dsh-palace'
 
 /** 每个对话当前打开的格子（前端上报，AI 记卡片时默认记到这里）。sessionId → 格子 id。 */
 export type ActiveItems = Map<string, string>
@@ -67,7 +67,7 @@ function json(value: unknown, status = 200): Response {
 
 function fail(error: unknown): Response {
   if (error instanceof ShelfError) return json({ ok: false, error: error.message }, 400)
-  console.error('[dsh-shelf]', error)
+  console.error('[dsh-palace]', error)
   return json({ ok: false, error: `内部错误：${(error as Error)?.message ?? String(error)}` }, 500)
 }
 
@@ -90,7 +90,7 @@ export function openExternal(target: string): void {
     : process.platform === 'win32'
       ? spawn('cmd', ['/c', 'start', '', target], { detached: true, stdio: 'ignore', windowsHide: true })
       : spawn('xdg-open', [target], { detached: true, stdio: 'ignore' })
-  child.on('error', error => console.error('[dsh-shelf] 打开失败', target, error))
+  child.on('error', error => console.error('[dsh-palace] 打开失败', target, error))
   child.unref()
 }
 

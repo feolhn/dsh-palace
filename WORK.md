@@ -1,8 +1,8 @@
-# Memory Palace（dsh-shelf）· WORK
+# Memory Palace（dsh-palace）· WORK
 
 > 唯一的工作文档，只写「现在是什么」。改决策就改这里；进度、想法、历史在 GitHub（见 §8）。
-> 界面名 Memory Palace（设计负责人起），npm 包名 `dsh-shelf`。
-> 最后更新：2026-11-14
+> 界面名 Memory Palace（设计负责人起），npm 包名 `dsh-palace`（beta 时叫 `dsh-shelf`）。
+> 最后更新：2026-11-22
 
 ---
 
@@ -89,19 +89,19 @@ v0.2 先走通一条线：
 | PDF **只引用路径，不复制** | 复制一份的话，批注会分散在两个文件里 |
 | B 站进度**手动打勾** | 插件拿不到 B 站的观看进度 |
 | 前后端**都由 Claude 写**，GPT 审查 | 后端逻辑很薄；拆给两个人写，接口约定和对接的成本比省下的还多 |
-| 插件名 `dsh-shelf`（书架） | 已查过没人用；不用 study，避免和 StudyHub 等混淆。GitHub `feolhn/dsh-shelf`、npm `dsh-shelf` 都已占住 |
+| 插件名 `dsh-palace`（1.0 起；beta 叫 `dsh-shelf`） | 界面处处叫 Memory Palace，包名叫 Shelf 会让用户困惑；`memory-palace` 已被注册，退而用 palace，短、好记。老数据目录 `dsh-shelf-data` 原地沿用（不搬家，老对话的工作目录在里面），本机设置自动搬到新前缀；npm 上的 `dsh-shelf` 标记为已改名 |
 | 摘录、想法、错题**合并为「卡片」一个概念**，作为它的三个子类 | 用户只需理解「格子 › 节 › 卡片」三层；分享、搜索、记忆都对卡片统一处理 |
 | 设计负责人**做 HTML 原型，不写插件代码**；原型按 `design/sample-library.json` 的数据结构、用 `design/theme.css` 的配色 | 学 git / PR 的成本远高于收益；按真实数据和配色做，原型才能直接照着实现 |
 | 原型和设计**暂不考虑深色模式**，只做浅色 | 先别把问题搞复杂。插件代码用的是主题变量，以后深色模式基本自动适配 |
 | 协作用 GitHub：**想法进 Discussions，定了要做的进 Issues，版本历史看 Releases**。WORK.md 只写「现在是什么」 | 像邮件一样一来一回，有记录；WORK.md 不会越写越长、占满上下文 |
 | **想法谁都能提，进不进版本由作者拍板** | 发散需要有人收口，否则 less is more 守不住 |
-| 界面名用设计负责人起的 **Memory Palace**，包名保留 `dsh-shelf` | 包名已占住；界面名可以随时改，包名改了老用户要重装 |
+| 界面名用设计负责人起的 **Memory Palace** | 1.0 起包名也跟着改成 `dsh-palace`（见上） |
 | **格子画布 + 去封面**：格子类型只有书、笔记、分组三种，分组像 iOS 文件夹 | 视觉权重相等，上下左右都能排；电影、播客、心情先用笔记格子装，不为「一切」预先设计 |
 | **全屏显示宫殿和阅读器；右侧栏只显示当前格子的笔记本**，不放画布。全屏的 AI 球推到 v0.3 | 右侧栏旁边就是对话，AI 功能都在这里用；460 宽放不下无限画布；AI 球等于自己做聊天界面，工作量大 |
 | 设计负责人的 handoff **只作样式参考**，实现由作者和 Claude 重构 | 原型不考虑实现（localStorage、网站式后端），照搬比重写更贵 |
 | 记忆功能**先不做 embedding**；参考高质量项目（Karpathy LLM Wiki 等），不参考同名小插件 | 先用文字索引 + 搜索工具验证「AI 记得我」；不够再升级 |
 | **字体可设置**（界面 / 阅读 / 分享三处）；首次打开宫殿时提示一次要不要装「官方字体包」，装上就和设计稿一样；也可以换成自己的字体。官方字体包含汇文明朝体 | 字体约 40MB，不随插件安装；默认用系统字体，不装也能用。本项目开源、不盈利，汇文明朝体按作者授权使用 |
-| 数据分两层：**原始数据存 JSON**（`palace.json` 加一格一个文件，放在 `~/Documents/dsh-shelf-data`），**记忆是 AI 生成的 Markdown**，可以随时删掉重建 | 卡片字段多、还会越来越多，适合 JSON；普通文件不绑死平台，用户能自己备份；记忆是派生层，换实现不动原始数据 |
+| 数据分两层：**原始数据存 JSON**（`palace.json` 加一格一个文件，放在 `~/Documents/dsh-palace-data`），**记忆是 AI 生成的 Markdown**，可以随时删掉重建 | 卡片字段多、还会越来越多，适合 JSON；普通文件不绑死平台，用户能自己备份；记忆是派生层，换实现不动原始数据 |
 | **验证在本地跑，不用 CI**：合并前 Claude 跑 `pnpm verify`（类型检查、测试、隐私检查、构建）；新功能开短分支并开 PR，**由 GPT 审查**，Claude 逐条核实后修改；main 永远能用 | 只有一台电脑在开发，CI 是多余的复杂度；GPT 擅长找 bug，审查和写代码的不是同一个模型 |
 | **验收**：作者先在自己的 Harness 里用，再发 beta 版给设计负责人装来实际用 | 两个真实用户比长清单有用 |
 | v0.2 换新数据格式，**不迁移 v0.1 的数据**，测试数据重新添加 | v0.1 只有作者和设计负责人装过，数据都是测试用的。以后有真实用户了，再给格式升级写迁移和测试 |
@@ -158,7 +158,7 @@ fonts     字体设置和官方字体包（等设计负责人选完字体再做�
 ## 6. 范围
 
 ### 6.1 v0.1（已发布）
-见 [Release v0.1.0](https://github.com/feolhn/dsh-shelf/releases/tag/v0.1.0)。
+见 [Release v0.1.0](https://github.com/feolhn/dsh-palace/releases/tag/v0.1.0)。
 
 ### 6.2 下一版（v0.2）：Memory Palace 最短链路（2026-11-14 定）
 ```
@@ -171,7 +171,7 @@ fonts     字体设置和官方字体包（等设计负责人选完字体再做�
 - 往后放：全屏里的 AI 球（v0.3，等于自己做一个聊天界面）、3D 图谱、桌面悬浮窗、其他媒体类型、MCP 导入（微信读书等）、向量检索、动图模板
 
 ### 6.3 以后再说
-见 [Discussions · Ideas](https://github.com/feolhn/dsh-shelf/discussions/categories/ideas)，一个想法一帖。
+见 [Discussions · Ideas](https://github.com/feolhn/dsh-palace/discussions/categories/ideas)，一个想法一帖。
 
 ### 6.4 明确不做
 - 固定周计划、按比例分配时间
@@ -196,7 +196,7 @@ fonts     字体设置和官方字体包（等设计负责人选完字体再做�
 
 | 看什么 | 在哪 |
 |---|---|
-| v0.2 做到哪了 | [Milestone v0.2](https://github.com/feolhn/dsh-shelf/milestone/1) |
-| 其他待办 | [Issues](https://github.com/feolhn/dsh-shelf/issues) |
-| 想法、待定问题 | [Discussions](https://github.com/feolhn/dsh-shelf/discussions) |
-| 各版本做了什么 | [Releases](https://github.com/feolhn/dsh-shelf/releases)、`git log` |
+| v0.2 做到哪了 | [Milestone v0.2](https://github.com/feolhn/dsh-palace/milestone/1) |
+| 其他待办 | [Issues](https://github.com/feolhn/dsh-palace/issues) |
+| 想法、待定问题 | [Discussions](https://github.com/feolhn/dsh-palace/discussions) |
+| 各版本做了什么 | [Releases](https://github.com/feolhn/dsh-palace/releases)、`git log` |
