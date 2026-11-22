@@ -46,7 +46,7 @@
 
 ## 安装
 
-**你需要**：电脑上装好 DeepSeek Harness 桌面版（0.2.x）。
+**你需要**：电脑上装好 DeepSeek Harness 桌面版（0.2.x）。还没有的话，先到 [DeepSeek Harness 官网](https://www.deepseek.com/harness/) 下载安装。
 
 1. 打开 Harness，进入插件安装界面。
 2. 输入 `dsh-palace`，点安装。
