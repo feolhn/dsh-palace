@@ -1,8 +1,23 @@
 # dsh-palace
 
 [![npm](https://img.shields.io/npm/v/dsh-palace)](https://www.npmjs.com/package/dsh-palace)
+[![downloads](https://img.shields.io/npm/dm/dsh-palace)](https://www.npmjs.com/package/dsh-palace)
+[![license](https://img.shields.io/github/license/feolhn/dsh-palace)](LICENSE)
+[![DeepSeek Harness](https://img.shields.io/badge/DeepSeek%20Harness-0.2.x-4d6bfe)](https://github.com/deepseek-ai/deepseek-harness)
+[![platform](https://img.shields.io/badge/platform-desktop%20(web%20UI)-lightgrey)](#安装)
+[![Awesome DSH Plugin](https://img.shields.io/badge/Awesome-DSH%20Plugin-fc60a8)](https://awesome-dsh-plugin.com/)
+[![standard-readme](https://img.shields.io/badge/readme%20style-standard-brightgreen)](https://github.com/RichardLitt/standard-readme)
 
 > Memory Palace：DeepSeek Harness 的读书插件。把书、视频课和笔记放进一座水彩宫殿，你只管记，AI 帮你整理。
+
+<p align="center">
+  <img src="assets/demo-1.gif" width="49%" alt="轴测视图：书与书之间的电弧">
+  <img src="assets/demo-3.gif" width="49%" alt="阅览室：进度与灵感">
+</p>
+<p align="center">
+  <img src="assets/demo-4.gif" width="49%" alt="卡片与和书对话">
+  <img src="assets/demo-5.gif" width="49%" alt="在格子里读 EPUB、摘录成分享卡片">
+</p>
 
 装好后，它在 Harness 里显示为 **Memory Palace**（记忆宫殿）。`dsh-palace` 是它在 npm 上的包名，安装时要输入这个名字。
 
@@ -112,7 +127,7 @@
 
 ## 参与贡献
 
-仓库目前还没有公开。公开后欢迎提 Issue 和 Pull Request。
+欢迎提 [Issue](https://github.com/feolhn/dsh-palace/issues) 和 Pull Request，想法和讨论请到 [Discussions](https://github.com/feolhn/dsh-palace/discussions)。
 
 想自己改代码的话：
 
