@@ -1,7 +1,8 @@
 /**
- * dsh-shelf Host 入口：注册 AI 工具 + 前端用的 HTTP 接口。
- * 数据目录默认 ~/Documents/dsh-shelf-data，可在 profile 的 cordis.patch.yml 里用 config.dataDir 修改。
+ * dsh-palace Host 入口：注册 AI 工具 + 前端用的 HTTP 接口。
+ * 数据目录默认 ~/Documents/dsh-palace-data，可在 profile 的 cordis.patch.yml 里用 config.dataDir 修改。
  */
+import { existsSync, renameSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Memory } from '../core/memory.ts'
@@ -9,7 +10,7 @@ import { PalaceStore } from '../core/store.ts'
 import { createRoutes, type ActiveItems } from './routes.ts'
 import { createTools } from './tools.ts'
 
-export const name = 'dsh-shelf'
+export const name = 'dsh-palace'
 
 export interface Config {
   /** 数据目录（palace.json、items/、images/）。 */
@@ -29,8 +30,25 @@ interface HostContext {
 /** system prompt 组装时拿到的 agent：id 就是会话 id。 */
 interface PromptAgent { id: string; session?: { header?: { cwd?: string } } }
 
+/**
+ * 默认数据目录 ~/Documents/dsh-palace-data。
+ * 插件以前叫 dsh-shelf（beta），数据在 ~/Documents/dsh-shelf-data：新目录还没有时把老目录改名过去；改名失败就继续用老目录，不丢数据。
+ */
+function defaultDataDir(): string {
+  const dir = join(homedir(), 'Documents', 'dsh-palace-data')
+  const old = join(homedir(), 'Documents', 'dsh-shelf-data')
+  if (existsSync(dir) || !existsSync(old)) return dir
+  try {
+    renameSync(old, dir)
+    return dir
+  } catch (error) {
+    console.warn('[dsh-palace] 旧数据目录改名失败，继续使用', old, error)
+    return old
+  }
+}
+
 export function apply(ctx: HostContext, config: Config = {}): void {
-  const dir = config.dataDir ?? join(homedir(), 'Documents', 'dsh-shelf-data')
+  const dir = config.dataDir ?? defaultDataDir()
   const store = new PalaceStore(dir)
   const active: ActiveItems = new Map()
   const memory = new Memory(store)
@@ -44,7 +62,7 @@ export function apply(ctx: HostContext, config: Config = {}): void {
   ctx.inject(['systemPrompt'], (scope) => {
     const home = resolve(dir)
     scope.systemPrompt.context({
-      name: 'dsh-shelf:memory',
+      name: 'dsh-palace:memory',
       order: 5000,
       interpolate: false,
       text: ({ agent }) => {
@@ -55,7 +73,7 @@ export function apply(ctx: HostContext, config: Config = {}): void {
         try {
           return memory.context({ itemId })
         } catch (error) {
-          console.warn('[dsh-shelf] 记忆背景生成失败，已跳过', error)
+          console.warn('[dsh-palace] 记忆背景生成失败，已跳过', error)
           return ''
         }
       },
@@ -64,7 +82,7 @@ export function apply(ctx: HostContext, config: Config = {}): void {
 
   ctx.inject(['connection'], (scope) => {
     for (const route of createRoutes(store, active, memory)) {
-      scope.effect(() => scope.connection.fetch.register(route), `dsh-shelf: ${route.path}`)
+      scope.effect(() => scope.connection.fetch.register(route), `dsh-palace: ${route.path}`)
     }
   })
 }

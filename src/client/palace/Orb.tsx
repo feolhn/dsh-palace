@@ -9,7 +9,7 @@ import {
   type Ball, type Bounds, type Cell, type OrbView, type Rect,
 } from './orb.ts'
 
-const PREFERRED_KEY = 'dsh-shelf:orb-cell'
+const PREFERRED_KEY = 'dsh-palace:orb-cell'
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v))
 
 function preferred(): { col: number; row: number } | undefined {

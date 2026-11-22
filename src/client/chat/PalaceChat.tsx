@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { chatWorkspace, setActive } from '../api.ts'
 import { ChatIntroProvider, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
 
-const STORE_KEY = 'dsh-shelf:chat-sessions'
+const STORE_KEY = 'dsh-palace:chat-sessions'
 
 function remembered(): Record<string, string> {
   try { return JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}') as Record<string, string> } catch { return {} }
@@ -90,7 +90,7 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, sid
     void sessionFor(scope, fresh.current).then((id) => {
       fresh.current = false
       if (!alive) return
-      held = sessionsService()!.retain(id, { source: 'dshShelf', signal: abort.signal })
+      held = sessionsService()!.retain(id, { source: 'dshPalace', signal: abort.signal })
       setReference(held)
       onSessionRef.current?.(id)
       void setActive(id, itemId ?? null).catch(() => undefined)

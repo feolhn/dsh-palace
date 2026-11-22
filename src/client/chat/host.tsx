@@ -1,7 +1,7 @@
 /**
  * 宫殿里的 AI 对话：嵌入 Harness 原生的对话界面（消息列表 + 输入框），背后是一个真实的 Harness 会话。
  * 做法照 Harness 自带的 subagent 侧栏（dsh-client-ui-subagent / sidebar-chat）：
- * 1. 全屏面板的 slot 声明一个 session 作用域的子 slot `dsh-shelf.chat`，渲染器会给面板注入 SessionProvider；
+ * 1. 全屏面板的 slot 声明一个 session 作用域的子 slot `dsh-palace.chat`，渲染器会给面板注入 SessionProvider；
  * 2. 用 sessions.retain 拿住会话，SessionProvider 包住子 slot；
  * 3. 子 slot 里渲染 `conversation.content`（embedded 模式），就是原生的聊天界面。
  * 这些都是 Harness 的非公开接口，版本变了可能失效：拿不到时界面显示提示，不影响宫殿其他功能。
@@ -10,8 +10,8 @@ import { createContext, useContext, type ReactNode } from 'react'
 import { setDraft } from '../chat.ts'
 
 /** 子 slot 名：一个 session 作用域的对话位置。Harness 要求子 slot 名全局唯一，全屏和右侧栏各用一个。 */
-export const CHAT_SLOT = 'dsh-shelf.chat'
-export const SIDEBAR_CHAT_SLOT = 'dsh-shelf.sidebar-chat'
+export const CHAT_SLOT = 'dsh-palace.chat'
+export const SIDEBAR_CHAT_SLOT = 'dsh-palace.sidebar-chat'
 
 /** 会话引用：用完必须 release。 */
 export interface SessionReference { readonly sessionId: string; release(): void }

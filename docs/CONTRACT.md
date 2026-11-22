@@ -5,10 +5,10 @@
 
 ## 1. 数据目录
 
-默认 `~/Documents/dsh-shelf-data/`，可以在 profile 的 `cordis.patch.yml` 里用 `config.dataDir` 改。
+默认 `~/Documents/dsh-palace-data/`，可以在 profile 的 `cordis.patch.yml` 里用 `config.dataDir` 改。
 
 ```
-dsh-shelf-data/
+dsh-palace-data/
 ├─ palace.json        宫殿布局（原始数据）
 ├─ items/<id>.json    每个书 / 笔记格子的内容（原始数据），文件名就是格子 id
 ├─ images/            卡片原图
@@ -197,7 +197,7 @@ function mountEpub(el: HTMLElement, opts: {
 
 ## 5. HTTP 接口（前端 ↔ host）
 
-都挂在 Harness 的 `/api` 通道上（由 Harness 负责鉴权），前缀 `/api/dsh-shelf/`。
+都挂在 Harness 的 `/api` 通道上（由 Harness 负责鉴权），前缀 `/api/dsh-palace/`。
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -224,25 +224,25 @@ function mountEpub(el: HTMLElement, opts: {
 
 | 工具 | 作用 |
 |---|---|
-| `shelf_overview` | 列出宫殿里的格子和进度；传 `item_id` 时返回完整目录和卡片 |
-| `shelf_add` | 新建分组、书（pdf / epub / 视频）、笔记格子 |
-| `shelf_read` | 读 PDF 指定页的文字，并说明哪些读不出（扫描页） |
-| `shelf_set_outline` | 写入两级目录 |
-| `shelf_set_target_dates` | 批量设置目标日期 |
-| `shelf_add_card` | 记一张卡片（摘录 / 想法 / 错题）。格子默认取当前对话打开的那个，节默认取当前节；`image` 填图片路径或 `sha256:` 附件 id |
-| `shelf_add_inspiration` | 把这次对话总结成一条灵感，存到当前格子 |
-| `shelf_remove` | 删除格子（书 / 笔记 / 空分组），连同卡片和灵感，不删原文件；调用前必须得到用户明确同意 |
-| `shelf_wiki_read` | 读一页记忆：格子 id 或 `me` |
-| `shelf_wiki_write` | 整页重写一页记忆（正文 ≤500 字，超了拒绝）；格子页带一句话 `summary` 和 3–5 个 `topics` |
-| `shelf_link` | 在两格之间连一条联想：`why` 一句话 + 两端各至少一条证据（卡片 / 灵感 id） |
-| `shelf_unlink` | 剪断两格之间的电弧 |
+| `palace_overview` | 列出宫殿里的格子和进度；传 `item_id` 时返回完整目录和卡片 |
+| `palace_add` | 新建分组、书（pdf / epub / 视频）、笔记格子 |
+| `palace_read` | 读 PDF 指定页的文字，并说明哪些读不出（扫描页） |
+| `palace_set_outline` | 写入两级目录 |
+| `palace_set_target_dates` | 批量设置目标日期 |
+| `palace_add_card` | 记一张卡片（摘录 / 想法 / 错题）。格子默认取当前对话打开的那个，节默认取当前节；`image` 填图片路径或 `sha256:` 附件 id |
+| `palace_add_inspiration` | 把这次对话总结成一条灵感，存到当前格子 |
+| `palace_remove` | 删除格子（书 / 笔记 / 空分组），连同卡片和灵感，不删原文件；调用前必须得到用户明确同意 |
+| `palace_wiki_read` | 读一页记忆：格子 id 或 `me` |
+| `palace_wiki_write` | 整页重写一页记忆（正文 ≤500 字，超了拒绝）；格子页带一句话 `summary` 和 3–5 个 `topics` |
+| `palace_link` | 在两格之间连一条联想：`why` 一句话 + 两端各至少一条证据（卡片 / 灵感 id） |
+| `palace_unlink` | 剪断两格之间的电弧 |
 
 ## 7. 宫殿里的 AI 对话
 
 全屏宫殿右侧的「与宫殿对话」、打开书 / 笔记后的「与书对话」，嵌入的是 Harness **原生对话界面**，背后是真实的 Harness 会话（用户配好的模型、上面的工具、左侧会话列表里能接着聊）。
 
-- 做法照 Harness 自带的 subagent 侧栏：`main` slot 声明 session 作用域的子 slot `dsh-shelf.chat` → 面板拿到 `SessionProvider` / `renderSlot` → `sessions.retain(id)` 包住子 slot → 子 slot 渲染 `conversation.content`（`variant: 'embedded'`，不显示首页大标题）。代码在 `src/client/chat/`。
-- 会话：宫殿一个、每个书 / 笔记格子各一个，映射记在本机 localStorage（`dsh-shelf:chat-sessions`）；会话被删或归档后自动新建；「新对话」换一个新的，旧的留在会话列表里。新建时用 `workspaces.create({ path: 数据目录 })` 登记工作区再 `sessions.create({ workspaceId })`，不切换主界面。
+- 做法照 Harness 自带的 subagent 侧栏：`main` slot 声明 session 作用域的子 slot `dsh-palace.chat` → 面板拿到 `SessionProvider` / `renderSlot` → `sessions.retain(id)` 包住子 slot → 子 slot 渲染 `conversation.content`（`variant: 'embedded'`，不显示首页大标题）。代码在 `src/client/chat/`。
+- 会话：宫殿一个、每个书 / 笔记格子各一个，映射记在本机 localStorage（`dsh-palace:chat-sessions`）；会话被删或归档后自动新建；「新对话」换一个新的，旧的留在会话列表里。新建时用 `workspaces.create({ path: 数据目录 })` 登记工作区再 `sessions.create({ workspaceId })`，不切换主界面。
 - 打开对话时上报 `active`，AI 记卡片、存灵感默认记到这本书。
 - 都是 Harness 的非公开接口：拿不到时面板显示提示，宫殿其他功能不受影响。同一个会话不要同时在两处挂输入框（每个会话只有一个编辑器）。
 

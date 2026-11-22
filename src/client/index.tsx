@@ -1,5 +1,5 @@
 /**
- * dsh-shelf（Memory Palace）前端入口。注册四个位置：
+ * dsh-palace（Memory Palace）前端入口。注册四个位置：
  * 1. 右侧栏页面：和全屏同一个宫殿（窄一点而已，不维护两套界面）
  * 2. 右侧栏引导页里的入口卡片
  * 3. 对话标题栏右侧的书本按钮
@@ -16,12 +16,22 @@ import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
 import { bindSessions, CHAT_SLOT, ChatSlotPanel, SIDEBAR_CHAT_SLOT, ChatSlotsProvider, type ChatSlots } from './chat/host.tsx'
 
-export const name = 'dsh-shelf'
+export const name = 'dsh-palace'
 export const inject = ['slots', 'sidebarRightTabs', 'sidebarRight']
 
-const TAB_ID = 'dsh-shelf/shelf'
-const TAB_KIND = 'dshShelf'
-const PANEL_ID = 'dsh-shelf'
+const TAB_ID = 'dsh-palace/palace'
+const TAB_KIND = 'dshPalace'
+const PANEL_ID = 'dsh-palace'
+
+// 插件以前叫 dsh-shelf：把本机记住的设置（视图、对话、字号等）搬到新前缀下，只搬一次
+try {
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith('dsh-shelf:')) continue
+    const next = `dsh-palace:${key.slice('dsh-shelf:'.length)}`
+    if (localStorage.getItem(next) === null) localStorage.setItem(next, localStorage.getItem(key) as string)
+    localStorage.removeItem(key)
+  }
+} catch { /* 读不了本地存储就算了 */ }
 
 // 前端上下文只用到少量方法，这里给出最小类型
 interface ClientContext {
@@ -48,7 +58,7 @@ function BookIcon({ size = 16 }: { size?: number }) {
 class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
   state: { error?: Error } = {}
   static getDerivedStateFromError(error: Error) { return { error } }
-  componentDidCatch(error: Error) { console.error('[dsh-shelf]', error) }
+  componentDidCatch(error: Error) { console.error('[dsh-palace]', error) }
   render() {
     if (this.state.error === undefined) return this.props.children
     return (
@@ -106,13 +116,13 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => {
     const style = document.createElement('style')
-    style.dataset.plugin = 'dsh-shelf'
+    style.dataset.plugin = 'dsh-palace'
     // 字体（#10）：随插件发布、默认加载；fonts.css 里的相对路径换成插件的资源接口
     const fonts = fontsCss.replace(/url\(fonts\/([^)]+)\)/g, (_, f: string) => `url("${apiUrl('asset', { f: `fonts/${f}` })}")`)
     style.textContent = [fonts, notebookCss, palaceCss, shareCss, readerCss].join('\n')
     document.head.appendChild(style)
     return () => style.remove()
-  }, 'dsh-shelf: styles')
+  }, 'dsh-palace: styles')
 
   const openShelf = () => ctx.sidebarRight.openTab(TAB_KIND)
 
@@ -120,8 +130,8 @@ export function apply(ctx: ClientContext): void {
     id: TAB_ID,
     kind: TAB_KIND,
     title: () => 'Memory Palace',
-    guide: [{ id: 'dsh-shelf', order: 40, title: () => 'Memory Palace', description: () => '记忆宫殿：书、笔记和灵感' }],
-  }), 'dsh-shelf: tab type')
+    guide: [{ id: 'dsh-palace', order: 40, title: () => 'Memory Palace', description: () => '记忆宫殿：书、笔记和灵感' }],
+  }), 'dsh-palace: tab type')
 
   ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
     name: 'sidebar.right.pane.tab',
@@ -131,7 +141,7 @@ export function apply(ctx: ClientContext): void {
 
   ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
     name: 'conversation.session.header.utilities',
-    id: 'dsh-shelf',
+    id: 'dsh-palace',
     order: -6,
     inject: () => ({ openShelf }),
   }, HeaderButton))

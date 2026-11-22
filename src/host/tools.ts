@@ -88,21 +88,21 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
       const debt = memory.debt(id)
       if (debt < 3) return ''
       nudged.add(key)
-      return `\n（提示：这一格的 wiki 之后新增了 ${debt} 条卡片 / 灵感，聊完方便时用 shelf_wiki_write 更新；不用打断用户。）`
+      return `\n（提示：这一格的 wiki 之后新增了 ${debt} 条卡片 / 灵感，聊完方便时用 palace_wiki_write 更新；不用打断用户。）`
     }
     nudged.add(key)
-    return '\n（提示：如果这条和宫殿里别的格子有关——同一个念头、主题或疑问——可以用 shelf_link 连一条电弧。）'
+    return '\n（提示：如果这条和宫殿里别的格子有关——同一个念头、主题或疑问——可以用 palace_link 连一条电弧。）'
   }
   const activeOf = (exec: { agent?: { id: string } }) => (exec.agent ? active.get(exec.agent.id) : undefined)
   const targetOf = (given: unknown, exec: { agent?: { id: string } }) => {
     const id = typeof given === 'string' && given !== '' ? given : activeOf(exec)
-    if (id === undefined) throw new ShelfError('不知道记到哪个格子：用户没有打开格子。请先用 shelf_overview 查看后指定 item_id，或请用户在右侧 Memory Palace 打开对应的书。')
+    if (id === undefined) throw new ShelfError('不知道记到哪个格子：用户没有打开格子。请先用 palace_overview 查看后指定 item_id，或请用户在右侧 Memory Palace 打开对应的书。')
     return id
   }
 
   return [
     defineTool({
-      name: 'shelf_overview',
+      name: 'palace_overview',
       description: '查看用户的 Memory Palace（记忆宫殿）：所有分组、书、笔记的 id、进度、卡片数，以及用户当前打开的是哪个格子。'
         + '涉及宫殿的任何操作前先调用它拿到 id。传 item_id 可查看这个格子的完整目录（含 section_id）、最近的卡片和灵感。',
       parameters: {
@@ -115,7 +115,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_add',
+      name: 'palace_add',
       description: '往宫殿里放东西。kind=group 新建分组（title）；kind=note 新建笔记格子（title，用于没有原文的东西：日记、心情、追剧）；'
         + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或 B 站视频课（url），可选 title、subtitle（备注：格子上标题上方的一行小字，用户想填什么都行，常见是作者或另一种语言的书名）。title 用书的原名，大小写照原书（如 Invention of Nature），不带文件名里的 - _ 《》 等符号；外文书可把中文译名放 subtitle、target_date（YYYY-MM-DD）。'
         + 'parent_id 填分组 id 可以直接放进分组（分组里不能再放分组）。',
@@ -143,13 +143,13 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
           return `已添加《${c.title}》 id=${c.id}，共 ${item.source?.type === 'pdf' ? item.source.pageCount : '?'} 页。`
             + (total > 0
               ? `已从 PDF 书签读出目录：${item.chapters.length} 章 ${total} 节。`
-              : '这本 PDF 没有书签，需要生成目录：请用户在右侧笔记本的「进度」里勾选目录页，或告诉你目录在第几页，然后用 shelf_read 读取。')
+              : '这本 PDF 没有书签，需要生成目录：请用户在右侧笔记本的「进度」里勾选目录页，或告诉你目录在第几页，然后用 palace_read 读取。')
         })
       },
     }),
 
     defineTool({
-      name: 'shelf_remove',
+      name: 'palace_remove',
       description: '从宫殿里删掉一个格子（书、笔记或空分组），连同它的进度、卡片和灵感，不删电脑上的原文件。分组里最后一格删掉或移出后，分组会自动消失，不用再删。'
         + '不可撤销：调用前必须先说清要删的是哪一个、会丢掉多少卡片和灵感，等用户明确同意后再调用。分组里还有东西时不能删。',
       parameters: {
@@ -169,7 +169,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_read',
+      name: 'palace_read',
       description: '读取某本 PDF 指定页的文字（页码为 PDF 的页序号，从 1 开始，不是书上印的页码）。用于读取目录页来生成章节结构。每次最多 30 页。',
       parameters: {
         item_id: { type: 'string', required: true },
@@ -194,7 +194,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_set_outline',
+      name: 'palace_set_outline',
       description: '写入（覆盖）书的目录结构，只要两级：章 › 节。没有分节的章，sections 留空即可（会自动算作一节）。'
         + '标题保持原书写法，去掉页码和省略号。重新生成目录时，标题不变的节会保留完成状态。'
         + '页码 page 可选，填 PDF 页序号（书上印的页码 + 偏移量）；不确定就不填。',
@@ -237,7 +237,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_set_target_dates',
+      name: 'palace_set_target_dates',
       description: '设置书的目标完成日期（YYYY-MM-DD），用于规划进度。可一次设置多本。规划时参考各书的节数，并给复习留出时间。设置前先和用户确认方案。',
       parameters: {
         items: {
@@ -269,7 +269,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_add_card',
+      name: 'palace_add_card',
       description: '记一张卡片。type=mistake 错题：用户发来错题截图并说「记错题」时调用，先看图把题目完整转成文字写进 quote（含选项），能判断的话把答案和解析写进 answer；'
         + 'type=excerpt 摘录：quote 是原文，note 是用户的想法；type=thought 想法：只有 note。'
         + 'image 填对话里图片的本地只读路径（图片说明中的 read-only path），没有路径就填附件 id（sha256:...）。'
@@ -300,7 +300,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_add_inspiration',
+      name: 'palace_add_inspiration',
       description: '把这次对话存成一条「灵感」：用户说「存成灵感」「记下来」之类时调用。'
         + '用用户的口吻、简洁地总结这次对话里用户的想法和得出的结论（不是复述 AI 说了什么），body 用 Markdown，几段即可；title 一句话点题。'
         + 'item_id 不填时存到用户当前打开的格子。',
@@ -321,7 +321,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
       },
     }),
     defineTool({
-      name: 'shelf_wiki_read',
+      name: 'palace_wiki_read',
       description: '读一页记忆：target 填格子 id 读这一格的 wiki（一句话、主题词、正文），填 me 读「关于用户」。当前格子和 me 已经在对话背景里，读别的格子时才需要调用。',
       parameters: {
         target: { type: 'string', required: true, description: '格子 id 或 me' },
@@ -334,7 +334,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
             const cell = store.getPalace().cells.find(c => c.id === args.target)
             if (cell === undefined || cell.kind === 'group') throw new ShelfError('格子不存在')
             const debt = memory.debt(cell.id)
-            if (page === undefined) return `《${cell.title}》还没有 wiki。` + (debt > 0 ? `已有 ${debt} 条卡片 / 灵感，可以用 shelf_overview 查看后写一页。` : '')
+            if (page === undefined) return `《${cell.title}》还没有 wiki。` + (debt > 0 ? `已有 ${debt} 条卡片 / 灵感，可以用 palace_overview 查看后写一页。` : '')
             return `《${cell.title}》wiki（${page.writtenAt.slice(0, 10)}）\n一句话：${page.summary ?? '（无）'}\n主题词：${page.topics?.join('、') ?? '（无）'}\n\n${page.body}`
               + (debt > 0 ? `\n\n（这一页之后新增了 ${debt} 条卡片 / 灵感）` : '')
           }
@@ -344,7 +344,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_wiki_write',
+      name: 'palace_wiki_write',
       description: `整页重写一页记忆（会覆盖旧内容，先在旧内容基础上改）。正文最多 ${PAGE_LIMIT} 字，超了会被拒绝：合并相近的、删掉过时的再写。`
         + 'target=me：关于用户的长期记忆，分「长期」「最近」两段，只记用户说过或做过的事实（喜好、正在经历的事、深入聊过的话题），不贴性格标签。'
         + 'target=格子 id：这一格的 wiki，只写卡片和灵感里没有的东西（对用户意味着什么、卡在哪、反复出现的主题、没解决的疑问），句末用 [^卡片或灵感 id] 标出依据；'
@@ -367,7 +367,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_link',
+      name: 'palace_link',
       description: '在两格之间连一条电弧（联想）：用户的某个想法、主题或疑问把这两格连在一起时调用。不需要两本书互相提及，连的是用户的念头。'
         + 'why 一句话说清连在哪（≤40 字，例如「都在写等待：盖茨比等绿灯，你在等 offer」）；evidence 填两端各至少一张卡片或一条灵感的 id。'
         + '同样的证据不能重复连；有新证据就再连一条，电弧会变粗。用户剪断过的两格，除非用户明确要求，否则不要再连。',
@@ -390,7 +390,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     }),
 
     defineTool({
-      name: 'shelf_unlink',
+      name: 'palace_unlink',
       description: '剪断两格之间的电弧（用户说这两个没关系、连错了时调用）。之前的联想都不再显示，以后也不会自动再连。',
       parameters: {
         from: { type: 'string', required: true },

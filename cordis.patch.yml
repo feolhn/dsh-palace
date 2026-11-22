@@ -1,4 +1,4 @@
-# dsh bundle patch：把书架插件加入 profile
+# dsh bundle patch：把 Memory Palace 插件加入 profile
 - insert:
-    - id: dsh-shelf
-      name: 'dsh-shelf'
+    - id: dsh-palace
+      name: 'dsh-palace'

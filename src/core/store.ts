@@ -126,7 +126,7 @@ export class PalaceStore {
     try {
       this.palace = { value: parsePalace(readFileSync(this.palaceFile, 'utf8')), stamp: mtime, broken: false }
     } catch (error) {
-      console.warn('[dsh-shelf] palace.json 解析失败，继续使用内存中的数据', error)
+      console.warn('[dsh-palace] palace.json 解析失败，继续使用内存中的数据', error)
       this.palace = { ...this.palace, stamp: mtime, broken: true }
     }
     this.rev += 1
@@ -148,7 +148,7 @@ export class PalaceStore {
     try {
       next = { value: parseItem(readFileSync(file, 'utf8'), id), stamp: mtime, broken: false }
     } catch (error) {
-      console.warn(`[dsh-shelf] items/${id}.json 解析失败`, error)
+      console.warn(`[dsh-palace] items/${id}.json 解析失败`, error)
       next = { value: cached?.value ?? emptyItem(id), stamp: mtime, broken: true }
     }
     if (cached !== undefined) this.rev += 1
@@ -252,7 +252,7 @@ export class PalaceStore {
 
     // 以下是提交后的清理：失败只多占空间，不能让已经成功的修改报错
     const cleanup = (what: string, run: () => void) => {
-      try { run() } catch (error) { console.warn(`[dsh-shelf] 清理 ${what} 失败，已忽略`, error) }
+      try { run() } catch (error) { console.warn(`[dsh-palace] 清理 ${what} 失败，已忽略`, error) }
     }
     for (const [id, { item }] of touched) {
       if (item !== null) continue

@@ -1,7 +1,7 @@
 {
-  "name": "dsh-shelf",
-  "version": "0.2.0-beta.5",
-  "description": "Memory Palace：DeepSeek Harness 读书插件。把书、视频课和笔记放进宫殿，记进度、摘录和想法，和 AI 聊完存成灵感，排版成分享卡片。",
+  "name": "dsh-palace",
+  "version": "1.0.0",
+  "description": "Memory Palace：DeepSeek Harness 的读书插件。把书、视频课和笔记放进一座水彩宫殿，你只管记，AI 帮你整理。",
   "type": "module",
   "main": "lib/index.js",
   "license": "MIT",
@@ -70,7 +70,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/feolhn/dsh-shelf.git"
+    "url": "git+https://github.com/feolhn/dsh-palace.git"
   },
-  "homepage": "https://github.com/feolhn/dsh-shelf#readme"
+  "homepage": "https://github.com/feolhn/dsh-palace#readme"
 }

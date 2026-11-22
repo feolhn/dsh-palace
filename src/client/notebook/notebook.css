@@ -8,7 +8,7 @@
   --nb-line: var(--dsw-alias-border-secondary, #e4e8ea);
   --nb-soft: var(--dsw-alias-fill-tertiary, #f3f5f6);
   --nb-accent: #294c60;
-  --nb-serif: "Shelf EB Garamond", "Shelf Source Han Serif", "EB Garamond", "Source Han Serif SC", "Songti SC", Georgia, serif;
+  --nb-serif: "Palace EB Garamond", "Palace Source Han Serif", "EB Garamond", "Source Han Serif SC", "Songti SC", Georgia, serif;
   height: 100%; overflow: auto; box-sizing: border-box; padding: 16px 18px 40px;
   color: var(--nb-text); font-size: 13px; line-height: 1.6;
 }
