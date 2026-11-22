@@ -126,6 +126,10 @@ export function Palace() {
   /** 刚松手、还在保存的格子：先停在放下的位置，等数据刷新回来再按正式坐标画（不在原位闪一下）。 */
   const [settling, setSettling] = useState<{ id: string; col: number; row: number }>()
   const [selected, setSelected] = useState<string>()
+  // 阅览室到位后才显示内容（原型 body.settled）；关上时先收起浮层再缩回（原型 room-exit-*）
+  const [settled, setSettled] = useState(false)
+  const [exiting, setExiting] = useState(false)
+  const roomKey = useRef('')
   const [adding, setAdding] = useState(false)
   const [gesture, setGesture] = useState<Gesture>()
   const [opError, setOpError] = useState<string>()
@@ -166,7 +170,7 @@ export function Palace() {
   }, [cam, palace, size, iso, layout])
 
   /** 平滑过渡到目标投影（和镜头），650ms；新的过渡会打断旧的。 */
-  const animate = (to: Proj, toCam?: Camera) => {
+  const animate = (to: Proj, toCam?: Camera, done?: () => void) => {
     const id = ++anim.current
     const from = live.current.proj, fromCam = live.current.cam
     const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650
@@ -181,6 +185,7 @@ export function Palace() {
         setCam({ x: fromCam.x + (toCam.x - fromCam.x) * e, y: fromCam.y + (toCam.y - fromCam.y) * e, scale: fromCam.scale + (toCam.scale - fromCam.scale) * e })
       }
       if (t < 1) requestAnimationFrame(frame)
+      else done?.()
     }
     requestAnimationFrame(frame)
   }
@@ -246,15 +251,29 @@ export function Palace() {
     } else if (p.open > 0.001) {
       toCam = beforeRoom.current
     }
+    // 换了格子或笔记 / 阅读切换：先藏起内容，镜头到位再显示；只是开关对话、改窗口大小时内容不闪
+    const key = `${selected ?? ''}|${roomMode}`
+    if (key !== roomKey.current) { roomKey.current = key; setSettled(false) }
+    const opened = selected !== undefined
     const same = Math.abs(p.amount - target.amount) < 0.001 && Math.abs(p.open - target.open) < 0.001 && Math.abs(p.spread - target.spread) < 0.001
-    if (!same || toCam !== undefined) animate(target, toCam)
+    if (!same || toCam !== undefined) animate(target, toCam, () => setSettled(opened))
+    else setSettled(opened)
   }, [selected, roomMode, chatOpen, size.w, size.h]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** 点图标「读」：EPUB 在这一格里打开；PDF、视频交给系统程序。 */
   const read = (id: string) => {
     if (summaries[id]?.source === 'epub') { setOrbChat(undefined); setRoomMode('reader'); setSelected(id) } else setReading(id)
   }
-  const closeRoom = () => { setSelected(undefined); setRoomMode('notes'); setOrbChat(undefined) }
+  const closeRoom = () => {
+    if (exiting) return
+    setOrbChat(undefined)
+    const finish = () => { setExiting(false); setSelected(undefined); setRoomMode('notes') }
+    if (selected === undefined || matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return }
+    // 先让内容、标签、对话淡出（约 0.2s），再沿原路缩回那一格
+    setExiting(true)
+    setSettled(false)
+    setTimeout(finish, 220)
+  }
 
   const toggleIso = () => {
     if (palace === undefined || cam === undefined) return
@@ -486,6 +505,8 @@ export function Palace() {
     && c.col >= group.col && c.col < group.col + gsize.cols && c.row >= group.row && c.row < group.row + gsize.rows
   const drop = dragging !== undefined ? dropAt({ x: dragging.px, y: dragging.py }) : undefined
 
+  // 阅览室打开时格子、分组框、电弧立刻收起，只留网格跟着镜头展开（原型 render 里 opened 就 hidden）；关上时随缩回渐渐出现
+  const outside = selected !== undefined ? 0 : 1 - proj.open
   const renderCell = (c: Cell) => {
     const isDragged = dragging?.cell.id === c.id
     const w = settling?.id === c.id ? settling : worldCell(c)
@@ -496,8 +517,8 @@ export function Palace() {
       y += d.y / cam.scale
     }
     return (
-      <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''} ${selected === c.id ? 'mp-selected' : ''}`}
-        style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * (1 - proj.open), pointerEvents: proj.open > 0.001 ? 'none' : undefined }}
+      <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''}`}
+        style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * outside, pointerEvents: proj.open > 0.001 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
         <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => read(c.id)} />
@@ -534,7 +555,7 @@ export function Palace() {
   } as CSSProperties
 
   return (
-    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''} ${proj.amount > 0.999 ? 'mp-iso' : ''}`}
+    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''} ${proj.amount > 0.999 ? 'mp-iso' : ''} ${exiting ? 'mp-room-exiting' : ''}`}
       style={{ ...lightScheme(), ...relief }}
       onPointerDown={onBackgroundDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setGesture(undefined)}>
       <div className="mp-paper" />
@@ -550,9 +571,9 @@ export function Palace() {
 
       {spreading && [...layout.frames.values()].map((e) => {
         const p = worldCell(e.cell), t = proj.spread
-        return <div key={e.cell.id} className="mp-iso-folder" style={{ ...rect(p.col * B, p.row * B, (1 + (e.w - 1) * t) * B, (1 + (e.h - 1) * t) * B), opacity: t * (1 - proj.open) }} />
+        return <div key={e.cell.id} className="mp-iso-folder" style={{ ...rect(p.col * B, p.row * B, (1 + (e.w - 1) * t) * B, (1 + (e.h - 1) * t) * B), opacity: t * outside }} />
       })}
-      {spreading && cam !== undefined && proj.amount > 0.001 && (
+      {spreading && cam !== undefined && proj.amount > 0.001 && selected === undefined && (
         <Arcs arcs={arcs} cells={cells} hover={hover} amount={proj.amount} m={m} cam={cam} size={size} B={B} worldCell={worldCell} />
       )}
 
@@ -562,9 +583,9 @@ export function Palace() {
 
       {group !== undefined && gsize !== undefined && cam !== undefined && (
         <>
-          {/* 阅览室展开时分组框和遮罩跟格子一起淡出，关上后回到原来的分组 */}
-          <div className="mp-dim" style={{ opacity: gp * (1 - proj.open) }} />
-          <div className="mp-group-frame" style={{ ...rect(group.col * B, group.row * B, B + (gsize.cols - 1) * B * gp, B + (gsize.rows - 1) * B * gp), opacity: 1 - proj.open }} />
+          {/* 阅览室打开时分组框和遮罩跟格子一起收起；框的边跟着网格线走（原型用 axisCoord），缩回途中不和网格错开 */}
+          <div className="mp-dim" style={{ opacity: gp * outside }} />
+          <div className="mp-group-frame" style={{ ...rect(ax(group.col, 'col'), ax(group.row, 'row'), B + (ax(group.col + gsize.cols, 'col') - ax(group.col, 'col') - B) * gp, B + (ax(group.row + gsize.rows, 'row') - ax(group.row, 'row') - B) * gp), opacity: outside }} />
           {gp > 0.6 && children.map(c => renderCell(c))}
         </>
       )}
@@ -605,7 +626,7 @@ export function Palace() {
         const sx = cam.x + x * cam.scale, sy = cam.y + y * cam.scale
         return (
           <>
-            <div className={`mp-room ${roomMode === 'reader' ? 'mp-room-reader' : ''}`} style={{ ...rect(x, y, w, h), opacity: proj.open }}>
+            <div className={`mp-room ${roomMode === 'reader' ? 'mp-room-reader' : ''} ${settled && shown ? 'mp-settled' : ''}`} style={rect(x, y, w, h)}>
               {proj.open > 0.6 && roomMode === 'notes' && (
                 <Room key={roomCell.id} palace={palace} cellId={roomCell.id} summary={summaries[roomCell.id]} tab={tab} onTab={setTab}
                   sessionId={chatOpen && roomSession?.cellId === roomCell.id ? roomSession.sessionId : undefined}

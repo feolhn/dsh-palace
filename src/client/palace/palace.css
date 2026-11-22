@@ -27,7 +27,6 @@
 /* 格子：去封面，标准排版。字号随缩放（font-size 由 JS 按 scale 设置，下面用 em） */
 .mp-cell { position: absolute; font-size: 16px; transform-origin: 0 0; cursor: pointer; transition: background .25s; }
 .mp-cell:hover { background: rgba(255, 255, 255, .08); }
-.mp-cell.mp-selected { background: rgba(255, 255, 255, .14); }
 .mp-cell.mp-lifted { z-index: 6; cursor: grabbing; background: #abc8d7dd; box-shadow: 0 14px 35px #36536328, 0 0 0 1px #ffffffe0; transition: none; }
 /* 格子正面：移植原型 style.css 的 .cell-title / .period-label / .group-count（scale = 1 时的像素，整个格子由 transform 缩放） */
 .mp-cell-title { position: absolute; left: 25px; right: 48px; bottom: 24px; font-family: var(--mp-serif); font-weight: 400; overflow-wrap: anywhere; }
@@ -69,7 +68,12 @@
 
 /* 阅览室（#29，移植原型 #room / #notes-panel / #note-tabs / #ai-toggle）：格子在网格里展开，没有背景，就是网格里的一块 */
 .mp-room, .mp-room * { box-sizing: border-box; }
-.mp-room { position: absolute; transform-origin: 0 0; z-index: 3; cursor: default; }
+.mp-room { position: absolute; transform-origin: 0 0; z-index: 3; cursor: default; transition: box-shadow .25s; }
+/* 镜头到位后内容才淡入（原型 body.settled .room-panel） */
+.mp-room > * { opacity: 0; transition: opacity .25s; }
+.mp-room.mp-settled > * { opacity: 1; }
+/* 关上阅览室：标签、对话、AI 按钮先淡出，再缩回那一格 */
+.mp-room-exiting .mp-tabs, .mp-room-exiting .mp-chat, .mp-room-exiting .mp-room-ai { opacity: 0 !important; pointer-events: none; transition: opacity .18s; }
 .mp-room-panel { position: absolute; inset: 0; padding: 30px 43px 19px; display: flex; flex-direction: column; user-select: text; -webkit-user-select: text; }
 .mp-room-heading { position: relative; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; min-height: 107px; }
 .mp-room-heading-text { min-width: 0; flex: 1; padding-right: 90px; display: flex; flex-direction: column; }
@@ -256,5 +260,5 @@
 @keyframes mp-orb-arrive { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .mp-orb { animation: none; } }
 /* 阅读时这一格就是书页：不要格子里的内边距 */
-.mp-room-reader { box-shadow: 0 3px 16px #3b56651c, inset 0 0 0 1px #ffffff70; }
+.mp-room-reader.mp-settled { box-shadow: 0 3px 16px #3b56651c, inset 0 0 0 1px #ffffff70; }
 .mp-room-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; }

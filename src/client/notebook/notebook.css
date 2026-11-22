@@ -28,6 +28,8 @@
 .nb-btn { align-self: flex-start; padding: 6px 14px !important; border: 1px solid var(--nb-line, #d6dde0) !important; border-radius: 999px; font-size: 12px; white-space: nowrap; }
 .nb-btn:hover { background: var(--nb-soft, #f3f5f6) !important; }
 .nb-btn.nb-primary { background: var(--nb-accent, #294c60) !important; border-color: transparent !important; color: #fff !important; }
+/* 和「继续读」同样的描边胶囊，只是字小 2px（#71） */
+.nb-btn.nb-btn-small { font-size: 10px; }
 .nb-btn:disabled { opacity: .4; cursor: default; }
 
 /* 列表（右侧栏首页） */

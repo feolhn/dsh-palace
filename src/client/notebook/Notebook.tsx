@@ -331,7 +331,7 @@ function InspirationsTab({ item, title, sessionId, onError }: { item: Item; titl
       {chatOk
         ? (
           <div className="nb-row">
-            <button type="button" className="nb-btn nb-primary" onClick={save}>把这次对话存成灵感</button>
+            <button type="button" className="nb-btn nb-btn-small" onClick={save}>把这次对话存成灵感</button>
             {sent && <span className="nb-small nb-muted">已经请 AI 总结，稍等片刻</span>}
           </div>
         )
