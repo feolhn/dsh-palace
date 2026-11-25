@@ -136,7 +136,7 @@ pnpm test         # 测试（core / host / AI 工具）
 pnpm verify       # 合并前跑：类型检查 + 测试 + 个人信息检查 + 构建
 ```
 
-从源码安装：先 `pnpm build`，再在插件安装界面填仓库文件夹的完整路径。每次改完代码都要重新 `pnpm build`，再重启 Harness。开发文档见 [WORK.md](WORK.md)，接口约定见 [docs/CONTRACT.md](docs/CONTRACT.md)。
+从源码安装：先 `pnpm build`，再在插件安装界面填仓库文件夹的完整路径。每次改完代码都要重新 `pnpm build`，再重启 Harness。开发说明见 [AGENTS.md](AGENTS.md)，接口约定见 [docs/CONTRACT.md](docs/CONTRACT.md)。
 
 ## 许可证
 
