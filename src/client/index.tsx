@@ -23,16 +23,6 @@ const TAB_ID = 'dsh-palace/palace'
 const TAB_KIND = 'dshPalace'
 const PANEL_ID = 'dsh-palace'
 
-// 插件以前叫 dsh-shelf：把本机记住的设置（视图、对话、字号等）搬到新前缀下，只搬一次
-try {
-  for (const key of Object.keys(localStorage)) {
-    if (!key.startsWith('dsh-shelf:')) continue
-    const next = `dsh-palace:${key.slice('dsh-shelf:'.length)}`
-    if (localStorage.getItem(next) === null) localStorage.setItem(next, localStorage.getItem(key) as string)
-    localStorage.removeItem(key)
-  }
-} catch { /* 读不了本地存储就算了 */ }
-
 // 前端上下文只用到少量方法，这里给出最小类型
 interface ClientContext {
   get(name: string): unknown
