@@ -54,7 +54,7 @@
 
 **文档**
 - 改了数据格式、接口或工具，就在同一个 PR 里改 `docs/CONTRACT.md`。
-- 改了用户能看到的功能或定位，就在同一个 PR 里改 `README.md`。发版打 tag 前，再通读一遍 README，确认和现状一致。
+- 改了用户能看到的功能或定位，就在同一个 PR 里改 `README.md`；一句话简介变了，也同步改 `package.json` 的 description 和 GitHub 仓库的 About。发版打 tag 前，再通读一遍 README，确认和现状一致。
 - 新概念加进 `docs/GLOSSARY.md`，讨论和代码都按那里的叫法。
 - 想新增文档或根目录条目时，先问它属于「为什么」还是「是什么」：前者发 Discussion，后者并进现有文档。
 
