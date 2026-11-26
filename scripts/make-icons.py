@@ -1,5 +1,5 @@
 """把设计负责人原型（Discussion #40）里的水彩图标转成插件用的小 WebP。
-用法：python3 -I scripts/make-icons.py <原型目录> vendor/icons
+用法：python3 -I scripts/make-icons.py <原型目录> vendor/themes/watercolor/icons
 每个图标按原型的校准（icons.js / style.css 里的尺寸和位移）画进同一个 77×77 的框（四周各留 10 的余量），
 导出 2 倍大小（194×194）。前端只要把图片放在框的 (-10, -10) 处，大小 97×97。"""
 import sys

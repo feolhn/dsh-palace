@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "name": "像素",
+  "edges": "hard",
+  "background": { "color": "#f8f8f8" },
+  "font": { "file": "fonts/PixelifySans.ttf", "latinOnly": true },
+  "icons": { "file": "icons/{key}.png", "inset": 6.5, "pixelated": true },
+  "colors": {
+    "ink": "#252329",
+    "quiet": "#5c5961",
+    "grid": "#000",
+    "dot": "#000",
+    "edge": "#252329",
+    "fill": "#f8f8f8",
+    "hover": "#e5e2dc",
+    "panel": "#f8f8f8",
+    "group": "rgba(170, 161, 150, .22)",
+    "shadow": "#252329",
+    "ring": "#343039",
+    "ringTrack": "#d6d3ce",
+    "arc": "#4f535e",
+    "arcOutline": "#f8f8f8",
+    "arcCurrent": "#222329"
+  }
+}

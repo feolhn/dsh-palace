@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "name": "水彩",
+  "edges": "soft",
+  "background": { "color": "#abc9d7", "image": "paper.svg" },
+  "icons": { "file": "icons/{key}.webp", "inset": -10 },
+  "colors": {}
+}

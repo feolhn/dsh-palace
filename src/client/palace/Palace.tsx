@@ -22,6 +22,7 @@ import { palaceOp, useArcs, usePalace } from './data.ts'
 import { Arcs } from './Arcs.tsx'
 import { delta, matrixOf, project, spreadDrop, spreadLayout, unproject, type Matrix, type SpreadLayout } from './projection.ts'
 import { lightScheme } from './light.ts'
+import { THEMES, setTheme, themeRoot, useThemeId } from './theme.ts'
 import { GroupNameDialog } from './GroupNameDialog.tsx'
 
 /** 格子边长（scale = 1 时的像素）。 */
@@ -545,6 +546,9 @@ export function Palace() {
 
   // 立起来的图标：抵消投影的旋转和倾斜，正对镜头，抬高并放大（原型 isometric.js 的 update）
   const det = m.a * m.d - m.b * m.c
+  const themeId = useThemeId()
+  const skin = themeRoot(themeId)
+  const hard = THEMES[themeId].edges === 'hard'
   const relief = {
     '--mp-facing': `matrix(${m.d / det},${-m.b / det},${-m.c / det},${m.a / det},0,0)`,
     '--mp-lift': `${-19 * proj.amount}px`,
@@ -555,8 +559,8 @@ export function Palace() {
   } as CSSProperties
 
   return (
-    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''} ${proj.amount > 0.999 ? 'mp-iso' : ''} ${exiting ? 'mp-room-exiting' : ''}`}
-      style={{ ...lightScheme(), ...relief }}
+    <div ref={rootRef} className={`mp-root ${gesture?.kind === 'pan' && gesture.moved ? 'mp-panning' : ''} ${chatOpen ? 'mp-chatting' : ''} ${proj.amount > 0.999 ? 'mp-iso' : ''} ${exiting ? 'mp-room-exiting' : ''} ${skin.className}`}
+      style={{ ...lightScheme(), ...skin.style, ...relief }}
       onPointerDown={onBackgroundDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => setGesture(undefined)}>
       <div className="mp-paper" />
       <svg className="mp-defs" aria-hidden="true"><defs>
@@ -567,7 +571,7 @@ export function Palace() {
           <feGaussianBlur stdDeviation=".45" />
         </filter>
       </defs></svg>
-      {cam !== undefined && <Grid cam={cam} size={size} m={m} ax={ax} />}
+      {cam !== undefined && <Grid cam={cam} size={size} m={m} ax={ax} square={hard} />}
 
       {spreading && [...layout.frames.values()].map((e) => {
         const p = worldCell(e.cell), t = proj.spread
@@ -612,6 +616,10 @@ export function Palace() {
         </button>
         {/* 光球没地方放（窗口太小、格子太密）时的备用入口 */}
         {!orbShown && <button type="button" className="mp-round mp-ai-orb" title="和宫殿对话（真实的 Harness 对话）" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = rootRef.current!.getBoundingClientRect(); setOrbChat({ x: r.left - b.left - 120, y: Math.max(95, size.h - ORB_CHAT.h - 90), w: r.width, h: 0 }) }}>AI</button>}
+        {/* 换皮肤（#102）：在几套官方皮肤之间轮换 */}
+        <button type="button" className="mp-view-toggle mp-theme-toggle" title="换皮肤" onClick={() => { const ids = Object.keys(THEMES); setTheme(ids[(ids.indexOf(themeId) + 1) % ids.length]) }}>
+          {THEMES[themeId].name}
+        </button>
         <div className="mp-zoom">
           <button type="button" onClick={() => zoomAt(1 / 1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) <= MIN_SCALE + 0.001}>−</button>
           <button type="button" className="mp-zoom-reset" title="显示全部" onClick={() => palace && setCam(iso ? spreadCamera(layout, palace.cells, size) : fitCamera(palace.cells, size))}>{Math.round((cam?.scale ?? 1) * 100)}%</button>
@@ -730,7 +738,7 @@ function CellFace({ cell, summary, count, groupPercent, onRead }: { cell: Cell; 
 }
 
 /** 网格线和交点（随投影一起变形；阅览室展开时线跟着让开）。只画视野里的部分。移植自原型 isometric.js 的 grid()。 */
-function Grid({ cam, size, m, ax }: { cam: Camera; size: Size; m: Matrix; ax: (i: number, axis: 'col' | 'row') => number }) {
+function Grid({ cam, size, m, ax, square }: { cam: Camera; size: Size; m: Matrix; ax: (i: number, axis: 'col' | 'row') => number; square: boolean }) {
   const corners = [[0, 0], [size.w, 0], [0, size.h], [size.w, size.h]].map(([x, y]) => unproject(m, x, y, size.w, size.h))
   const step = B * cam.scale
   // 阅览室让开的那段宽度也算进去，多画几条线
@@ -757,7 +765,10 @@ function Grid({ cam, size, m, ax }: { cam: Camera; size: Size; m: Matrix; ax: (i
         {lines.map((l, i) => <line key={i} x1={l.a.x} y1={l.a.y} x2={l.b.x} y2={l.b.y} />)}
       </g>
       <g className="mp-dots">
-        {dots.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={r} />)}
+        {/* 直角皮肤（像素）的交点是小方块 */}
+        {square
+          ? dots.map((p, i) => <rect key={i} x={Math.round(p.x - r * .7)} y={Math.round(p.y - r * .7)} width={Math.round(r * 1.4)} height={Math.round(r * 1.4)} />)
+          : dots.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={r} />)}
       </g>
     </svg>
   )

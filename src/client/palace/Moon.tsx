@@ -1,8 +1,8 @@
 /**
- * 格子右上角的水彩图标 + 进度环 + 百分比（移植自原型的 .moon-button）。书点它进入阅读，其他格子点它和点格子一样。
+ * 格子右上角的图标 + 进度环 + 百分比（移植自原型的 .moon-button）。书点它进入阅读，其他格子点它和点格子一样。
  * 框固定 77×95（scale = 1 时的像素，整个格子由外层 transform 缩放）。轴测时图标立起来、带投影，进度环留在地面（#40，palace.css）。
  */
-import { iconUrl } from './icons.ts'
+import { iconUrl, useThemeId } from './theme.ts'
 
 export function percentText(p: number): string {
   const v = Math.max(0, Math.min(1, p)) * 100
@@ -10,6 +10,7 @@ export function percentText(p: number): string {
 }
 
 export function Moon({ icon, percent, label, onOpen }: { icon: string; percent?: number; label: string; onOpen?: () => void }) {
+  const themeId = useThemeId()
   const pct = percent === undefined ? undefined : Math.max(0, Math.min(1, percent)) * 100
   return (
     <button type="button" className="mp-moon" aria-label={label}
@@ -25,7 +26,7 @@ export function Moon({ icon, percent, label, onOpen }: { icon: string; percent?:
         </svg>
       </span>
       <span className="mp-moon-relief">
-        <img src={iconUrl(icon)} alt="" draggable={false} />
+        <img src={iconUrl(themeId, icon)} alt="" draggable={false} />
       </span>
       {percent !== undefined && <span className="mp-moon-pct">{percentText(percent)}</span>}
     </button>

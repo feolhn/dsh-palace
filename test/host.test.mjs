@@ -130,4 +130,14 @@ test('EPUB：可以添加（目录等前端读），阅读器脚本只给白名�
   assert.equal(r.status, 404)
   r = await call('asset', { query: '?f=reader/epub.LICENSE.txt' })
   assert.equal(r.status, 404)
+
+  // 皮肤（#102）：只给 vendor/themes 下的图片和字体
+  r = await call('asset', { query: '?f=themes/pixel/icons/moon.png' })
+  assert.equal(r.status, 200)
+  r = await call('asset', { query: '?f=themes/watercolor/paper.svg' })
+  assert.equal(r.status, 200)
+  r = await call('asset', { query: '?f=themes/pixel/theme.json' })
+  assert.equal(r.status, 404)
+  r = await call('asset', { query: '?f=themes/pixel/../../package.json' })
+  assert.equal(r.status, 404)
 })

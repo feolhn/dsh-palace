@@ -78,7 +78,7 @@ src/shared   前后端共用的数据类型
 | `docs/CONTRACT.md` | 数据格式、HTTP 接口、AI 工具 |
 | `docs/GLOSSARY.md` | 术语的中英文对照 |
 | `src/` `test/` `scripts/` | 代码、测试、构建和检查脚本 |
-| `vendor/` | 随包发布的字体、图标和阅读器脚本 |
+| `vendor/` | 随包发布的字体、阅读器脚本和皮肤（`vendor/themes/<id>/`：theme.json、图标、背景） |
 | `assets/` | README 和插件市场用的演示动图（路径写在 `screenshots.json` 里，不要挪动） |
 | `cordis.patch.yml` `screenshots.json` | 宿主和插件市场从根目录读取，必须留在根目录 |
 | Discussions 置顶目录帖 | 所有设计讨论和决策存档 |
