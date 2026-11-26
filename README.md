@@ -59,8 +59,6 @@
 3. 完全退出 Harness，再重新打开。
 4. 左侧导航出现「Memory Palace」，就装好了。
 
-> **用过测试版 `dsh-shelf` 的朋友**：先卸载 `dsh-shelf`，再按上面的步骤安装 `dsh-palace`。你原来的书、笔记和对话会自动保留（数据继续放在原来的 `dsh-shelf-data` 文件夹里），不用重新添加。如果你以前在 `cordis.patch.yml` 里给 `dsh-shelf` 设过 `dataDir`，记得把同样的路径填到 `dsh-palace` 的条目下（见[数据存在哪](#数据存在哪)）。
-
 ## 使用
 
 ### 打开宫殿
@@ -98,7 +96,7 @@
 
 ## 数据存在哪
 
-所有数据都在你自己的电脑上，默认放在 `~/Documents/dsh-palace-data/`（「文稿」文件夹里的 `dsh-palace-data`；用过测试版的是原来的 `dsh-shelf-data`）。都是普通文件，复制这个文件夹就是备份：
+所有数据都在你自己的电脑上，默认放在 `~/Documents/dsh-palace-data/`（「文稿」文件夹里的 `dsh-palace-data`）。都是普通文件，复制这个文件夹就是备份：
 
 - `palace.json`：宫殿里每一格的位置
 - `items/`：每一格的目录、进度、卡片和灵感
