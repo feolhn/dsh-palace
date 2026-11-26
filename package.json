@@ -1,7 +1,7 @@
 {
   "name": "dsh-palace",
   "version": "1.0.0",
-  "description": "Memory Palace：DeepSeek Harness 的读书插件。把书、视频课和笔记放进一座水彩宫殿，你只管记，AI 帮你整理。",
+  "description": "Memory Palace：DeepSeek Harness 插件，一个懂你在想什么的 AI。把书、课、剧和随手的念头放进一座宫殿，你只管记、只管聊，AI 帮你整理，也慢慢记住你。",
   "type": "module",
   "main": "lib/index.js",
   "license": "MIT",
