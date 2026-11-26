@@ -2,7 +2,6 @@
  * dsh-palace Host 入口：注册 AI 工具 + 前端用的 HTTP 接口。
  * 数据目录默认 ~/Documents/dsh-palace-data，可在 profile 的 cordis.patch.yml 里用 config.dataDir 修改。
  */
-import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Memory } from '../core/memory.ts'
@@ -30,16 +29,8 @@ interface HostContext {
 /** system prompt 组装时拿到的 agent：id 就是会话 id。 */
 interface PromptAgent { id: string; session?: { header?: { cwd?: string } } }
 
-/**
- * 默认数据目录 ~/Documents/dsh-palace-data。
- * 插件以前叫 dsh-shelf（beta），数据在 ~/Documents/dsh-shelf-data：新目录里还没有宫殿时继续用老目录。
- * 不搬家：老对话的工作目录就在老目录下，搬走了续聊会找不到（#74）。
- */
-function defaultDataDir(): string {
-  const dir = join(homedir(), 'Documents', 'dsh-palace-data')
-  const old = join(homedir(), 'Documents', 'dsh-shelf-data')
-  return !existsSync(join(dir, 'palace.json')) && existsSync(join(old, 'palace.json')) ? old : dir
-}
+/** 默认数据目录 ~/Documents/dsh-palace-data。 */
+const defaultDataDir = () => join(homedir(), 'Documents', 'dsh-palace-data')
 
 export function apply(ctx: HostContext, config: Config = {}): void {
   const dir = config.dataDir ?? defaultDataDir()
