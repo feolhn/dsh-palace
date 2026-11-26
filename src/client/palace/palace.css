@@ -58,7 +58,9 @@
 .mp-primary { border-bottom: 1px solid #5f7c8a77 !important; padding: 5px 0 !important; font-size: 13px; }
 
 .mp-footer[hidden] { display: none; }
-.mp-footer { position: absolute; z-index: 9; /* 高于阅览室（8）：开着书也能点 AI，书不关 */  right: 28px; bottom: 22px; display: flex; gap: 11px; align-items: center; cursor: default; }
+/* 底栏靠右；放不下时往上折成两行（wrap-reverse），不裁切、按钮文字不折行。空白处不挡画布拖动 */
+.mp-footer { position: absolute; z-index: 9; /* 高于阅览室（8）：开着书也能点 AI，书不关 */  left: 28px; right: 28px; bottom: 22px; display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; gap: 11px; align-items: center; cursor: default; pointer-events: none; }
+.mp-footer > * { flex-shrink: 0; white-space: nowrap; pointer-events: auto; }
 .mp-round { width: 35px; height: 35px; border: 1px solid var(--mp-edge, #fffffa85) !important; border-radius: 50%; font-size: 17px; }
 .mp-round:hover { background: var(--mp-hover, #ffffff20) !important; }
 .mp-zoom { display: flex; align-items: center; height: 35px; border: 1px solid var(--mp-edge, #fffffa85); border-radius: 30px; background: var(--mp-fill, #c5dae338); }
@@ -197,7 +199,7 @@
 .mp-chat [data-conversation-content] { --dsh-chat-content-width: 100%; --dsh-composer-card-max-width: 100%; --dsh-composer-side-clearance: 0px; }
 .mp-chat [data-composer-seat] { background: linear-gradient(180deg, transparent 0, var(--mp-panel, #dce7e3) 36px) !important; } /* 输入框上方的渐隐用面板的颜色，不是 Harness 的白底 */
 .mp-chat-note { font-size: 12px; line-height: 1.8; color: var(--mp-quiet); padding: 8px 4px; }
-.mp-chatting .mp-footer { right: min(436px, calc(100% - 290px)); } /* 290：底栏宽约 266px，最窄 520px 时也不出画布 */
+.mp-chatting .mp-footer { right: min(436px, calc(100% - 290px)); } /* 对话面板开着时让到它左边；窄了就折行 */
 /* 阅览室旁边的对话（原型 #ai-dock）：贴在阅览室左边，位置由 Palace 算好 */
 .mp-chat.mp-chat-dock { right: auto; bottom: auto; padding: 19px 10px 10px; background: var(--mp-panel, #dce7e3d9); backdrop-filter: blur(7px); }
 /* 设计稿 #40 第 3 点。只用 Harness 公开的 data-* 钩子和 CSS 变量改外观，不动对话控件本身（官方更新时最多样式失效，不会坏） */
