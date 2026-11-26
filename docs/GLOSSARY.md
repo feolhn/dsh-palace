@@ -21,7 +21,7 @@
 | 错题 | Mistake | `type: 'mistake'` | 做错的题，状态分为待复习和已掌握 |
 | 灵感 | Inspiration | `Inspiration` | 阅览室第三页的条目，由一次 AI 对话总结出的短文 |
 | 分享卡片 | Share card | `src/client/share` | 把卡片排版成图片，方便分享 |
-| 光球 | Orb | `.mp-orb` | 打开 AI 对话的入口（仅 Harness 版有） |
+| 光球 | Orb | `.mp-orb` | 打开 AI 对话的入口（仅 Harness 版有）。样子跟着皮肤：水彩是透明的圆，像素是方块 |
 
 ## 记忆
 
@@ -50,8 +50,8 @@
 | 能力 | Capabilities | `/api/capabilities`（规划中） | 宿主声明自己支持的功能，前端只看能力开关，不判断宿主 |
 | 工具 | Tool | `palace_*` | 提供给 AI 调用的操作 |
 | 数据目录 | Data dir | `dataDir` | 默认是 `~/Documents/dsh-palace-data` |
-| 皮肤 | Theme | `theme.json`（规划中） | 换背景、图标、光球的配置，只放图片和颜色 |
-| 槽位 | Slot | —（规划中） | 皮肤里可以替换的位置，例如背景、格子图标、光球 |
+| 皮肤 | Theme | `vendor/themes/<id>/theme.json` | 一套背景、图标、字体和颜色，没有 CSS 和脚本。官方有水彩（默认）和像素两套，底栏按钮切换（#102） |
+| 槽位 | Slot | `COLOR_SLOTS` | 皮肤里可以替换的位置：背景、格子图标、字体，和 ink、edge、ring 等颜色。用户自己替换槽位是下一步（#95） |
 | 快照 | Snapshot | —（规划中） | 每天第一次写入前对数据目录的自动备份 |
 | 演示站 | Demo site | `demo/` | 给新用户在线体验的静态网站：Core 跑在浏览器里，配上剧本和演示数据（以后做） |
 | 演示数据 | Demo palace | `demo/palaces/`（规划中） | 一份数据目录快照加一份 `theme.json`，水彩和像素各一套 |

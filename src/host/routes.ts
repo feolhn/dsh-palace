@@ -117,6 +117,10 @@ function vendorDir(): string {
   return existsSync(built) ? built : fileURLToPath(new URL('../../vendor/', import.meta.url))
 }
 
+const THEME_TYPES: Record<string, string> = {
+  webp: 'image/webp', png: 'image/png', svg: 'image/svg+xml', ttf: 'font/ttf', woff2: 'font/woff2',
+}
+
 const IMAGE_TYPES: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
 }
@@ -218,12 +222,12 @@ export function createRoutes(store: PalaceStore, active: ActiveItems, memory = n
         response.headers.set('cache-control', 'public, max-age=86400')
         return response
       }
-      // 水彩图标（#29）：vendor/icons/<名字>.webp
-      const icon = /^icons\/([a-z][a-z-]{0,30})\.webp$/.exec(rel)?.[1]
-      if (icon !== undefined) {
-        const file = join(vendorDir(), 'icons', `${icon}.webp`)
+      // 皮肤的图片和字体（#102）：vendor/themes/<皮肤>/<文件>，只认这几种后缀、最多一层子目录
+      const theme = /^themes\/[a-z][a-z0-9-]{0,30}\/(?:[a-z]+\/)?[A-Za-z0-9][A-Za-z0-9-]{0,60}\.(webp|png|svg|ttf|woff2)$/.exec(rel.split(sep).join('/'))
+      if (theme !== null) {
+        const file = join(vendorDir(), rel)
         if (!existsSync(file)) return new Response('not found', { status: 404 })
-        const response = streamFile(file, 'image/webp')
+        const response = streamFile(file, THEME_TYPES[theme[1]])
         response.headers.set('cache-control', 'public, max-age=86400')
         return response
       }

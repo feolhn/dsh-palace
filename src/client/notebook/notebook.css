@@ -101,7 +101,7 @@
 .nb-page-num { text-align: center; font-size: 11px; color: var(--nb-muted, #6b7b84); margin-top: 4px; }
 
 /* 全屏宫殿的阅览室里：跟随宫殿的配色和字体，移植设计稿（白色细线、方框打勾、两列卡片；舷窗标签在 palace.css） */
-.mp-room-panel .nb { --nb-line: #ffffff70; --nb-soft: #ffffff2e; --nb-muted: #4c6d7e; --nb-accent: #294c60; --nb-serif: var(--mp-serif); flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; margin-top: 0; padding: 18px 9px 4px 0; scrollbar-width: thin; scrollbar-color: #ffffff70 transparent; container-type: inline-size; }
+.mp-room-panel .nb { --nb-line: var(--mp-edge-soft, #ffffff70); --nb-soft: var(--mp-hover, #ffffff2e); --nb-muted: var(--mp-quiet); --nb-accent: var(--mp-ink); --nb-serif: var(--mp-serif); flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; margin-top: 0; padding: 18px 9px 4px 0; scrollbar-width: thin; scrollbar-color: #ffffff70 transparent; container-type: inline-size; }
 .mp-room-panel .nb-tabs { justify-content: center; gap: 30px; border-bottom: 0; margin: 4px 0 18px; }
 .mp-room-panel .nb-tabs button { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 0 !important; border: 0 !important; margin: 0; font-size: 11px; letter-spacing: .12em; color: var(--mp-ink); }
 .mp-room-panel .nb-tabs button::before {
@@ -141,29 +141,29 @@
   .mp-room-panel .nb-sec { gap: 10px; min-height: 49px; }
   .mp-room-panel .nb-sec-title { font-size: 12px; }
 }
-.mp-room-panel .nb-outline { border-top: 1px solid #ffffff99; }
-.mp-room-panel .nb-chapter, .mp-room-panel .nb-sec { border-bottom: 1px solid #ffffff4d; }
+.mp-room-panel .nb-outline { border-top: 1px solid var(--mp-edge, #ffffff99); }
+.mp-room-panel .nb-chapter, .mp-room-panel .nb-sec { border-bottom: 1px solid var(--mp-edge-soft, #ffffff4d); }
 .mp-room-panel .nb-chapter { min-height: 44px; padding: 9px 4px !important; }
 .mp-room-panel .nb-chapter { font-weight: 400; font-family: var(--mp-serif); font-size: 15px; align-items: center; }
-.mp-room-panel .nb-sec.nb-cur { background: #ffffff1c; }
-.mp-room-panel .nb-sec input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 15px; height: 15px; margin: 0; flex-shrink: 0; border: 1px solid #f6f5e4; border-radius: 1px; cursor: pointer; display: grid; place-items: center; }
-.mp-room-panel .nb-sec input[type=checkbox]:checked { background: #ffffff44; border-color: #5d7e86; }
-.mp-room-panel .nb-sec input[type=checkbox]:checked::after { content: "✓"; font: 13px/1 serif; color: #3e626e; }
+.mp-room-panel .nb-sec.nb-cur { background: var(--mp-hover, #ffffff1c); }
+.mp-room-panel .nb-sec input[type=checkbox] { appearance: none; -webkit-appearance: none; width: 15px; height: 15px; margin: 0; flex-shrink: 0; border: 1px solid var(--mp-edge, #f6f5e4); border-radius: 1px; cursor: pointer; display: grid; place-items: center; }
+.mp-room-panel .nb-sec input[type=checkbox]:checked { background: var(--mp-hover, #ffffff44); border-color: var(--mp-edge, #5d7e86); }
+.mp-room-panel .nb-sec input[type=checkbox]:checked::after { content: "✓"; font: 13px/1 serif; color: var(--mp-ink, #3e626e); }
 .mp-room-panel .nb-foot { border-top: 0; }
 /* 卡片、灵感 */
 .mp-room-panel .nb-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.mp-room-panel .nb-card, .mp-room-panel .nb-insp { background: #f9f5e842; border: 1px solid #ffffff59; border-radius: 0; padding: 18px 20px; }
-.mp-room-panel .nb-card blockquote { border-left-color: #e5ba68; }
-.mp-room-panel .nb-compose textarea { background: #ffffff28; border: 0; border-bottom: 1px solid #7a99a455; border-radius: 0; }
+.mp-room-panel .nb-card, .mp-room-panel .nb-insp { background: var(--mp-fill, #f9f5e842); border: 1px solid var(--mp-edge, #ffffff59); border-radius: 0; padding: 18px 20px; }
+.mp-room-panel .nb-card blockquote { border-left-color: var(--mp-ring, #e5ba68); }
+.mp-room-panel .nb-compose textarea { background: var(--mp-fill, #ffffff28); border: 0; border-bottom: 1px solid var(--mp-edge, #7a99a455); border-radius: 0; }
 /* 阅览室里的按钮统一成描边胶囊（继续读、全部 / 摘录 / 想法 / 错题、存成灵感），11px */
-.mp-room-panel .nb-btn:not(.nb-primary), .mp-room-panel .nb-chips button { padding: 6px 14px !important; border: 1px solid #ffffffb0 !important; border-radius: 999px; font-size: 11px; background: transparent !important; color: inherit !important; }
-.mp-room-panel .nb-btn:not(.nb-primary):hover, .mp-room-panel .nb-chips button:hover { background: #ffffff26 !important; }
-.mp-room-panel .nb-chips button.nb-on { background: #ffffff40 !important; }
+.mp-room-panel .nb-btn:not(.nb-primary), .mp-room-panel .nb-chips button { padding: 6px 14px !important; border: 1px solid var(--mp-edge, #ffffffb0) !important; border-radius: 999px; font-size: 11px; background: transparent !important; color: inherit !important; }
+.mp-room-panel .nb-btn:not(.nb-primary):hover, .mp-room-panel .nb-chips button:hover { background: var(--mp-hover, #ffffff26) !important; }
+.mp-room-panel .nb-chips button.nb-on { background: var(--mp-hover, #ffffff40) !important; }
 .mp-room-panel .nb-btn.nb-primary { border-color: transparent !important; }
 @container (max-width: 560px) { .mp-room-panel .nb-cards { grid-template-columns: minmax(0, 1fr); } }
 /* 原型 .thought-card 的字：卡片标题宋体、正文 12px、批注上方细线 */
 .mp-room-panel .nb-card blockquote { font-size: 15px; line-height: 1.8; }
-.mp-room-panel .nb-card .nb-note { font-size: 12px; line-height: 1.9; border-top: 1px solid #fff8; padding-top: 10px; }
+.mp-room-panel .nb-card .nb-note { font-size: 12px; line-height: 1.9; border-top: 1px solid var(--mp-edge-soft, #fff8); padding-top: 10px; }
 .mp-room-panel .nb-card blockquote + .nb-note { margin-top: 2px; }
 .mp-room-panel .nb-card footer .nb-link, .mp-room-panel .nb-insp footer .nb-link { font-size: 10px; }
 .mp-room-panel .nb-insp h3 { font-size: 19px; }

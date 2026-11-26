@@ -53,7 +53,7 @@ dsh-palace-data/
 | `parentId` | `null` 表示在宫殿最外层；否则是所在分组的 id |
 | `col`, `row` | 整数坐标。最外层可以是负数；分组里从 0 开始 |
 | `title`, `subtitle` | 格子上显示的文字。subtitle 是「备注」，可选：标题上方一行小字，用户想填什么都行（作者、另一种语言的书名……） |
-| `icon` | 可选：水彩图标名（`vendor/icons/<icon>.webp`，经 `asset?f=icons/<icon>.webp` 读取）。不填时前端按 id 固定挑一个，分组默认彩虹 |
+| `icon` | 可选：图标名（16 个之一，见 `src/client/palace/icons.ts`）。每套皮肤各画一份，图片按 §4.5 的 `icons.file` 找。不填时前端按 id 固定挑一个，分组默认彩虹 |
 
 规则：
 - 同一层里 `(parentId, col, row)` 不能重复。移动到有格子的位置 = 两个格子互换，一次写入完成。
@@ -195,6 +195,26 @@ function mountEpub(el: HTMLElement, opts: {
 
 纸张固定 1080×1440。认不出的字段保存时原样保留。
 
+### 4.5 皮肤 theme.json（前端，#102）
+
+一套皮肤是 `vendor/themes/<id>/` 下的一份 `theme.json` 加它用到的图片和字体，只放颜色和图片，没有 CSS 和脚本。现在有两套官方皮肤：`watercolor`（水彩，默认）、`pixel`（像素）。选了哪套记在本机（`localStorage` 的 `dsh-palace:theme`）。
+
+```jsonc
+{
+  "schema": 1,
+  "name": "像素",                         // 底栏按钮上显示的名字
+  "edges": "hard",                        // soft：圆角、毛玻璃、柔和阴影；hard：直角、实心投影、方形网格交点
+  "background": { "color": "#f8f8f8", "image": "paper.svg" },  // image 可选，铺满画布
+  "font": { "file": "fonts/PixelifySans.ttf", "latinOnly": true }, // 可选；latinOnly 时中文用系统黑体
+  "icons": { "file": "icons/{key}.png", "inset": 6.5, "pixelated": true }, // 图片放进 77×77 图标框，四周内缩 inset（负数往外扩）
+  "colors": { "ink": "#252329" }          // 槽位见下；没写的用水彩的默认值
+}
+```
+
+颜色槽位（`src/client/palace/theme.ts` 的 `COLOR_SLOTS`，对应 CSS 变量 `--mp-<槽位>`）：`ink` 正文、`quiet` 次要文字、`grid` 网格线、`dot` 网格交点、`edge` 按钮和面板的细边、`fill` 按钮底色、`hover` 悬停和选中、`panel` 对话和弹窗底色、`group` 分组底色、`shadow` 实心投影、`ring` / `ringTrack` 进度环、`arc` / `arcOutline` / `arcCurrent` 电弧。
+
+用户自己换图片、颜色（#95）以后在这套槽位上做。
+
 ## 5. HTTP 接口（前端 ↔ host）
 
 都挂在 Harness 的 `/api` 通道上（由 Harness 负责鉴权），前缀 `/api/dsh-palace/`。
@@ -208,7 +228,7 @@ function mountEpub(el: HTMLElement, opts: {
 | GET | `file?id=` | 原文字节（pdf、epub），只给登记过的路径 |
 | GET | `image?name=` | 卡片原图 |
 | GET | `page-text?id=&pages=1,2` | `{ pages: [{page,text}], scanned: [页码] }`，PDF 选目录页用 |
-| GET | `asset?f=` | 前端需要的静态资源：`reader/epub.min.js`、`reader/jszip.min.js`（白名单），pdf.js 的 CMap 等 |
+| GET | `asset?f=` | 前端需要的静态资源：`reader/epub.min.js`、`reader/jszip.min.js`（白名单），pdf.js 的 CMap 等，界面字体 `fonts/*.woff2`，皮肤的图片和字体 `themes/<id>/[子目录/]<名字>`（webp、png、svg、ttf、woff2；`theme.json` 打包在前端里，不从这里读） |
 | POST | `pick-file` | macOS 弹出文件选择框 |
 | POST | `open` | 用系统程序打开原文或数据目录 |
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |

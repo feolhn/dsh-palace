@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react'
 import type { Cell, CellSummary, Palace } from '../../shared/palace.ts'
 import { Notebook, type NotebookTab } from '../notebook/Notebook.tsx'
 import { palaceOp } from './data.ts'
-import { ICONS, iconOf, iconUrl } from './icons.ts'
+import { ICONS, iconOf } from './icons.ts'
 import { Moon } from './Moon.tsx'
+import { iconUrl, useThemeId } from './theme.ts'
 
 export function tabsOf(summary: CellSummary | undefined): [NotebookTab, string][] {
   // 笔记格子没有原文，也就没有进度
@@ -40,6 +41,7 @@ export function Room({ palace, cellId, summary, sessionId, tab, onTab, onRead, o
   const [subtitle, setSubtitle] = useState(cell.subtitle ?? '')
   const [error, setError] = useState<string>()
   const [armed, setArmed] = useState(false)
+  const themeId = useThemeId()
   const [picking, setPicking] = useState(false)
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export function Room({ palace, cellId, summary, sessionId, tab, onTab, onRead, o
             {ICONS.map(k => (
               <button key={k} type="button" role="option" aria-selected={iconOf(cell) === k} title={k}
                 onClick={() => { void run('updateCell', { icon: k }); setPicking(false) }}>
-                <img src={iconUrl(k)} alt="" draggable={false} />
+                <img src={iconUrl(themeId, k)} alt="" draggable={false} />
               </button>
             ))}
           </div>
