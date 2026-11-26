@@ -42,16 +42,16 @@
 
 | 中文 | English | 代码里 | 含义 |
 |---|---|---|---|
-| 宿主 | Host app | — | 运行插件的 AI 客户端：DeepSeek Harness、Claude、ChatGPT |
+| 宿主 | Host app | — | 运行插件的 AI 客户端：现在是 DeepSeek Harness，规划中有 Claude、ChatGPT |
 | 核心 | Core | `src/core` | 业务逻辑与数据读写，只依赖 Node，不依赖任何宿主 |
 | 宿主层 | Host layer | `src/host` | Harness 插件层：注册工具、注入记忆、提供 HTTP 接口 |
 | 前端 | Client | `src/client` | React 写的宫殿界面 |
-| 适配层 | Adapter | — | 某个宿主专用的薄层，例如 Harness 适配层、MCP 适配层 |
-| 能力 | Capabilities | `/api/capabilities` | 宿主声明自己支持的功能，前端只看能力开关，不判断宿主 |
+| 适配层 | Adapter | — | 某个宿主专用的薄层，例如 Harness 适配层、MCP 适配层（MCP 为规划中） |
+| 能力 | Capabilities | `/api/capabilities`（规划中） | 宿主声明自己支持的功能，前端只看能力开关，不判断宿主 |
 | 工具 | Tool | `palace_*` | 提供给 AI 调用的操作 |
 | 数据目录 | Data dir | `dataDir` | 默认是 `~/Documents/dsh-palace-data` |
-| 皮肤 | Theme | `theme.json` | 换背景、图标、光球的配置，只放图片和颜色 |
-| 槽位 | Slot | — | 皮肤里可以替换的位置，例如背景、格子图标、光球 |
-| 快照 | Snapshot | — | 每天第一次写入前对数据目录的自动备份 |
+| 皮肤 | Theme | `theme.json`（规划中） | 换背景、图标、光球的配置，只放图片和颜色 |
+| 槽位 | Slot | —（规划中） | 皮肤里可以替换的位置，例如背景、格子图标、光球 |
+| 快照 | Snapshot | —（规划中） | 每天第一次写入前对数据目录的自动备份 |
 | 演示站 | Demo site | `demo/` | 给新用户在线体验的静态网站：Core 跑在浏览器里，配上剧本和演示数据（以后做） |
-| 演示数据 | Demo palace | `demo/palaces/` | 一份数据目录快照加一份 `theme.json`，水彩和像素各一套 |
+| 演示数据 | Demo palace | `demo/palaces/`（规划中） | 一份数据目录快照加一份 `theme.json`，水彩和像素各一套 |
