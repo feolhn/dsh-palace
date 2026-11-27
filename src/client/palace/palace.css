@@ -97,12 +97,13 @@
 .mp-room-moon:hover .mp-room-icon-btn, .mp-room-icon-btn:focus-visible { opacity: .7; }
 .mp-icon-picker { position: absolute; z-index: 6; right: -25px; top: 104px; display: grid; grid-template-columns: repeat(4, 52px); gap: 4px; padding: 10px;
   border: 1px solid var(--mp-edge, #ffffff80); border-radius: 16px; background: var(--mp-panel, linear-gradient(135deg, #dce9eceb, #c9dee5e6)); backdrop-filter: blur(22px); box-shadow: inset 0 1px 0 #ffffffbf, 0 10px 30px #36586626; }
-.mp-icon-picker.mp-many { grid-template-columns: repeat(6, 52px); max-height: 344px; overflow-y: auto; overscroll-behavior: contain; }
+.mp-icon-picker.mp-many { grid-template-columns: repeat(6, 52px); max-height: 360px; overflow-y: auto; overscroll-behavior: contain; }
 .mp-icon-group { grid-column: 1 / -1; padding: 6px 2px 0; font-size: 10px; letter-spacing: 1px; opacity: .6; }
 .mp-icon-group:first-child { padding-top: 0; }
-.mp-icon-picker button { width: 52px; height: 52px; border-radius: 12px; }
+.mp-icon-picker button { width: 52px; height: 66px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
+.mp-icon-picker button span { font-size: 10px; line-height: 13px; white-space: nowrap; opacity: .75; }
 .mp-icon-picker button:hover, .mp-icon-picker button[aria-selected=true] { background: #ffffff40 !important; box-shadow: inset 0 0 0 1px #ffffff99; }
-.mp-icon-picker img { width: 50px; height: 50px; margin: 1px; image-rendering: var(--mp-icon-render, auto); }
+.mp-icon-picker img { width: 50px; height: 50px; margin: 1px 1px 0; flex-shrink: 0; image-rendering: var(--mp-icon-render, auto); }
 .mp-room-footer { display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--mp-edge, #fffffa66); padding-top: 11px; margin-top: 11px; flex-shrink: 0; }
 .mp-room-footer .mp-text-btn { font-size: 11px; opacity: .8; }
 .mp-spacer { flex: 1; }
@@ -313,14 +314,11 @@
 .mp-hard .mp-moon-shadow { left: 16px; top: 23px; width: 48px; height: 40px; background: var(--mp-shadow); filter: none; opacity: calc(var(--mp-depth) * .12);
   clip-path: polygon(20% 0, 80% 0, 80% 15%, 100% 15%, 100% 85%, 80% 85%, 80% 100%, 20% 100%, 20% 85%, 0 85%, 0 15%, 20% 15%); }
 /* 电弧：细一号、不发光、直角端点，电流一格一格地走 */
-.mp-hard .mp-arc path { stroke-linecap: butt; stroke-linejoin: miter; }
-.mp-hard .mp-arc-halo { display: none; }
-.mp-hard .mp-arc-outline { stroke-width: 2.25; opacity: 1; }
-/* 主线和描边是同一套阶梯虚线（路径按 3px 格取整，见 projection.ts 的 stairs），电流另外走 */
-.mp-hard :is(.mp-arc-outline, .mp-arc-core) { stroke-dasharray: 6 3; }
-.mp-hard .mp-arc-core { stroke-width: .9; }
-.mp-hard .mp-arc-current { stroke-width: 1.5; stroke-dasharray: 6 34; animation-timing-function: steps(18), steps(4); }
-.mp-hard .mp-arc-branches { display: none; }
+/* 电弧：参照 #110 原型，一条细的低对比灰色短虚线，电流是沿线走的一小段深灰，不要描边和分叉 */
+.mp-hard .mp-arc path { stroke-linecap: butt; }
+.mp-hard :is(.mp-arc-halo, .mp-arc-outline, .mp-arc-branches) { display: none; }
+.mp-hard .mp-arc-core { stroke: var(--mp-arc); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
+.mp-hard .mp-arc-current { stroke-width: 1; stroke-dasharray: 3 3 3 51; opacity: .55; }
 .mp-hard .mp-arc-why { background: var(--mp-panel); border-color: var(--mp-edge); box-shadow: 2px 2px 0 var(--mp-shadow); }
 /* AI 光球：方块按钮 */
 .mp-hard .mp-orb, .mp-hard .mp-ai-orb { border: 1px solid var(--mp-edge) !important; background: var(--mp-fill) !important; box-shadow: 2px 2px 0 var(--mp-shadow) !important;

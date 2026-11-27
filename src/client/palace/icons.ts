@@ -27,8 +27,10 @@ export function iconOf(cell: Pick<Cell, 'id' | 'kind' | 'icon'>): string {
   return POOL[hash(cell.id) % POOL.length]
 }
 
-/** 选择器里悬停显示的中文名（基础图标就用英文键名）。 */
+/** 选择器里每个图标下面的中文名。 */
 export const ICON_NAMES: Record<string, string> = {
+  moon: '月亮', sun: '太阳', rainbow: '彩虹', orange: '橙子', 'open-book': '书', shell: '贝壳', 'black-swan': '黑天鹅', 'snow-mountain': '雪山',
+  earth: '地球', pufferfish: '河豚', 'lotus-leaf': '荷叶', 'gold-coin': '金币', teardrop: '水滴', mercury: '水星', venus: '金星', mars: '火星',
   'tennis-racket': '网球拍', 'tennis-ball': '网球', 'rock-climber': '攀岩', carabiner: '攀岩扣', 'climbing-shoe': '攀岩鞋', 'chalk-bag': '镁粉袋',
   badminton: '羽毛球', 'running-shoe': '跑步', cycling: '骑行', 'swim-goggles': '游泳', surfing: '冲浪', skiing: '滑雪',
   'hiking-pack': '徒步', camping: '露营', kayaking: '皮划艇', 'yoga-mat': '瑜伽', camera: '摄影', painting: '绘画',

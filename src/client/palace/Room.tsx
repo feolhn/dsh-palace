@@ -79,9 +79,10 @@ export function Room({ palace, cellId, summary, sessionId, tab, onTab, onRead, o
             {iconGroups(iconChoices(themeId)).map((g, _, all) => [
               all.length > 1 && <span key={g.name} className="mp-icon-group">{g.name}</span>,
               ...g.keys.map(k => (
-                <button key={k} type="button" role="option" aria-selected={iconOf(cell) === k} title={ICON_NAMES[k] ?? k}
+                <button key={k} type="button" role="option" aria-selected={iconOf(cell) === k}
                   onClick={() => { void run('updateCell', { icon: k }); setPicking(false) }}>
                   <img {...iconImage(themeId, k)} alt="" draggable={false} />
+                  <span>{ICON_NAMES[k] ?? k}</span>
                 </button>
               )),
             ])}

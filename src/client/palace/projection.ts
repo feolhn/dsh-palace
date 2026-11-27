@@ -113,17 +113,6 @@ export function spreadDrop(layout: SpreadLayout, cells: readonly Cell[], p: { co
 
 // ---------- 电弧 ----------
 
-function stairs(pts: { x: number; y: number }[], step: number): string {
-  const snap = (v: number) => Math.round(v / step) * step
-  let d = '', px = NaN, py = NaN
-  for (const p of pts) {
-    const x = snap(p.x), y = snap(p.y)
-    if (Number.isNaN(px)) d = `M${x},${y}`
-    else if (x !== px || y !== py) d += ` H${x} V${y}`
-    px = x; py = y
-  }
-  return d
-}
 
 /** 一条电弧的屏幕路径：抛物线拱起 + 细小的电流抖动；多股在垂直方向错开。 */
 export function arcPaths(opts: {
@@ -131,8 +120,6 @@ export function arcPaths(opts: {
   /** 两端的世界坐标（决定拱高和错开方向） */
   wa: { x: number; y: number }; wb: { x: number; y: number }
   strands: number; seed: number; m: Matrix; amount: number; scale: number
-  /** 像素皮肤：点对齐到这么大的格子，相邻点之间先横后竖，画成阶梯折线 */
-  step?: number
 }): { strands: string[]; branches: string[]; apex: { x: number; y: number } } {
   const { a, b, wa, wb, m, scale } = opts
   const dx = wb.x - wa.x, dy = wb.y - wa.y, distance = Math.max(1, Math.hypot(dx, dy))
@@ -148,7 +135,7 @@ export function arcPaths(opts: {
       const off = separation * env + Math.sin(t * Math.PI * 26 + opts.seed * 1.3 + s) * 1.35 * env
       pts.push({ x: a.x + (b.x - a.x) * t + normal.x * off, y: a.y + (b.y - a.y) * t + normal.y * off - 4 * t * (1 - t) * height })
     }
-    strands.push(opts.step ? stairs(pts, opts.step) : pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '))
+    strands.push(pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '))
     branches.push([22, 47].map((start, j) => {
       const p = pts[start], q = pts[start + 4], r = pts[start + 8], side = j ? 1 : -1
       return `M${p.x.toFixed(1)},${p.y.toFixed(1)} L${(q.x + side * 5 * scale).toFixed(1)},${(q.y - 4 * scale).toFixed(1)} L${(r.x + side * 10 * scale).toFixed(1)},${(r.y - 7 * scale).toFixed(1)}`

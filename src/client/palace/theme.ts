@@ -143,3 +143,8 @@ export function defaultPaper(): string | undefined {
   const page = THEMES[current].colors.page
   return page !== undefined && /^#[0-9a-f]{6}$/i.test(page) ? page : undefined
 }
+
+/** 分享卡片要不要铺纯色纸（不叠棉纸纹理）：直角皮肤都是平的。 */
+export function flatPaper(): boolean {
+  return THEMES[current].edges === 'hard'
+}

@@ -82,15 +82,18 @@ export function measurer(ctx: CanvasRenderingContext2D, draft: ShareDraft) {
   return (text: string, size: number) => { ctx.font = fontCss(draft, size); return ctx.measureText(text).width }
 }
 
-export function draw(ctx: CanvasRenderingContext2D, draft: ShareDraft, layout: Layout): void {
+/** grain：叠棉纸纹理（像素皮肤是纯色纸，不叠）。 */
+export function draw(ctx: CanvasRenderingContext2D, draft: ShareDraft, layout: Layout, grain = true): void {
   ctx.clearRect(0, 0, W, H)
   ctx.fillStyle = draft.color
   ctx.fillRect(0, 0, W, H)
-  ctx.save()
-  ctx.globalCompositeOperation = 'multiply'
-  ctx.globalAlpha = 0.62
-  ctx.drawImage(paperTexture(), 0, 0)
-  ctx.restore()
+  if (grain) {
+    ctx.save()
+    ctx.globalCompositeOperation = 'multiply'
+    ctx.globalAlpha = 0.62
+    ctx.drawImage(paperTexture(), 0, 0)
+    ctx.restore()
+  }
 
   const ink = inkFor(draft.color)
   ctx.fillStyle = ink
