@@ -8,6 +8,7 @@ import type { Card, Item, Section } from '../../shared/palace.ts'
 import { apiUrl } from '../api.ts'
 import { palaceOp } from '../palace/data.ts'
 import { ShareEditor } from '../share/ShareEditor.tsx'
+import { markColor } from '../palace/theme.ts'
 import { mountEpub, sameFile, type EpubHandle } from './epub.ts'
 import { WordPopup, type WordAnchor } from './WordPopup.tsx'
 
@@ -99,6 +100,7 @@ export function EpubReader({ item, title, subtitle, onClose, embedded }: { item:
           clearTimeout(posTimer.current)
           posTimer.current = setTimeout(savePosition, 1000)
         },
+        mark: markColor(),
         onSelect: (sel) => { setPicked(undefined); setSelection(sel) },
         onHighlight: (cfi) => { setSelection(undefined); setPicked(cfi) },
         lookup: () => lookupRef.current,

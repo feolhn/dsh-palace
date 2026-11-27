@@ -5,13 +5,14 @@
  */
 import { useSyncExternalStore, type CSSProperties } from 'react'
 import { apiUrl } from '../api.ts'
+import { ICONS } from './icons.ts'
 import watercolor from '../../../vendor/themes/watercolor/theme.json'
 import pixel from '../../../vendor/themes/pixel/theme.json'
 
 /** 可以换颜色的槽位，对应 palace.css 里的 --mp-<名字>。 */
 export const COLOR_SLOTS = [
   'ink', 'quiet', 'grid', 'dot', 'edge', 'fill', 'hover', 'panel', 'group', 'shadow',
-  'ring', 'ringTrack', 'arc', 'arcOutline', 'arcCurrent',
+  'ring', 'ringTrack', 'arc', 'arcOutline', 'arcCurrent', 'mark', 'page',
 ] as const
 
 export interface Theme {
@@ -22,14 +23,19 @@ export interface Theme {
   background: { color: string; image?: string }
   /** 界面字体；latinOnly 表示只含拉丁字母，中文用系统黑体 */
   font?: { file: string; latinOnly?: boolean }
-  /** 图标图片：{key} 换成图标名。图片放在 77×77 图标框里、四周内缩 inset（负数就是往外扩） */
-  icons: { file: string; inset: number; pixelated?: boolean }
+  /**
+   * 图标图片：{key} 换成图标名。图片放在 77×77 图标框里、四周内缩 inset（负数就是往外扩）。
+   * 16 个基础图标每套皮肤都有；more 是这套皮肤额外画的，别的皮肤没有时借这套的图来显示。
+   */
+  icons: { file: string; inset: number; pixelated?: boolean; more?: string[] }
   colors: Partial<Record<(typeof COLOR_SLOTS)[number], string>>
 }
 
 /** 官方皮肤，按显示顺序。 */
 export const THEMES = { watercolor, pixel } as unknown as Record<string, Theme>
 const DEFAULT = 'watercolor'
+// icons.ts 也引用这里，所以 ICONS 只在函数里用，不在模块顶层取值
+const isBase = (key: string) => (ICONS as readonly string[]).includes(key)
 const STORE_KEY = 'dsh-palace:theme'
 
 const listeners = new Set<() => void>()
@@ -63,8 +69,29 @@ export function useThemeId(): string {
 
 const fileUrl = (id: string, file: string) => apiUrl('asset', { f: `themes/${id}/${file}` })
 
-export function iconUrl(themeId: string, key: string): string {
-  return fileUrl(themeId, THEMES[themeId].icons.file.replace('{key}', key))
+/** 有这个图标的皮肤：当前皮肤有就用当前的，没有就借第一套画了它的。 */
+function ownerOf(themeId: string, key: string): string {
+  if (isBase(key) || THEMES[themeId].icons.more?.includes(key)) return themeId
+  return Object.keys(THEMES).find(id => THEMES[id].icons.more?.includes(key)) ?? themeId
+}
+
+/** 图标图片的地址；借别的皮肤的图时带上那套皮肤的内缩和缩放方式（覆盖根节点上的 CSS 变量）。 */
+export function iconImage(themeId: string, key: string): { src: string; style?: CSSProperties } {
+  const owner = ownerOf(themeId, key)
+  const icons = THEMES[owner].icons
+  const src = fileUrl(owner, icons.file.replace('{key}', key))
+  if (owner === themeId) return { src }
+  return { src, style: { '--mp-icon-inset': `${icons.inset}px`, '--mp-icon-render': icons.pixelated ? 'pixelated' : 'auto' } as CSSProperties }
+}
+
+/** 当前皮肤能选的图标：基础的 16 个加上这套皮肤额外画的。 */
+export function iconChoices(themeId: string): string[] {
+  return [...ICONS, ...(THEMES[themeId].icons.more ?? [])]
+}
+
+/** 所有皮肤加起来认识的图标（格子里存的图标名要在这里面才算数）。 */
+export function knownIcon(key: string): boolean {
+  return isBase(key) || Object.values(THEMES).some(t => t.icons.more?.includes(key))
 }
 
 const loadedFonts = new Set<string>()
@@ -104,4 +131,20 @@ export function themeRoot(id: string): { className: string; style: CSSProperties
     vars['--mp-sans'] = `"${fontFamily(id)}", ${SANS}`
   }
   return { className: theme.edges === 'hard' ? 'mp-hard' : '', style: vars as CSSProperties }
+}
+
+/** 划线、摘录高亮的颜色。EPUB 正文在 iframe 里读不到 CSS 变量，打开书时直接取这个值。 */
+export function markColor(): string {
+  return THEMES[current].colors.mark ?? '#f4dfa0'
+}
+
+/** 分享卡片新草稿的默认纸色：皮肤的 page（要是 #rrggbb），没写就用第一种纸色。 */
+export function defaultPaper(): string | undefined {
+  const page = THEMES[current].colors.page
+  return page !== undefined && /^#[0-9a-f]{6}$/i.test(page) ? page : undefined
+}
+
+/** 分享卡片要不要铺纯色纸（不叠棉纸纹理）：直角皮肤都是平的。 */
+export function flatPaper(): boolean {
+  return THEMES[current].edges === 'hard'
 }

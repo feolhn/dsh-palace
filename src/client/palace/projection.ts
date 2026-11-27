@@ -113,6 +113,7 @@ export function spreadDrop(layout: SpreadLayout, cells: readonly Cell[], p: { co
 
 // ---------- 电弧 ----------
 
+
 /** 一条电弧的屏幕路径：抛物线拱起 + 细小的电流抖动；多股在垂直方向错开。 */
 export function arcPaths(opts: {
   a: { x: number; y: number }; b: { x: number; y: number }

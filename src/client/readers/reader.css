@@ -73,3 +73,17 @@
 @keyframes rd-nav-arrive { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .rd-nav { animation: none; } }
 .rd-embedded .rd-select { bottom: 84px; }
+
+/* 像素皮肤（#102）：平的浅底、细墨线框、实心投影；暖黄的填充换成暖灰透明 */
+.mp-hard .rd-root, .mp-hard .rd-root.rd-embedded { background: var(--mp-panel); color: var(--mp-ink); }
+.mp-hard .rd-paper { background: var(--mp-page, var(--mp-panel)); box-shadow: inset 0 0 0 1px var(--mp-edge); }
+.mp-hard .rd-head { border-bottom-color: color-mix(in srgb, var(--mp-edge) 20%, transparent); }
+.mp-hard .rd-head .rd-toc { background: var(--mp-fill); border-color: var(--mp-edge); }
+.mp-hard .rd-text:hover, .mp-hard .rd-turn:hover, .mp-hard .rd-edge:hover { background: rgba(170, 161, 150, .22) !important; }
+.mp-hard :is(.rd-muted, .rd-lookup-toggle, .rd-turn, .rd-menu, .rd-edge) { color: var(--mp-quiet) !important; }
+.mp-hard :is(.rd-options, .rd-select, .rd-word) { background: var(--mp-panel); color: var(--mp-ink); border: 1px solid var(--mp-edge); box-shadow: 3px 3px 0 var(--mp-shadow); }
+.mp-hard .rd-options .rd-toc { border-bottom-color: var(--mp-edge); }
+.mp-hard .rd-nav { background: var(--mp-panel); color: var(--mp-ink); border: 1px solid var(--mp-edge); box-shadow: 2px 2px 0 var(--mp-shadow); backdrop-filter: none; }
+.mp-hard .rd-nav input[type=range]::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--mp-edge) 0 var(--rd-progress), #c8c5bf var(--rd-progress) 100%); }
+.mp-hard .rd-nav input[type=range]::-webkit-slider-thumb { background: var(--mp-edge); border-radius: 0; }
+.mp-hard .rd-btn { background: var(--mp-fill) !important; color: var(--mp-ink) !important; border: 1px solid var(--mp-edge) !important; box-shadow: 2px 2px 0 var(--mp-shadow); }

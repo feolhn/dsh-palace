@@ -154,7 +154,7 @@ export async function updateCell(store: PalaceStore, args: { id: unknown; title?
   const title = args.title === undefined ? undefined : text(args.title, '标题')
   const subtitle = optionalText(args.subtitle, '备注')
   const icon = optionalText(args.icon, '图标')
-  if (icon !== undefined && !/^[a-z][a-z-]{0,30}$/.test(icon)) throw new ShelfError('图标名无效')
+  if (icon !== undefined && !/^[a-z][a-z0-9-]{0,30}$/.test(icon)) throw new ShelfError('图标名无效')
   return store.mutate((tx) => {
     const cell = cellOf(tx.palace, args.id)
     if (title !== undefined) cell.title = title

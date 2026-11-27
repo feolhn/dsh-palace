@@ -12,6 +12,7 @@ import readerCss from './readers/reader.css?raw'
 import fontsCss from '../../vendor/fonts/fonts.css?raw'
 import { apiUrl } from './api.ts'
 import { Palace } from './palace/Palace.tsx'
+import { themeRoot, useThemeId } from './palace/theme.ts'
 import { Component, type ReactNode } from 'react'
 import { bindChat } from './chat.ts'
 import { bindSessions, CHAT_SLOT, ChatSlotPanel, SIDEBAR_CHAT_SLOT, ChatSlotsProvider, type ChatSlots } from './chat/host.tsx'
@@ -64,13 +65,19 @@ class Guard extends Component<{ children: ReactNode }, { error?: Error }> {
  * 全屏面板和右侧栏页面：同一个宫殿。渲染器注入 SessionProvider / renderSlot（因为声明了 session 作用域的子 slot），
  * 交给宫殿里的 AI 对话用。data-mp-host：阅读器等浮层盖在这个容器上，不盖住 Harness 的界面。
  */
+/** 皮肤的类名和 CSS 变量放在浮层容器上：宫殿、阅读器、分享卡片编辑器（portal 到这里）都跟着换。 */
+function ThemeHost({ children }: { children: ReactNode }) {
+  const skin = themeRoot(useThemeId())
+  return <div data-mp-host className={skin.className} style={{ position: 'relative', height: '100%', overflow: 'hidden', ...skin.style }}>{children}</div>
+}
+
 function palacePanel(chatSlot: string) {
   return function PalacePanel(props: Partial<ChatSlots>) {
     const slots = props.SessionProvider && props.renderSlot ? { SessionProvider: props.SessionProvider, renderSlot: props.renderSlot, chatSlot } : undefined
     return (
-      <div data-mp-host style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
+      <ThemeHost>
         <ChatSlotsProvider value={slots}><Guard><Palace /></Guard></ChatSlotsProvider>
-      </div>
+      </ThemeHost>
     )
   }
 }

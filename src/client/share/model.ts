@@ -81,7 +81,8 @@ export function defaultSource(title: string, subtitle?: string): string {
 }
 
 /** 从卡片里存的草稿读出可用的设置；缺的、坏的字段用默认值。 */
-export function draftFor(saved: unknown, texts: ShareTexts): ShareDraft {
+/** paper：没存过纸色时用的默认纸色（跟皮肤走，见 theme.ts 的 defaultPaper）。 */
+export function draftFor(saved: unknown, texts: ShareTexts, paper: string = PAPERS[0]): ShareDraft {
   const s = isObject(saved) ? saved : {}
   const size = clamp(Number(s.size) || 50, 28, 76)
   const ranges = {} as Record<TextKey, Range[]>
@@ -96,7 +97,7 @@ export function draftFor(saved: unknown, texts: ShareTexts): ShareDraft {
   }
   return {
     v: 1,
-    color: typeof s.color === 'string' && /^#[0-9a-f]{6}$/i.test(s.color) ? s.color : PAPERS[0],
+    color: typeof s.color === 'string' && /^#[0-9a-f]{6}$/i.test(s.color) ? s.color : paper,
     font: typeof s.font === 'string' && Object.hasOwn(FONTS, s.font) ? s.font as FontId : 'song',
     size,
     noteSize: clamp(Number(s.noteSize) || Math.round(size * 0.72), 18, 76),
