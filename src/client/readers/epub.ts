@@ -157,7 +157,8 @@ export async function mountEpub(el: HTMLElement, opts: {
     spread: spreadFor(el),
     allowScriptedContent: false, // 书里的脚本一律不跑
   })
-  rendition.themes.default({ body: { 'line-height': '1.8' }, '::selection': { background: opts.mark } })
+  // 正文底色透明，露出阅读器纸面（皮肤的 page）；书自己写了底色的仍以书为准
+  rendition.themes.default({ body: { 'line-height': '1.8', background: 'transparent' }, '::selection': { background: opts.mark } })
   rendition.themes.override('font-size', `${opts.fontSize}px`, true)
 
   /** 同一个文件里可能有好几个目录锚点：取这一页结尾之前出现的最后一个（标题出现在这一页上，就算进了那一节）。 */

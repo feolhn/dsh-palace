@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { PanelOverlay } from '../host.tsx'
 import type { Card } from '../../shared/palace.ts'
 import { palaceOp } from '../palace/data.ts'
+import { defaultPaper } from '../palace/theme.ts'
 import { draw, loadFont, measurer } from './draw.ts'
 import {
   FONTS, H, PAPERS, W, defaultSource, draftFor, fingerprint, layout, mergeDraft, normalizeRanges, sourceOf,
@@ -20,7 +21,7 @@ export function ShareEditor({ itemId, card, title, subtitle, onClose }: {
   onClose: () => void
 }) {
   const texts: ShareTexts = { quote: card.quote ?? '', note: card.note ?? '' }
-  const [draft, setDraft] = useState<ShareDraft>(() => draftFor(card.share, texts))
+  const [draft, setDraft] = useState<ShareDraft>(() => draftFor(card.share, texts, defaultPaper()))
   const [status, setStatus] = useState('')
   // 还没画出第一帧时也算「有问题」，不能导出
   const [problem, setProblem] = useState<string | undefined>('正在排版…')

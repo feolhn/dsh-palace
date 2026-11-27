@@ -117,7 +117,7 @@ export function Palace() {
   const [roomMode, setRoomMode] = useState<RoomMode>('notes')
   /** 光球打开的对话：光球在屏幕上的位置。 */
   const [orbChat, setOrbChat] = useState<Rect>()
-  const [orbShown, setOrbShown] = useState(false)
+  const [orbNoRoom, setOrbNoRoom] = useState(false)
   const [openGroup, setOpenGroup] = useState<string>()
   /** 分组展开程度 0–1（进出分组时镜头推近 / 拉远，约 650ms，原型 groupProgress）。 */
   const [gp, setGp] = useState(0)
@@ -611,15 +611,17 @@ export function Palace() {
 
       <footer className="mp-footer" hidden={proj.open > 0.001} onPointerDown={e => e.stopPropagation()}>
         <button type="button" className="mp-round" title="添加" onClick={() => setAdding(true)}>＋</button>
-        <button type="button" className="mp-view-toggle" aria-pressed={iso} aria-keyshortcuts="I" title={iso ? '切换到平面视图（I）' : '切换到轴测视图（I）：看分组和书之间的电弧'} onClick={toggleIso}>
+        {/* 视图和皮肤两个按钮只放图标，说明写在悬停提示里 */}
+        <button type="button" className="mp-view-toggle mp-icon-only" aria-pressed={iso} aria-keyshortcuts="I" aria-label={iso ? '切换到平面视图' : '切换到立体视图'} title={iso ? '切换到平面视图（I）' : '切换到立体视图（I）：看分组和书之间的电弧'} onClick={toggleIso}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 6-10 6L2 9Z M2 13l10 6 10-6 M2 17l10 6 10-6" /></svg>
-          <span>{iso ? '平面' : '轴测'}</span>
         </button>
-        {/* 光球没地方放（窗口太小、格子太密）时的备用入口 */}
-        {!orbShown && <button type="button" className="mp-round mp-ai-orb" title="和宫殿对话（真实的 Harness 对话）" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = rootRef.current!.getBoundingClientRect(); setOrbChat({ x: r.left - b.left - 120, y: Math.max(95, size.h - ORB_CHAT.h - 90), w: r.width, h: 0 }) }}>AI</button>}
+        {/* 备用入口：立体视图里没有光球，或者光球没地方放（窗口太小、格子太密）。切换和找位置的途中不显示，免得闪一下 */}
+        {(iso || orbNoRoom) && <button type="button" className="mp-round mp-ai-orb" title="和宫殿对话（真实的 Harness 对话）" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = rootRef.current!.getBoundingClientRect(); setOrbChat({ x: r.left - b.left - 120, y: Math.max(95, size.h - ORB_CHAT.h - 90), w: r.width, h: 0 }) }}>AI</button>}
         {/* 换皮肤（#102）：在几套官方皮肤之间轮换 */}
-        <button type="button" className="mp-view-toggle mp-theme-toggle" title="换皮肤" onClick={() => { const ids = Object.keys(THEMES); setTheme(ids[(ids.indexOf(themeId) + 1) % ids.length]) }}>
-          {THEMES[themeId].name}
+        <button type="button" className="mp-view-toggle mp-icon-only mp-theme-toggle" aria-label={`换皮肤（现在是${THEMES[themeId].name}）`} title={`换皮肤：现在是${THEMES[themeId].name}`}
+          onClick={() => { const ids = Object.keys(THEMES); setTheme(ids[(ids.indexOf(themeId) + 1) % ids.length]) }}>
+          {/* 调色盘 */}
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-.8 2-1.8 0-1.4-1.4-1.9-1.4-3.2 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3Z" /><circle cx="7.5" cy="11" r="1.2" /><circle cx="10" cy="7" r="1.2" /><circle cx="15" cy="7" r="1.2" /></svg>
         </button>
         <div className="mp-zoom">
           <button type="button" onClick={() => zoomAt(1 / 1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) <= MIN_SCALE + 0.001}>−</button>
@@ -656,7 +658,7 @@ export function Palace() {
           </>
         )
       })()}
-      <Orb view={orbView} label={reader ? '打开阅读 AI 对话' : '打开宫殿 AI 对话'} open={orbChat !== undefined} onShown={setOrbShown}
+      <Orb view={orbView} label={reader ? '打开阅读 AI 对话' : '打开宫殿 AI 对话'} open={orbChat !== undefined} onNoRoom={setOrbNoRoom}
         onToggle={at => setOrbChat(orbChat !== undefined ? undefined : at)} />
       {orbChat !== undefined && palace !== undefined && (() => {
         // 面板在光球下方（原型 positionPanel），放不下就往上挪

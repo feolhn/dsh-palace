@@ -7,6 +7,7 @@ import type { CSSProperties } from 'react'
 import type { Cell } from '../../shared/palace.ts'
 import type { Arc } from './data.ts'
 import { arcPaths, project, type Matrix } from './projection.ts'
+import { THEMES, useThemeId } from './theme.ts'
 
 const PER_CELL = 5
 const MAX_STRANDS = 5
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function Arcs({ arcs, cells, hover, amount, m, cam, size, B, worldCell }: Props) {
+  const pixel = THEMES[useThemeId()].edges === 'hard'
   const byId = new Map(cells.filter(c => c.kind !== 'group').map(c => [c.id, c]))
   // 电弧落在格子右上角（月亮 / 图标的位置），跟着图标一起抬高
   const anchor = (c: Cell) => {
@@ -45,7 +47,7 @@ export function Arcs({ arcs, cells, hover, amount, m, cam, size, B, worldCell }:
   const now = Date.now()
   const drawn = shown.map((arc, index) => {
     const a = anchor(byId.get(arc.from)!), b = anchor(byId.get(arc.to)!)
-    const geo = arcPaths({ a: a.screen, b: b.screen, wa: a.world, wb: b.world, strands: Math.min(arc.strands, MAX_STRANDS), seed: index, m, amount, scale: cam.scale })
+    const geo = arcPaths({ a: a.screen, b: b.screen, wa: a.world, wb: b.world, strands: Math.min(arc.strands, MAX_STRANDS), seed: index, m, amount, scale: cam.scale, step: pixel ? 3 : undefined })
     const days = Math.max(0, (now - Date.parse(arc.lastAt)) / 86400000)
     const related = hover !== undefined && (arc.from === hover || arc.to === hover)
     return { arc, index, geo, related, fade: 0.45 + 0.55 * Math.exp(-days / 60) }

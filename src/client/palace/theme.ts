@@ -12,7 +12,7 @@ import pixel from '../../../vendor/themes/pixel/theme.json'
 /** 可以换颜色的槽位，对应 palace.css 里的 --mp-<名字>。 */
 export const COLOR_SLOTS = [
   'ink', 'quiet', 'grid', 'dot', 'edge', 'fill', 'hover', 'panel', 'group', 'shadow',
-  'ring', 'ringTrack', 'arc', 'arcOutline', 'arcCurrent', 'mark',
+  'ring', 'ringTrack', 'arc', 'arcOutline', 'arcCurrent', 'mark', 'page',
 ] as const
 
 export interface Theme {
@@ -136,4 +136,10 @@ export function themeRoot(id: string): { className: string; style: CSSProperties
 /** 划线、摘录高亮的颜色。EPUB 正文在 iframe 里读不到 CSS 变量，打开书时直接取这个值。 */
 export function markColor(): string {
   return THEMES[current].colors.mark ?? '#f4dfa0'
+}
+
+/** 分享卡片新草稿的默认纸色：皮肤的 page（要是 #rrggbb），没写就用第一种纸色。 */
+export function defaultPaper(): string | undefined {
+  const page = THEMES[current].colors.page
+  return page !== undefined && /^#[0-9a-f]{6}$/i.test(page) ? page : undefined
 }

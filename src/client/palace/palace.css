@@ -98,6 +98,8 @@
 .mp-icon-picker { position: absolute; z-index: 6; right: -25px; top: 104px; display: grid; grid-template-columns: repeat(4, 52px); gap: 4px; padding: 10px;
   border: 1px solid var(--mp-edge, #ffffff80); border-radius: 16px; background: var(--mp-panel, linear-gradient(135deg, #dce9eceb, #c9dee5e6)); backdrop-filter: blur(22px); box-shadow: inset 0 1px 0 #ffffffbf, 0 10px 30px #36586626; }
 .mp-icon-picker.mp-many { grid-template-columns: repeat(6, 52px); max-height: 344px; overflow-y: auto; overscroll-behavior: contain; }
+.mp-icon-group { grid-column: 1 / -1; padding: 6px 2px 0; font-size: 10px; letter-spacing: 1px; opacity: .6; }
+.mp-icon-group:first-child { padding-top: 0; }
 .mp-icon-picker button { width: 52px; height: 52px; border-radius: 12px; }
 .mp-icon-picker button:hover, .mp-icon-picker button[aria-selected=true] { background: #ffffff40 !important; box-shadow: inset 0 0 0 1px #ffffff99; }
 .mp-icon-picker img { width: 50px; height: 50px; margin: 1px; image-rendering: var(--mp-icon-render, auto); }
@@ -226,6 +228,7 @@
 .mp-iso-folder { position: absolute; transform-origin: 0 0; border: 1px solid var(--mp-edge, #fffef3b3); background: #fffdf142; pointer-events: none; }
 .mp-view-toggle { display: flex; align-items: center; gap: 7px; height: 35px; padding: 0 12px !important; border: 1px solid var(--mp-edge, #fffffa85) !important; border-radius: 18px; background: var(--mp-fill, #ffffff17) !important;
   font-family: var(--mp-serif) !important; font-size: 12px; letter-spacing: .08em; }
+.mp-view-toggle.mp-icon-only { width: 35px; justify-content: center; padding: 0 !important; }
 .mp-view-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1; }
 .mp-view-toggle[aria-pressed=true] { background: var(--mp-hover, #fff7d638) !important; }
 
@@ -313,6 +316,8 @@
 .mp-hard .mp-arc path { stroke-linecap: butt; stroke-linejoin: miter; }
 .mp-hard .mp-arc-halo { display: none; }
 .mp-hard .mp-arc-outline { stroke-width: 2.25; opacity: 1; }
+/* 主线和描边是同一套阶梯虚线（路径按 3px 格取整，见 projection.ts 的 stairs），电流另外走 */
+.mp-hard :is(.mp-arc-outline, .mp-arc-core) { stroke-dasharray: 6 3; }
 .mp-hard .mp-arc-core { stroke-width: .9; }
 .mp-hard .mp-arc-current { stroke-width: 1.5; stroke-dasharray: 6 34; animation-timing-function: steps(18), steps(4); }
 .mp-hard .mp-arc-branches { display: none; }

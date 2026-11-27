@@ -32,6 +32,7 @@
     "arc": "#4f535e",
     "arcOutline": "#f8f8f8",
     "arcCurrent": "#222329",
-    "mark": "rgba(170, 161, 150, .45)"
+    "mark": "rgba(170, 161, 150, .45)",
+    "page": "#eeebe6"
   }
 }

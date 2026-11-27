@@ -27,7 +27,7 @@ function signature(view: OrbView | undefined): string {
     view.exclusions.map(e => [r(e.x), r(e.y), r(e.w), r(e.h)]), view.readerRect && [r(view.readerRect.x), r(view.readerRect.y), r(view.readerRect.w), r(view.readerRect.h)]])
 }
 
-export function Orb({ view, label, open, onToggle, onShown }: {
+export function Orb({ view, label, open, onToggle, onNoRoom }: {
   /** undefined = 现在不该出现（轴测、拖动中、打开了笔记……） */
   view?: OrbView
   label: string
@@ -36,7 +36,8 @@ export function Orb({ view, label, open, onToggle, onShown }: {
   /** 点了光球：传入它在宫殿里的位置（打开对话面板用）。 */
   onToggle: (at: Rect) => void
   /** 光球出现 / 消失（没地方放时宫殿要显示备用的 AI 按钮）。 */
-  onShown?: (shown: boolean) => void
+  /** 光球找不到地方放（窗口太小、格子太密）：true 时宫殿显示备用入口。重新找位置时先回到 false，不在等待期间闪备用按钮。 */
+  onNoRoom?: (noRoom: boolean) => void
 }) {
   const button = useRef<HTMLButtonElement>(null)
   const [visible, setVisible] = useState(false)
@@ -48,8 +49,8 @@ export function Orb({ view, label, open, onToggle, onShown }: {
     drag?: { x: number; y: number; drop?: Cell }; hold?: ReturnType<typeof setTimeout>; ignoreClickUntil: number; open: boolean
   }>({ cruise: 0, scale: 1, rest: false, ignoreClickUntil: 0, open })
   s.current.open = open
-  const onShownRef = useRef(onShown)
-  onShownRef.current = onShown
+  const onNoRoomRef = useRef(onNoRoom)
+  onNoRoomRef.current = onNoRoom
   const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const draw = () => {
@@ -85,20 +86,20 @@ export function Orb({ view, label, open, onToggle, onShown }: {
     st.press = undefined
     setVisible(false)
     setTarget(undefined)
-    onShownRef.current?.(false)
+    onNoRoomRef.current?.(false)
     if (view === undefined) return
     let frame = 0
     const timer = setTimeout(() => {
       const area = view.readerRect !== undefined ? readerArea(view) : undefined
       let cell: (Rect & { col?: number; row?: number }) | undefined = area
-      if (view.readerRect !== undefined && area === undefined) return
+      if (view.readerRect !== undefined && area === undefined) { onNoRoomRef.current?.(true); return }
       if (cell === undefined) {
         const p = preferred()
         cell = p ? emptyCell(view, p.col, p.row) : undefined
       }
       if (cell === undefined) {
         const pools = candidates(view)
-        if (pools.length === 0) return
+        if (pools.length === 0) { onNoRoomRef.current?.(true); return }
         const pool = pools[Math.floor(Math.random() * pools.length)]
         cell = pool[Math.floor(Math.random() * pool.length)]
       }
@@ -110,7 +111,6 @@ export function Orb({ view, label, open, onToggle, onShown }: {
       st.ball = ball
       st.cruise = cruise
       setVisible(true)
-      onShownRef.current?.(true)
       draw()
       if (reduce) return
       let previous = performance.now()

@@ -212,7 +212,7 @@ function mountEpub(el: HTMLElement, opts: {
 }
 ```
 
-颜色槽位（`src/client/palace/theme.ts` 的 `COLOR_SLOTS`，对应 CSS 变量 `--mp-<槽位>`）：`ink` 正文、`quiet` 次要文字、`grid` 网格线、`dot` 网格交点、`edge` 按钮和面板的细边、`fill` 按钮底色、`hover` 悬停和选中、`panel` 对话和弹窗底色、`group` 分组底色、`shadow` 实心投影、`ring` / `ringTrack` 进度环、`arc` / `arcOutline` / `arcCurrent` 电弧、`mark` 阅读器里划线和摘录高亮的底色。
+颜色槽位（`src/client/palace/theme.ts` 的 `COLOR_SLOTS`，对应 CSS 变量 `--mp-<槽位>`）：`ink` 正文、`quiet` 次要文字、`grid` 网格线、`dot` 网格交点、`edge` 按钮和面板的细边、`fill` 按钮底色、`hover` 悬停和选中、`panel` 对话和弹窗底色、`group` 分组底色、`shadow` 实心投影、`ring` / `ringTrack` 进度环、`arc` / `arcOutline` / `arcCurrent` 电弧、`mark` 阅读器里划线和摘录高亮的底色、`page` 阅读器纸面和分享卡片新草稿的默认纸色（要写成 `#rrggbb`，没写时阅读器用水彩的纸面渐变，分享卡片用第一种纸色）。
 
 用户自己换图片、颜色（#95）以后在这套槽位上做。
 

@@ -37,3 +37,10 @@ export const ICON_NAMES: Record<string, string> = {
   'hold-horn': '牛角点', 'hold-rail': '长条边', 'hold-foot-chip': '小脚点', 'hold-volume-triangle': '三角体', 'hold-volume-diamond': '菱形体', 'hold-cluster': '岩点组合',
   door: '门', fire: '火', snowboard: '单板', 'alpine-skis': '双板滑雪', motorcycle: '摩托车',
 }
+
+/** 选择器分组：岩点单独一组，门和火这类通用物体归「常用」，其余运动和爱好归「活动」。只有一组时不显示标题。 */
+export function iconGroups(keys: string[]): { name: string; keys: string[] }[] {
+  const base: readonly string[] = ICONS
+  const groupOf = (k: string) => k.startsWith('hold-') ? '攀岩岩点' : base.includes(k) || k === 'door' || k === 'fire' ? '常用' : '活动'
+  return ['常用', '活动', '攀岩岩点'].map(name => ({ name, keys: keys.filter(k => groupOf(k) === name) })).filter(g => g.keys.length > 0)
+}
