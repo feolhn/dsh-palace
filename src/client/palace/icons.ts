@@ -35,7 +35,7 @@ export const ICON_NAMES: Record<string, string> = {
   headphones: '音乐', pottery: '陶艺', cooking: '烹饪', coffee: '咖啡', gardening: '园艺', stargazing: '观星',
   'hold-jug': '大抓点', 'hold-sloper': '圆斜面', 'hold-crimp': '薄边', 'hold-pinch': '夹点', 'hold-pocket-one': '单指洞', 'hold-pocket-two': '双孔点',
   'hold-horn': '牛角点', 'hold-rail': '长条边', 'hold-foot-chip': '小脚点', 'hold-volume-triangle': '三角体', 'hold-volume-diamond': '菱形体', 'hold-cluster': '岩点组合',
-  door: '门', fire: '火', snowboard: '单板', 'alpine-skis': '双板滑雪', motorcycle: '摩托车',
+  door: '门', fire: '火', snowboard: '单板', 'alpine-skis': '双板滑雪', gta6: 'GTA6', motorcycle: '摩托车',
 }
 
 /** 选择器分组：岩点单独一组，门和火这类通用物体归「常用」，其余运动和爱好归「活动」。只有一组时不显示标题。 */
