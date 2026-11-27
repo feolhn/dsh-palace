@@ -325,3 +325,11 @@ test('阅读起止月份：从打勾、卡片、灵感推出，读完才有结�
   item.finishedAt = '2026-12-01'
   assert.deepEqual(summaryOf(item).period, { start: '2026-10', end: '2026-12' })
 })
+
+test('图标名可以带数字（gta6），不能有大写或别的符号', async () => {
+  const store = fresh()
+  const n = await ops.addCell(store, { kind: 'note', title: 'N' })
+  assert.equal((await ops.updateCell(store, { id: n.id, icon: 'gta6' })).icon, 'gta6')
+  await assert.rejects(ops.updateCell(store, { id: n.id, icon: 'GTA6' }), /图标名无效/)
+  await assert.rejects(ops.updateCell(store, { id: n.id, icon: '../x' }), /图标名无效/)
+})
