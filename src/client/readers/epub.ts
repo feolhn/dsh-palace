@@ -123,6 +123,8 @@ export async function mountEpub(el: HTMLElement, opts: {
   initialLoc?: string
   highlights: string[]
   fontSize: number
+  /** 选中文字和摘录高亮的颜色（跟皮肤走） */
+  mark: string
   onPosition(pos: EpubPosition): void
   /** 选中一段文字（划线）；取消选择时不回调。 */
   onSelect(sel: { quote: string; loc: string }): void
@@ -155,7 +157,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     spread: spreadFor(el),
     allowScriptedContent: false, // 书里的脚本一律不跑
   })
-  rendition.themes.default({ body: { 'line-height': '1.8' }, '::selection': { background: '#f4dfa0' } })
+  rendition.themes.default({ body: { 'line-height': '1.8' }, '::selection': { background: opts.mark } })
   rendition.themes.override('font-size', `${opts.fontSize}px`, true)
 
   /** 同一个文件里可能有好几个目录锚点：取这一页结尾之前出现的最后一个（标题出现在这一页上，就算进了那一节）。 */
@@ -254,7 +256,7 @@ export async function mountEpub(el: HTMLElement, opts: {
   }).catch(() => undefined)
 
   function highlight(cfi: string) {
-    try { rendition.annotations.highlight(cfi, {}, () => opts.onHighlight(cfi), 'mp-hl', { fill: '#f4dfa0', 'fill-opacity': '0.45' }) } catch { /* 旧位置在新版本书里不存在 */ }
+    try { rendition.annotations.highlight(cfi, {}, () => opts.onHighlight(cfi), 'mp-hl', { fill: opts.mark, 'fill-opacity': '0.45' }) } catch { /* 旧位置在新版本书里不存在 */ }
   }
 
   return {

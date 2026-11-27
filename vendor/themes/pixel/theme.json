@@ -4,7 +4,18 @@
   "edges": "hard",
   "background": { "color": "#f8f8f8" },
   "font": { "file": "fonts/PixelifySans.ttf", "latinOnly": true },
-  "icons": { "file": "icons/{key}.png", "inset": 6.5, "pixelated": true },
+  "icons": {
+    "file": "icons/{key}.png", "inset": 6.5, "pixelated": true,
+    "more": [
+      "tennis-racket", "tennis-ball", "rock-climber", "carabiner", "climbing-shoe", "chalk-bag",
+      "badminton", "running-shoe", "cycling", "swim-goggles", "surfing", "skiing",
+      "hiking-pack", "camping", "kayaking", "yoga-mat", "camera", "painting",
+      "headphones", "pottery", "cooking", "coffee", "gardening", "stargazing",
+      "hold-jug", "hold-sloper", "hold-crimp", "hold-pinch", "hold-pocket-one", "hold-pocket-two",
+      "hold-horn", "hold-rail", "hold-foot-chip", "hold-volume-triangle", "hold-volume-diamond", "hold-cluster",
+      "door", "fire", "snowboard", "alpine-skis", "motorcycle"
+    ]
+  },
   "colors": {
     "ink": "#252329",
     "quiet": "#5c5961",
@@ -20,6 +31,7 @@
     "ringTrack": "#d6d3ce",
     "arc": "#4f535e",
     "arcOutline": "#f8f8f8",
-    "arcCurrent": "#222329"
+    "arcCurrent": "#222329",
+    "mark": "rgba(170, 161, 150, .45)"
   }
 }

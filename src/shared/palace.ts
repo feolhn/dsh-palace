@@ -22,7 +22,7 @@ export interface Cell {
   row: number
   title: string
   subtitle?: string
-  /** 水彩图标（vendor/icons/<icon>.webp）。不填时按 id 挑一个固定的。 */
+  /** 图标名（vendor/themes/<皮肤>/icons/<icon>.*）。不填时按 id 挑一个固定的。 */
   icon?: string
   createdAt: string
 }

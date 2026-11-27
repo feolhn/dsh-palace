@@ -97,6 +97,7 @@
 .mp-room-moon:hover .mp-room-icon-btn, .mp-room-icon-btn:focus-visible { opacity: .7; }
 .mp-icon-picker { position: absolute; z-index: 6; right: -25px; top: 104px; display: grid; grid-template-columns: repeat(4, 52px); gap: 4px; padding: 10px;
   border: 1px solid var(--mp-edge, #ffffff80); border-radius: 16px; background: var(--mp-panel, linear-gradient(135deg, #dce9eceb, #c9dee5e6)); backdrop-filter: blur(22px); box-shadow: inset 0 1px 0 #ffffffbf, 0 10px 30px #36586626; }
+.mp-icon-picker.mp-many { grid-template-columns: repeat(6, 52px); max-height: 344px; overflow-y: auto; overscroll-behavior: contain; }
 .mp-icon-picker button { width: 52px; height: 52px; border-radius: 12px; }
 .mp-icon-picker button:hover, .mp-icon-picker button[aria-selected=true] { background: #ffffff40 !important; box-shadow: inset 0 0 0 1px #ffffff99; }
 .mp-icon-picker img { width: 50px; height: 50px; margin: 1px; image-rendering: var(--mp-icon-render, auto); }
@@ -300,9 +301,10 @@
 /* 图标与进度环：不要光晕和水彩边，阴影是像素块 */
 .mp-hard .mp-moon-halo { display: none; }
 .mp-hard .mp-moon-ring { opacity: 1; shape-rendering: crispEdges; }
-.mp-hard .mp-moon-ring circle { filter: none; stroke-width: 3; }
-.mp-hard .mp-ring-wash { opacity: .75; }
-.mp-hard .mp-ring-progress { stroke-linecap: butt; }
+/* 进度环是 2px 方块拼出的阶梯圆（Moon.tsx 的 PixelRing），不用描边 */
+.mp-pixel-ring rect { stroke: none; transform: none; transition: none; }
+.mp-pixel-ring .mp-ring-wash { fill: var(--mp-ring-track); opacity: .75; }
+.mp-pixel-ring .mp-ring-progress { fill: var(--mp-ring); }
 .mp-hard .mp-moon:hover .mp-moon-relief img { filter: brightness(1.05); }
 .mp-hard .mp-cell .mp-moon-relief img { filter: drop-shadow(calc(3px * var(--mp-depth)) calc(4px * var(--mp-depth)) 0 color-mix(in srgb, var(--mp-shadow) calc(30% * var(--mp-depth)), transparent)); }
 .mp-hard .mp-moon-shadow { left: 16px; top: 23px; width: 48px; height: 40px; background: var(--mp-shadow); filter: none; opacity: calc(var(--mp-depth) * .12);
@@ -313,7 +315,7 @@
 .mp-hard .mp-arc-outline { stroke-width: 2.25; opacity: 1; }
 .mp-hard .mp-arc-core { stroke-width: .9; }
 .mp-hard .mp-arc-current { stroke-width: 1.5; stroke-dasharray: 6 34; animation-timing-function: steps(18), steps(4); }
-.mp-hard .mp-arc-branches { stroke-width: .75; }
+.mp-hard .mp-arc-branches { display: none; }
 .mp-hard .mp-arc-why { background: var(--mp-panel); border-color: var(--mp-edge); box-shadow: 2px 2px 0 var(--mp-shadow); }
 /* AI 光球：方块按钮 */
 .mp-hard .mp-orb, .mp-hard .mp-ai-orb { border: 1px solid var(--mp-edge) !important; background: var(--mp-fill) !important; box-shadow: 2px 2px 0 var(--mp-shadow) !important;
@@ -326,3 +328,6 @@
 .mp-hard .mp-room-panel :is(.nb-card, .nb-insp) { box-shadow: 3px 3px 0 color-mix(in srgb, var(--mp-shadow) 15%, transparent); }
 .mp-hard .mp-room-panel :is(.nb-btn:not(.nb-primary), .nb-chips button) { box-shadow: 2px 2px 0 var(--mp-shadow); }
 .mp-hard .mp-room-panel .nb-compose textarea { border: 1px solid var(--mp-edge); }
+/* 「学到这里」：浅灰倒三角，不发光（白色发光在浅底上看不见） */
+.mp-hard .mp-room-panel .nb-upto i { border-top-color: #b9b5ae; filter: none; }
+.mp-hard .mp-room-panel .nb-upto:hover i { border-top-color: var(--mp-quiet); filter: none; }

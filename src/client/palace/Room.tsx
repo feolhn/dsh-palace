@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react'
 import type { Cell, CellSummary, Palace } from '../../shared/palace.ts'
 import { Notebook, type NotebookTab } from '../notebook/Notebook.tsx'
 import { palaceOp } from './data.ts'
-import { ICONS, iconOf } from './icons.ts'
+import { ICON_NAMES, iconOf } from './icons.ts'
 import { Moon } from './Moon.tsx'
-import { iconUrl, useThemeId } from './theme.ts'
+import { iconChoices, iconImage, useThemeId } from './theme.ts'
 
 export function tabsOf(summary: CellSummary | undefined): [NotebookTab, string][] {
   // 笔记格子没有原文，也就没有进度
@@ -75,11 +75,11 @@ export function Room({ palace, cellId, summary, sessionId, tab, onTab, onRead, o
           {readable && <button type="button" className="mp-text-btn mp-room-icon-btn" onClick={() => setPicking(!picking)}>换图标</button>}
         </div>
         {picking && (
-          <div className="mp-icon-picker" role="listbox" aria-label="选一个图标">
-            {ICONS.map(k => (
-              <button key={k} type="button" role="option" aria-selected={iconOf(cell) === k} title={k}
+          <div className={`mp-icon-picker ${iconChoices(themeId).length > 16 ? 'mp-many' : ''}`} role="listbox" aria-label="选一个图标">
+            {iconChoices(themeId).map(k => (
+              <button key={k} type="button" role="option" aria-selected={iconOf(cell) === k} title={ICON_NAMES[k] ?? k}
                 onClick={() => { void run('updateCell', { icon: k }); setPicking(false) }}>
-                <img src={iconUrl(themeId, k)} alt="" draggable={false} />
+                <img {...iconImage(themeId, k)} alt="" draggable={false} />
               </button>
             ))}
           </div>

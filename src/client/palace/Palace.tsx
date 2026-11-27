@@ -547,6 +547,7 @@ export function Palace() {
   // 立起来的图标：抵消投影的旋转和倾斜，正对镜头，抬高并放大（原型 isometric.js 的 update）
   const det = m.a * m.d - m.b * m.c
   const themeId = useThemeId()
+  // .mp-root 上有水彩的默认颜色，所以皮肤变量这里也要再给一次（外层 ThemeHost 管浮层）
   const skin = themeRoot(themeId)
   const hard = THEMES[themeId].edges === 'hard'
   const relief = {
