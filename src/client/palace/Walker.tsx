@@ -13,14 +13,19 @@ import { nearestFree, planRoute, type P, type R } from './walkerPath.ts'
 interface Obstacle extends R { id: string; raw: R }
 type Dir = 'south' | 'east' | 'north' | 'west'
 
-// 雪碧图：原生 32×32 一帧，5 帧 × 4 朝向，脚底锚点 (16, 31)，显示放大 4 倍
-const ZOOM = 4, FRAME = 32 * ZOOM, ANCHOR = { x: 16 * ZOOM, y: 31 * ZOOM }
-// 两套角色全部帧的联合边界（原生像素 [9, 1, 23, 32)），换算成相对脚底的显示像素
-const BODY = { left: (9 - 16) * ZOOM, right: (23 - 16) * ZOOM, top: (1 - 31) * ZOOM, bottom: (32 - 31) * ZOOM }
+// #110 交接包的原始雪碧图：64×64 一帧，5 帧 × 4 朝向，按原型显示为 116px 一帧。
+const FRAME = 116
+const ZOOM = FRAME / 64
+const ANCHOR = { x: 32 * ZOOM, y: 60 * ZOOM }
+// 两套角色全部帧的联合边界 [14, 10, 50, 60)，换算成相对脚底的显示坐标。
+const BODY = {
+  left: 14 * ZOOM - ANCHOR.x, right: 50 * ZOOM - ANCHOR.x,
+  top: 10 * ZOOM - ANCHOR.y, bottom: 60 * ZOOM - ANCHOR.y,
+}
 const GAP = 6
 const SPEED = 190
 const DIRS: Dir[] = ['south', 'east', 'north', 'west']
-const CHARACTERS = [{ id: 'li', name: '阿栗' }, { id: 'you', name: '小柚' }]
+const CHARACTERS = [{ id: 'dipper', name: 'Dipper' }, { id: 'mabel', name: 'Mabel' }]
 
 // ---------- 图标的可见范围（alpha 边界，按图片地址缓存） ----------
 
