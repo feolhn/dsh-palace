@@ -25,7 +25,7 @@ const BODY = {
 const GAP = 6
 const SPEED = 190
 const DIRS: Dir[] = ['south', 'east', 'north', 'west']
-const CHARACTERS = [{ id: 'dipper', name: 'Dipper' }, { id: 'mabel', name: 'Mabel' }]
+const CHARACTER_IMAGES = ['walk-dipper.png', 'walk-mabel.png']
 
 // ---------- 图标的可见范围（alpha 边界，按图片地址缓存） ----------
 
@@ -200,16 +200,16 @@ export function Walker({ rootRef, enabled, paused, m, cam, size, layoutKey }: {
 
   useEffect(() => () => cancelAnimationFrame(s.current.raf), [])
 
-  const ch = CHARACTERS[character], other = CHARACTERS[(character + 1) % CHARACTERS.length]
+  const image = fileUrl('pixel', `walker/${CHARACTER_IMAGES[character]}`)
   // 只有身体范围接收点击：透明的画布留给下面的地图
   const clip = `inset(${ANCHOR.y + BODY.top}px ${FRAME - ANCHOR.x - BODY.right}px ${Math.max(0, FRAME - ANCHOR.y - BODY.bottom)}px ${ANCHOR.x + BODY.left}px)`
   return (
     <div ref={layer} className="mp-walker" hidden>
       <div className="mp-walker-shadow" />
-      <button ref={sprite} type="button" className="mp-walker-sprite" aria-label={`现在是${ch.name}，点一下换成${other.name}`} title={`${ch.name}（点一下换人）`}
-        style={{ left: -ANCHOR.x, top: -ANCHOR.y, width: FRAME, height: FRAME, backgroundImage: `url("${fileUrl('pixel', `walker/walk-${ch.id}.png`)}")`, backgroundSize: `${FRAME * 5}px ${FRAME * 4}px`, clipPath: clip }}
+      <button ref={sprite} type="button" className="mp-walker-sprite" aria-label="切换角色" title="切换角色"
+        style={{ left: -ANCHOR.x, top: -ANCHOR.y, width: FRAME, height: FRAME, backgroundImage: `url("${image}")`, backgroundSize: `${FRAME * 5}px ${FRAME * 4}px`, clipPath: clip }}
         onPointerDown={e => e.stopPropagation()} onPointerUp={e => e.stopPropagation()}
-        onClick={(e) => { e.stopPropagation(); setCharacter(c => (c + 1) % CHARACTERS.length) }} />
+        onClick={(e) => { e.stopPropagation(); setCharacter(c => (c + 1) % CHARACTER_IMAGES.length) }} />
     </div>
   )
 }
