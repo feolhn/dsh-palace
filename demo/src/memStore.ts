@@ -3,11 +3,12 @@
  * 只实现 ops 用到的 mutate(tx)；改动只在当前页面里，刷新就回到原样。
  * Core 引用的 node:fs 等在打包时换成空壳（demo/build.mjs），这几个 op 用不到它们。
  */
-import type { PalaceStore, Tx } from '../../src/core/store.ts'
+import type { Store } from '../../src/core/ops.ts'
+import type { Tx } from '../../src/core/store.ts'
 import type { Item, Palace } from '../../src/shared/palace.ts'
 
-export function memStore(data: { palace: Palace; items: Record<string, Item> }): PalaceStore {
-  const store = {
+export function memStore(data: { palace: Palace; items: Record<string, Item> }): Store {
+  return {
     mutate<T>(fn: (tx: Tx) => T): Promise<T> {
       try {
         // 先在副本上改，fn 抛错就什么都不变（和真的 store 一样）
@@ -34,5 +35,4 @@ export function memStore(data: { palace: Palace; items: Record<string, Item> }):
       }
     },
   }
-  return store as unknown as PalaceStore
 }

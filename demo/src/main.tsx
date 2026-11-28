@@ -25,7 +25,7 @@ document.head.appendChild(style)
 // 第一次来默认轴测视图：电弧只在轴测里画，一眼能看见格子连在一起
 if (localStorage.getItem('dsh-palace:view') === null) localStorage.setItem('dsh-palace:view', 'iso')
 
-/** 对话面板里点输入框 → 打开安装面板（两处不在同一棵组件树里，用事件传） */
+/** 打开安装面板：对话里的「安装」、底栏「ⓘ」都发这个事件（不在同一棵组件树里，fakeApi.ts 里也用这个名字） */
 const ASK_INSTALL = 'dm-ask-install'
 
 /** 访客在演示里试发的话：只留在这个页面里（关掉面板再打开还在，刷新就没了） */
@@ -71,17 +71,34 @@ function DemoChat({ scope, lines }: { scope: string; lines: ChatLine[] | undefin
   )
 }
 
-function Demo() {
+/** 「ⓘ」：打开「关于 Palace」分组。用插件自己的交互：轴测视图里分组是摊开的，先切回平面，再在分组格子上点一下 */
+const ABOUT = '关于 Palace'
+async function openAbout(d: Snapshot): Promise<void> {
+  const g = d.palace.cells.find(c => c.kind === 'group' && c.title === ABOUT)
+  if (g === undefined) return
+  const flat = document.querySelector<HTMLButtonElement>('.mp-view-toggle[title^="切换到平面"]')
+  if (flat !== null) { flat.click(); await new Promise(r => setTimeout(r, 900)) }
+  const el = document.querySelector(`.mp-cell[data-cell-id="${g.id}"]`)
+  if (el === null) return
+  const r = el.getBoundingClientRect(), at = { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0, pointerId: 99, bubbles: true }
+  el.dispatchEvent(new PointerEvent('pointerdown', at))
+  await new Promise(r => setTimeout(r, 50)) // 等宫殿记下这次按下，再抬起
+  el.dispatchEvent(new PointerEvent('pointerup', at))
+}
+
+function Demo({ data }: { data: Snapshot }) {
   const skin = themeRoot(useThemeId())
   const [howto, setHowto] = useState<{ lead?: string }>()
   // 轻引导：一句话，点开第一个格子后就收起
   const [hint, setHint] = useState(true)
   useEffect(() => {
-    const ask = () => setHowto({ lead: '装上插件后，就能和它聊。' })
+    const ask = () => setHowto({})
     const down = (e: PointerEvent) => { if ((e.target as Element | null)?.closest?.('.mp-cell')) setHint(false) }
+    const about = () => { setHint(false); void openAbout(data) }
     addEventListener(ASK_INSTALL, ask)
+    addEventListener('dm-about', about)
     addEventListener('pointerdown', down, true)
-    return () => { removeEventListener(ASK_INSTALL, ask); removeEventListener('pointerdown', down, true) }
+    return () => { removeEventListener(ASK_INSTALL, ask); removeEventListener('dm-about', about); removeEventListener('pointerdown', down, true) }
   }, [])
 
   return (
@@ -137,5 +154,5 @@ function HowTo({ lead, onClose }: { lead?: string; onClose: () => void }) {
 
 void loadDemo().then((d: Snapshot) => {
   setDemoChat(scope => <DemoChat key={scope} scope={scope} lines={d.chats[scope]} />)
-  createRoot(document.getElementById('app')!).render(<Demo />)
+  createRoot(document.getElementById('app')!).render(<Demo data={d} />)
 })
