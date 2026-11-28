@@ -21,6 +21,18 @@ const raw = {
   },
 }
 
+/** 演示站不读 PDF：宫殿组件间接引入的 pdf.js 换成空壳，不用装这个大依赖 */
+const noPdf = {
+  name: 'no-pdf',
+  setup(b) {
+    b.onResolve({ filter: /^pdfjs-dist/ }, a => ({ path: a.path, namespace: 'no-pdf' }))
+    b.onLoad({ filter: /.*/, namespace: 'no-pdf' }, () => ({
+      contents: "export default ''; export class PDFWorker {}; export function getDocument() { throw new Error('演示站不读 PDF') }",
+      loader: 'js',
+    }))
+  },
+}
+
 rmSync(out, { recursive: true, force: true })
 mkdirSync(out, { recursive: true })
 await build({
@@ -32,7 +44,7 @@ await build({
   target: 'es2022',
   jsx: 'automatic',
   minify: true,
-  plugins: [raw],
+  plugins: [noPdf, raw],
   // 插件源码（../src/client）里的 react 从演示站自己的依赖里找
   nodePaths: [resolve(here, 'node_modules')],
   define: { 'process.env.NODE_ENV': '"production"' },

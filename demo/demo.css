@@ -3,7 +3,7 @@ html, body, #app { margin: 0; height: 100%; }
 body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
 .dm-root { position: relative; height: 100%; overflow: hidden; color: var(--mp-ink, #294c60); }
 .dm-stage { position: absolute; inset: 0; cursor: pointer; }
-.dm-stage > * { pointer-events: none; } /* 只看不操作：点画面就是暂停 / 继续 */
+.dm-canvas { position: absolute; inset: 0; pointer-events: none; } /* 只看不操作：点画面就是暂停 / 继续；inert 挡住键盘 */
 .dm-stage .mp-footer, .dm-stage .mp-orb, .dm-stage .mp-ai-orb { display: none !important; }
 
 .dm-caption { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); padding: 10px 22px; font: 400 26px var(--mp-serif, serif); letter-spacing: .12em;

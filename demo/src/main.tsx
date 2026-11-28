@@ -24,6 +24,7 @@ document.head.appendChild(style)
 const START_STATE = startState(START, START_ISO)
 const VIEW_KEY = 'dsh-palace:view'
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+const TICK = 50
 
 function Demo() {
   const [shown, setShown] = useState<DemoState>(() => stateAt(START_STATE, SCENES, 0))
@@ -46,6 +47,15 @@ function Demo() {
   /** 跳到第 index 幕的开头：瞬间重放前面的动作，重新挂载宫殿，然后从这里播 */
   const seek = async (index: number) => {
     const id = ++run.current
+    /** 等 ms 毫秒，暂停时不计时；跳转了就提前返回 false */
+    const hold = async (ms: number) => {
+      for (let left = ms; left > 0;) {
+        await sleep(TICK)
+        if (run.current !== id) return false
+        if (!pausedRef.current) left -= TICK
+      }
+      return run.current === id
+    }
     const s = stateAt(START_STATE, SCENES, index)
     localStorage.setItem(VIEW_KEY, s.iso ? 'iso' : 'flat')
     setDemoData(s)
@@ -56,15 +66,14 @@ function Demo() {
     for (let i = index; i < SCENES.length; i++) {
       if (i !== index) { state = enterScene(state); setShown(state); setScene(i); setStep(0) }
       for (const [k, a] of SCENES[i].actions.entries()) {
-        while (pausedRef.current && run.current === id) await sleep(100)
         if (run.current !== id) return
+        while (pausedRef.current) { if (!await hold(TICK)) return }
         state = apply(state, a)
         setDemoData(state)
         if (a.do === 'view') toggleView(a.iso)
         else void refreshPalace()
         setShown(state)
-        await sleep(durationOf(a))
-        if (run.current !== id) return
+        if (!await hold(durationOf(a))) return
         setStep(k + 1)
       }
     }
@@ -80,7 +89,9 @@ function Demo() {
   return (
     <div className={`dm-root ${skin.className}`} style={skin.style}>
       <div ref={stage} className="dm-stage" data-mp-host onClick={(e) => { if (e.isTrusted) setPaused(p => !p) }}>
-        <Palace key={mount} />
+        <div className="dm-canvas" ref={el => el?.setAttribute('inert', '')}>
+          <Palace key={mount} />
+        </div>
       </div>
       {shown.caption !== undefined && <div key={shown.caption} className="dm-caption">{shown.caption}</div>}
       {shown.chat.length > 0 && (
