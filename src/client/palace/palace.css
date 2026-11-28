@@ -334,3 +334,10 @@
 /* 「学到这里」：浅灰倒三角，不发光（白色发光在浅底上看不见） */
 .mp-hard .mp-room-panel .nb-upto i { border-top-color: #b9b5ae; filter: none; }
 .mp-hard .mp-room-panel .nb-upto:hover i { border-top-color: var(--mp-quiet); filter: none; }
+
+/* 立体视图的像素小人（实验，#115）：容器和影子不拦截地图，只有人物身体接收点击 */
+.mp-walker { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 2; pointer-events: none; transform-origin: 0 0; }
+.mp-walker[hidden] { display: none; }
+.mp-walker-shadow { position: absolute; left: -22px; top: -7px; width: 44px; height: 14px; background: #302d2826; clip-path: polygon(0 45%, 45% 0, 100% 55%, 55% 100%); }
+.mp-root .mp-walker-sprite { position: absolute; background: transparent no-repeat; image-rendering: pixelated; pointer-events: auto; cursor: pointer; touch-action: manipulation; }
+.mp-root .mp-walker-sprite:focus-visible { filter: brightness(1.12); outline: 1px dashed #77727b; outline-offset: -2px; }
