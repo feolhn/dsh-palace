@@ -59,10 +59,14 @@ function Demo() {
     setEnded(false)
     /** 等 ms 毫秒，暂停时不计时；跳转了就提前返回 false */
     const hold = async (ms: number) => {
+      // 按真实流逝的时间扣：标签页在后台时浏览器会把定时器拖到一秒一次，按次数扣会慢几十倍
+      let last = performance.now()
       for (let left = ms; left > 0;) {
         await sleep(TICK)
         if (run.current !== id) return false
-        if (!pausedRef.current) { left -= TICK; setElapsed(e => e + TICK) }
+        const now = performance.now(), dt = Math.min(now - last, left)
+        last = now
+        if (!pausedRef.current) { left -= dt; setElapsed(e => e + dt) }
       }
       return run.current === id
     }
