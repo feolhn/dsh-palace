@@ -259,6 +259,9 @@ function HowTo({ onClose }: { onClose: () => void }) {
           )}
         </div>
       ))}
+      {/* 请喜欢的人去 GitHub 点星：不说「开源」，说「免费、代码公开」，小白也看得懂 */}
+      <p className="dm-star">Memory Palace 免费，代码全部公开在 GitHub。喜欢的话，去点一颗 ⭐，这是对我们最大的鼓励。
+        <a href="https://github.com/feolhn/dsh-palace" target="_blank" rel="noreferrer">去 GitHub 点星 ↗</a></p>
       <button type="button" className="dm-copy dm-close" onClick={onClose}>关闭</button>
     </section>
   )
