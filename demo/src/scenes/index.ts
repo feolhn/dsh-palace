@@ -11,7 +11,7 @@ import { connect } from './03-connect.ts'
 
 /** 开场时宫殿里已有的几格 */
 export const START: NewCell[] = [
-  { id: 'kosmos', title: '宇宙', subtitle: '洪堡', kind: 'book', icon: 'earth', col: 0, row: 0, progress: 0.4 },
+  { id: 'kosmos', title: '宇宙', subtitle: '洪堡', kind: 'book', icon: 'earth', col: 0, row: 0, progress: 0.4, sample: true },
   { id: 'walk', title: '散步时想到的', icon: 'teardrop', col: 1, row: 0 },
   { id: 'mountain', title: '去年爬的那座山', icon: 'snow-mountain', col: 0, row: 1 },
 ]

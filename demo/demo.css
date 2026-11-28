@@ -25,7 +25,7 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-seg.dm-on .dm-name, .dm-seg:hover .dm-name { opacity: 1; }
 .dm-replay { position: absolute; z-index: 20; right: 96px; top: 12px; padding: 6px 14px; font: inherit; font-size: 13px; color: inherit; background: var(--mp-panel, #e0e9e8cc); border: 1px solid currentColor; cursor: pointer; }
 .dm-install { position: absolute; z-index: 20; right: 24px; top: 12px; padding: 6px 14px; font: inherit; font-size: 13px; color: inherit; background: var(--mp-panel, #e0e9e8cc); border: 1px solid currentColor; cursor: pointer; }
-.dm-howto { position: absolute; z-index: 21; right: 24px; top: 50px; width: min(360px, calc(100vw - 48px)); padding: 18px 20px; font-size: 14px; line-height: 1.7;
+.dm-howto { box-sizing: border-box; max-height: calc(100% - 140px); overflow-y: auto; position: absolute; z-index: 21; right: 24px; top: 50px; width: min(360px, calc(100vw - 48px)); padding: 18px 20px; font-size: 14px; line-height: 1.7;
   background: var(--mp-panel, #e0e9e8f2); border: 1px solid var(--mp-edge, #fffffbbf); box-shadow: 0 10px 30px #3653631f; animation: dm-in .25s ease both; }
 .dm-howto h2 { margin: 0 0 8px; font: 400 18px var(--mp-serif, serif); }
 .dm-howto ol { margin: 0; padding-left: 1.3em; }
@@ -39,13 +39,13 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-host-tag { font-size: 12px; opacity: .7; }
 .dm-host ol { margin: 0 0 10px; }
 
+/* 像素皮肤画布是浅色，白字看不清：改用皮肤的深色字 */
+.mp-hard .dm-caption { color: var(--mp-ink, #294c60); text-shadow: none; }
 .dm-caption.dm-out, .dm-chat.dm-out { animation: dm-out .9s ease forwards; }
 @keyframes dm-out { to { opacity: 0; } }
 @keyframes dm-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .dm-caption, .dm-line, .dm-chat.dm-out { animation: none; } }
 .dm-close { display: block; margin: 10px 0 0; }
-/* 窄窗口：底栏占满右边，进度条挪到它上面一行 */
-@media (max-width: 760px) { .dm-bar { right: 28px; bottom: 76px; } }
 
 /* 仿插件的对话面板（外框是插件的 .mp-chat，这里只定位置和里面的东西） */
 .dm-root .mp-chat.dm-panel { left: auto; right: 28px; top: 50%; bottom: auto; transform: translateY(-50%); width: min(340px, 42vw); height: min(460px, 64vh); z-index: 16; pointer-events: none; animation: dm-in .35s ease both; }
@@ -63,3 +63,14 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-root .dm-pulse { animation: dm-pulse 1.2s ease-out both !important; }
 @keyframes dm-pulse { 0% { box-shadow: 0 0 0 0 #ffffffcc; } 60% { box-shadow: 0 0 0 18px #ffffff00; } 100% { box-shadow: 0 0 0 0 #ffffff00; } }
 @media (prefers-reduced-motion: reduce) { .dm-root .mp-chat.dm-panel, .dm-root .dm-pulse, .dm-composer.dm-typing::after { animation: none !important; } }
+
+/* 窄窗口（手机）：插件底栏收成一行（缩放交给双指），进度条在它上面一行；「跳过」「安装」挪到标题下面，不和标题抢位置 */
+@media (max-width: 760px) {
+  .dm-stage .mp-zoom { display: none; }
+  .dm-bar { right: 28px; bottom: 76px; }
+  .dm-replay, .dm-install { top: 72px; }
+  .dm-howto { top: 110px; }
+  .dm-root .mp-chat.dm-panel { left: 16px; right: 16px; width: auto; top: auto; bottom: 124px; transform: none; height: min(380px, 52vh); }
+}
+/* 手机 Safari 会把 16px 以下的输入框在聚焦时自动放大（播完自由浏览时点「＋」会碰到） */
+@media (pointer: coarse) { .dm-root :is(input, textarea, select) { font-size: 16px !important; } }

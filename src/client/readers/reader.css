@@ -51,6 +51,7 @@
 .rd-paper { position: absolute; inset: 0; overflow: hidden;
   background: linear-gradient(90deg, #f5f0e5 0%, #f6f2e8 47.5%, #e6e0d2 49.8%, #d7cfbd 50%, #ece6d9 50.3%, #f7f3e9 53%, #f4efe3 100%); }
 @container (max-width: 760px) { .rd-paper { background: #f5f0e5; } }
+.rd-paper.rd-single { background: #f5f0e5; } /* 正文实际是单页（epub.ts 按正文区宽度判断） */
 .rd-embedded { container-type: inline-size; }
 .rd-embedded .rd-stage { position: absolute; inset: 24px 44px 72px; padding: 0; }
 .rd-menu { position: absolute; z-index: 7; top: 7px; right: 12px; padding: 0 5px 7px !important; font: 23px/1.2 "EB Garamond", Georgia, serif !important; color: #6c7363 !important; opacity: .4; }

@@ -114,8 +114,12 @@ function outlineOf(toc: NavItem[]): OutlineInput[] {
 }
 
 /** 双页只在宽面板里用（右侧栏窄，自然是单页）。 */
+const SPREAD_MIN = 760
 function spreadFor(el: HTMLElement): 'auto' | 'none' {
-  return el.clientWidth >= 760 ? 'auto' : 'none'
+  const mode = el.clientWidth >= SPREAD_MIN ? 'auto' : 'none'
+  // 纸面的书脊跟着实际分页走：单页不画书脊，免得正文跨过中缝
+  el.closest('.rd-paper')?.classList.toggle('rd-single', mode === 'none')
+  return mode
 }
 
 export async function mountEpub(el: HTMLElement, opts: {
@@ -155,6 +159,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     height: '100%',
     flow: 'paginated',
     spread: spreadFor(el),
+    minSpreadWidth: SPREAD_MIN, // 和 spreadFor 用同一个阈值（epub.js 默认 800，两边会对不上）
     allowScriptedContent: false, // 书里的脚本一律不跑
   })
   // 正文底色透明，露出阅读器纸面（皮肤的 page）；书自己写了底色的仍以书为准
@@ -244,7 +249,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     clearTimeout(resizeTimer)
     resizeTimer = setTimeout(async () => {
       const here = await rendition.currentLocation()
-      rendition.spread(spreadFor(el))
+      rendition.spread(spreadFor(el), SPREAD_MIN)
       rendition.resize(el.clientWidth, el.clientHeight)
       if (here?.start) await rendition.display(here.start.cfi).catch(() => undefined)
     }, 150)

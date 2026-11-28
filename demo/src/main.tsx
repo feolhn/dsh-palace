@@ -28,6 +28,7 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const TICK = 50
 
 const FADE_MS = 900
+const PULSE_MS = 900
 const NO_LINES: DemoState['chat'] = []
 
 /** 值变「空」时，把旧值再留 FADE_MS（这段时间 leaving = true，界面淡出）；变成新值则立刻换上 */
@@ -86,15 +87,9 @@ function Demo() {
     if (a.do === 'leave') {
       // 阅读 → 笔记 → 宫殿：插件里左上角返回按钮要点两次
       q<HTMLButtonElement>('.mp-back')?.click()
-      await hold(700)
+      if (!await hold(700)) return 700 // 中途跳转了：不再点，免得关掉新一幕的阅览室
       q<HTMLButtonElement>('.mp-back')?.click()
       return 700
-    }
-    if (a.do === 'chat' && a.open) {
-      // 先让光球闪一下，告诉观众对话从这里打开
-      const orb = q<HTMLElement>('.mp-orb:not([hidden]), .mp-ai-orb')
-      orb?.classList.add('dm-pulse')
-      setTimeout(() => orb?.classList.remove('dm-pulse'), 1200)
     }
     return 0
   }
@@ -131,6 +126,15 @@ function Demo() {
         if (run.current !== id) return
         while (pausedRef.current) { if (!await hold(TICK)) return }
         let spent = 0
+        if (a.do === 'chat' && a.open) {
+          // 先让光球（读书时是阅览室里的 AI 入口）闪一下、停一会儿，再打开面板：观众看得出对话从哪里开始
+          const orb = q<HTMLElement>('.mp-orb:not([hidden]), .mp-ai-orb, .mp-room-ai')
+          orb?.classList.add('dm-pulse')
+          const ok = await hold(PULSE_MS)
+          orb?.classList.remove('dm-pulse')
+          if (!ok) return
+          spent = PULSE_MS
+        }
         if (a.do === 'say' && a.who === 'user' && state.panel !== undefined) {
           // 在输入框里打字，打完停一下再发出去
           const chars = [...a.text]
@@ -203,7 +207,7 @@ function Demo() {
       {/* 同一个位置：播放时「跳过」直接进自由浏览，播完变「重播」 */}
       {ended
         ? <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>
-        : <button type="button" className="dm-replay" onClick={() => void skip()}>跳过 ⏭</button>}
+        : <button type="button" className="dm-replay" onClick={() => void skip()}>跳过</button>}
       {paused && !ended && <div className="dm-paused">已暂停 · 点画面继续</div>}
       <nav className="dm-bar" aria-label="演示进度">
         {SCENES.map((sc, i) => {

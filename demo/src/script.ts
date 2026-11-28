@@ -33,6 +33,8 @@ export interface NewCell {
   icon?: string
   col: number
   row: number
+  /** 挂上示意书页（demo/book.mjs），点图标能进阅览室读。只给台本里真的会读的书挂 */
+  sample?: boolean
   /** 0–1：书的进度（演示用，按节数换算） */
   progress?: number
 }
@@ -65,8 +67,8 @@ function cellOf(c: NewCell): { cell: Cell; item: Item } {
   const kind = c.kind ?? 'note'
   const cell: Cell = { id: c.id, kind, parentId: null, col: c.col, row: c.row, title: c.title, createdAt: CREATED,
     ...(c.subtitle !== undefined ? { subtitle: c.subtitle } : {}), ...(c.icon !== undefined ? { icon: c.icon } : {}) }
-  // 书都挂同一本示意书页（demo/book.mjs 构建出的 EPUB，fakeApi 的 file 请求返回它）
-  const item = emptyItem(c.id, kind === 'book' ? { type: 'epub', path: '' } : null)
+  // 只有 sample 的书挂示意书页（fakeApi 的 file 请求返回它）；别的书没有原文，点格子照常进笔记
+  const item = emptyItem(c.id, c.sample === true ? { type: 'epub', path: '' } : null)
   if (c.progress !== undefined) {
     // 十节，按进度勾上前几节，格子上就有进度环
     const done = Math.round(c.progress * 10)
@@ -110,7 +112,7 @@ export function durationOf(a: Action): number {
   }
   if (a.do === 'view') return 1600
   if (a.do === 'read' || a.do === 'leave') return 2000
-  if (a.do === 'chat') return a.open ? 1400 : 600
+  if (a.do === 'chat') return a.open ? 1900 : 600 // 打开含光球闪一下（约 0.9 秒）
   return 900
 }
 
