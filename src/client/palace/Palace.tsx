@@ -530,7 +530,7 @@ export function Palace() {
       y += d.y / cam.scale
     }
     return (
-      <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''}`}
+      <div key={c.id} data-cell-id={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''}`}
         style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * outside * fade, pointerEvents: proj.open > 0.001 || fade < 1 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>

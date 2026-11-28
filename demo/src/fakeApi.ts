@@ -16,7 +16,7 @@ export function setDemoData(s: DemoState): void {
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
-function handle(path: string, url: URL): Response {
+function handle(path: string, url: URL, real: typeof fetch): Response | Promise<Response> {
   const s = current
   if (s === undefined) return json({ ok: false, error: '演示还没准备好' }, 503)
   switch (path) {
@@ -29,6 +29,8 @@ function handle(path: string, url: URL): Response {
       const item = s.items[url.searchParams.get('id') ?? '']
       return item === undefined ? json({ ok: false, error: '找不到这个格子' }, 404) : json({ ok: true, rev, item })
     }
+    // 所有书都打开同一本示意书页（构建时由 demo/book.mjs 生成）
+    case 'file': return s.items[url.searchParams.get('id') ?? '']?.source?.type === 'epub' ? real('assets/demo-book.epub') : json({ ok: false, error: '找不到这个文件' }, 404)
     case 'arcs': return json({ ok: true, rev, arcs: s.arcs.map(a => ({ ...a, strands: 1, lastAt: '2026-11-01T00:00:00.000Z' })) })
     default: return json({ ok: false, error: '这里是演示，暂时不能修改。装上插件后，就能放进你自己的东西了' }, 400)
   }
@@ -39,6 +41,6 @@ export function installFakeApi(): void {
   window.fetch = async (input, init) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, document.baseURI)
     const m = /\/api\/dsh-palace\/([a-z-]+)$/.exec(url.pathname)
-    return m === null ? real(input, init) : handle(m[1], url)
+    return m === null ? real(input, init) : handle(m[1], url, real)
   }
 }

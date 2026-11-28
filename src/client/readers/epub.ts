@@ -53,7 +53,7 @@ let loading: Promise<EpubFactory> | undefined
 function script(name: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const el = document.createElement('script')
-    el.src = `${apiUrl('asset')}?f=reader/${name}`
+    el.src = apiUrl('asset', { f: `reader/${name}` })
     el.onload = () => resolve()
     el.onerror = () => { el.remove(); reject(new Error(`阅读器脚本加载失败（${name}）`)) }
     document.head.append(el)

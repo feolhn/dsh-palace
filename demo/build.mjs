@@ -1,9 +1,10 @@
 // 演示站构建：demo/src → demo/dist（Cloudflare Pages 发布这个目录）。先在 demo/ 里 npm ci，再 node demo/build.mjs [--serve]
 import { build } from 'esbuild'
-import { cpSync, mkdirSync, rmSync } from 'node:fs'
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { epub } from './book.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const out = resolve(here, 'dist')
@@ -56,12 +57,16 @@ cpSync(resolve(here, 'demo.css'), resolve(out, 'demo.css'))
 // 皮肤和字体：apiUrl('asset', { f }) 在演示站里指向 assets/<f>
 cpSync(resolve(vendor, 'themes'), resolve(out, 'assets/themes'), { recursive: true })
 cpSync(resolve(vendor, 'fonts'), resolve(out, 'assets/fonts'), { recursive: true })
+// 阅读器脚本（epub.js、jszip）和它们的许可证
+for (const f of ['epub.min.js', 'jszip.min.js', 'epub.LICENSE.txt', 'jszip.LICENSE.md']) cpSync(resolve(vendor, f), resolve(out, 'assets/reader', f))
+// 示意书页：fakeApi 的 file 请求指向它
+writeFileSync(resolve(out, 'assets/demo-book.epub'), epub())
 console.log('built demo/dist')
 
 if (process.argv.includes('--serve')) {
   const { createServer } = await import('node:http')
   const { createReadStream, existsSync, statSync } = await import('node:fs')
-  const types = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml', woff2: 'font/woff2', ttf: 'font/ttf', json: 'application/json' }
+  const types = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml', woff2: 'font/woff2', ttf: 'font/ttf', json: 'application/json', epub: 'application/epub+zip' }
   const port = Number(process.env.PORT ?? 4195)
   createServer((req, res) => {
     let file = resolve(out, '.' + decodeURIComponent(new URL(req.url, 'http://x').pathname))

@@ -46,3 +46,20 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-close { display: block; margin: 10px 0 0; }
 /* 窄窗口：底栏占满右边，进度条挪到它上面一行 */
 @media (max-width: 760px) { .dm-bar { right: 28px; bottom: 76px; } }
+
+/* 仿插件的对话面板（外框是插件的 .mp-chat，这里只定位置和里面的东西） */
+.dm-root .mp-chat.dm-panel { left: auto; right: 28px; top: 50%; bottom: auto; transform: translateY(-50%); width: min(340px, 42vw); height: min(460px, 64vh); z-index: 16; pointer-events: none; animation: dm-in .35s ease both; }
+.dm-root .mp-chat.dm-panel.dm-out { animation: dm-out .9s ease forwards; }
+.dm-lines { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 0 4px 10px; overflow: hidden; }
+.dm-panel .dm-line { font-size: 13px; }
+.dm-composer { position: relative; margin: 0 2px; padding: 10px 40px 10px 12px; min-height: 44px; font-size: 13px; line-height: 1.6; border: 1px solid var(--mp-edge, #fffffbbf); background: var(--mp-fill, #ffffffb3); opacity: .6; }
+.dm-composer.dm-typing { opacity: 1; }
+.dm-composer.dm-typing::after { content: ""; display: inline-block; width: 1px; height: 1.1em; margin-left: 1px; vertical-align: -2px; background: currentColor; animation: dm-caret 1s steps(1) infinite; }
+.dm-send { position: absolute; right: 8px; bottom: 8px; width: 26px; height: 26px; display: grid; place-items: center; font-size: 13px; border: 1px solid currentColor; opacity: .5; }
+.dm-typing .dm-send { opacity: 1; }
+@keyframes dm-caret { 50% { opacity: 0; } }
+
+/* 打开对话前让光球闪一下 */
+.dm-root .dm-pulse { animation: dm-pulse 1.2s ease-out both !important; }
+@keyframes dm-pulse { 0% { box-shadow: 0 0 0 0 #ffffffcc; } 60% { box-shadow: 0 0 0 18px #ffffff00; } 100% { box-shadow: 0 0 0 0 #ffffff00; } }
+@media (prefers-reduced-motion: reduce) { .dm-root .mp-chat.dm-panel, .dm-root .dm-pulse, .dm-composer.dm-typing::after { animation: none !important; } }
