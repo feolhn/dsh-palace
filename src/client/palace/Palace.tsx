@@ -8,6 +8,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from 'react'
 import type { Cell, CellSummary } from '../../shared/palace.ts'
 import { AddDialog } from './AddDialog.tsx'
+import { Walker } from './Walker.tsx'
 import { Room, RoomTabs } from './Room.tsx'
 import { Orb } from './Orb.tsx'
 import type { OrbView, Rect } from './orb.ts'
@@ -525,7 +526,7 @@ export function Palace() {
       y += d.y / cam.scale
     }
     return (
-      <div key={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''}`}
+      <div key={c.id} data-cell-id={c.id} className={`mp-cell mp-${c.kind} ${isDragged ? 'mp-lifted' : ''}`}
         style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * outside * fade, pointerEvents: proj.open > 0.001 || fade < 1 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
@@ -604,6 +605,14 @@ export function Palace() {
       )}
 
       {drop !== undefined && <div className="mp-drop" style={rect(drop.shown.col * B, drop.shown.row * B, B, B)} />}
+
+      {/* 立体视图的像素小人（实验，#115）：只在像素皮肤、立体首页、过渡结束后出现 */}
+      {hard && cam !== undefined && (
+        <Walker rootRef={rootRef} m={m} cam={cam} size={size}
+          enabled={spreading && proj.amount > 0.999 && proj.spread > 0.999 && proj.open < 0.001 && selected === undefined && dragging === undefined}
+          paused={gesture?.kind === 'pan' || adding || naming !== undefined}
+          layoutKey={cells.map(c => `${c.id}:${c.parentId}:${c.col},${c.row}:${c.icon ?? ''}`).join('|')} />
+      )}
 
       <header className="mp-masthead">
         <span className="mp-wordmark">Memory Palace</span>

@@ -67,7 +67,7 @@ export function useThemeId(): string {
   return useSyncExternalStore(subscribe, () => current)
 }
 
-const fileUrl = (id: string, file: string) => apiUrl('asset', { f: `themes/${id}/${file}` })
+export const fileUrl = (id: string, file: string) => apiUrl('asset', { f: `themes/${id}/${file}` })
 
 /** 有这个图标的皮肤：当前皮肤有就用当前的，没有就借第一套画了它的。 */
 function ownerOf(themeId: string, key: string): string {
