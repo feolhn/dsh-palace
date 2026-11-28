@@ -23,7 +23,8 @@ function sectionOf(item: Item, anchor: string | undefined): Section | undefined 
 }
 
 /** 在宫殿阅览室这一格里打开（#29 第三步，原型 #reader-panel）：没有标题栏，菜单收在右上角 ⋯，底部移过去才出现页码和进度条。 */
-export interface Embedded { onNotes: () => void; onChat?: () => void }
+/** onChat 带 quote：划词后「问问 AI」，把原文放进输入框 */
+export interface Embedded { onNotes: () => void; onChat?: (quote?: string) => void }
 
 export function EpubReader({ item, title, subtitle, onClose, embedded }: { item: Item; title: string; subtitle?: string; onClose: () => void; embedded?: Embedded }) {
   // 浮层第一次渲染时容器还不在，用 state 记住挂载点，出现后再打开书
@@ -194,6 +195,7 @@ export function EpubReader({ item, title, subtitle, onClose, embedded }: { item:
         <div className="rd-select">
           <span className="rd-quote">{selection.quote}</span>
           <button type="button" className="rd-btn" onClick={() => void saveExcerpt()}>记为摘录</button>
+          {embedded?.onChat && <button type="button" className="rd-text" onClick={() => { const q = selection.quote; handle.current?.clearSelection(); setSelection(undefined); embedded.onChat?.(q) }}>问问 AI</button>}
           <button type="button" className="rd-text" onClick={() => { handle.current?.clearSelection(); setSelection(undefined) }}>取消</button>
         </div>
       )}

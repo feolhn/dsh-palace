@@ -186,7 +186,8 @@
 .mp-chat-head .mp-text-btn:hover { opacity: 1; }
 .mp-chat-close { font-size: 17px; line-height: 1; padding: 0 2px 6px 6px; }
 /* 原生对话自己管滚动：容器要有确定高度 */
-.mp-chat-body { flex: 1; min-height: 0; display: flex; --dsh-chat-content-width: 100%; --dsh-composer-card-max-width: 100%; }
+/* 宫殿根节点禁了选字（拖画布用），对话里要能选中回复的一段来复制（#121） */
+.mp-chat-body { flex: 1; min-height: 0; display: flex; --dsh-chat-content-width: 100%; --dsh-composer-card-max-width: 100%; user-select: text; -webkit-user-select: text; }
 .mp-chat-body > * { flex: 1; min-width: 0; min-height: 0; }
 /* 空对话的引导（原型 .conversation-mark / .ai-example / .ai-prompt） */
 .mp-chat-shell { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; } /* slot 外包装是 display: contents，伸展规则要直接给这里 */

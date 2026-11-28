@@ -5,7 +5,8 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { chatWorkspace, setActive } from '../api.ts'
-import { ChatIntroProvider, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
+import { setDraft } from '../chat.ts'
+import { ChatIntroProvider, focusComposer, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
 
 const STORE_KEY = 'dsh-palace:chat-sessions'
 
@@ -56,7 +57,7 @@ async function sessionFor(scope: string, fresh: boolean): Promise<string> {
   return id
 }
 
-export function PalaceChat({ scope, itemId, heading, context, prompts, dock, side = false, onSession, onClose }: {
+export function PalaceChat({ scope, itemId, heading, context, prompts, dock, side = false, seed, onSession, onClose }: {
   /** 'palace' 或格子 id：决定用哪个会话 */
   scope: string
   /** 书 / 笔记的 id：AI 记卡片时默认记到这里 */
@@ -71,8 +72,11 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, sid
   side?: boolean
   /** 当前对话的会话 id（打开 / 换新对话 / 关闭时通知），给旁边的笔记本发消息用 */
   onSession?: (sessionId: string | undefined) => void
+  /** 放进输入框的一段话（阅读器划词「问问 AI」）。n 变了就再放一次；只放不发 */
+  seed?: { text: string; n: number }
   onClose: () => void
 }) {
+  const panel = useRef<HTMLElement>(null)
   const slots = useChatSlots()
   const [reference, setReference] = useState<SessionReference>()
   const [error, setError] = useState<string>()
@@ -104,10 +108,24 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, sid
     }
   }, [scope, itemId, generation, slots])
 
+  // 会话打开后把 seed 放进输入框并聚焦。输入框是原生对话异步渲染的，等它出现（最多约 2 秒）
+  const sessionId = reference?.sessionId
+  useEffect(() => {
+    if (seed === undefined || sessionId === undefined) return
+    let frame = 0, tries = 0, drafted = false
+    const put = () => {
+      drafted ||= setDraft(sessionId, seed.text)
+      if (drafted && focusComposer(panel.current)) return
+      if (++tries < 120) frame = requestAnimationFrame(put)
+    }
+    put()
+    return () => cancelAnimationFrame(frame)
+  }, [sessionId, seed?.n])
+
   const unsupported = slots === undefined || sessionsService() === undefined || error === 'unsupported'
 
   return (
-    <aside className={`mp-chat ${dock ? 'mp-chat-dock' : ''} ${side ? 'mp-chat-side' : ''}`} aria-label={heading} style={dock}
+    <aside ref={panel} className={`mp-chat ${dock ? 'mp-chat-dock' : ''} ${side ? 'mp-chat-side' : ''}`} aria-label={heading} style={dock}
       onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
       <header className="mp-chat-head">
         <div>
