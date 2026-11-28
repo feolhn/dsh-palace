@@ -183,7 +183,7 @@ function Demo() {
   }, [])
 
   return (
-    <div className={`dm-root ${skin.className}`} style={skin.style}>
+    <div className={`dm-root ${ended ? 'dm-done' : ''} ${skin.className}`} style={skin.style}>
       <div ref={stage} className={`dm-stage ${ended ? 'dm-ended' : ''}`} data-mp-host onClick={(e) => { if (e.isTrusted && !ended) setPaused(p => !p) }}>
         <div className="dm-canvas" ref={canvas}>
           <Palace key={mount} />

@@ -64,9 +64,11 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 @keyframes dm-pulse { 0% { box-shadow: 0 0 0 0 #ffffffcc; } 60% { box-shadow: 0 0 0 18px #ffffff00; } 100% { box-shadow: 0 0 0 0 #ffffff00; } }
 @media (prefers-reduced-motion: reduce) { .dm-root .mp-chat.dm-panel, .dm-root .dm-pulse, .dm-composer.dm-typing::after { animation: none !important; } }
 
-/* 窄窗口（手机）：插件底栏收成一行（缩放交给双指），进度条在它上面一行；「跳过」「安装」挪到标题下面，不和标题抢位置 */
+/* 窄窗口（手机）：播放时底栏收成一行（画布还点不了，缩放用不上），进度条在它上面一行；
+   播完自由浏览时缩放和「显示全部」要回来（手机上没有双指缩放），底栏折成两行，进度条再往上让一行；「跳过」「安装」挪到标题下面，不和标题抢位置 */
 @media (max-width: 760px) {
-  .dm-stage .mp-zoom { display: none; }
+  .dm-root:not(.dm-done) .dm-stage .mp-zoom { display: none; }
+  .dm-done .dm-bar { bottom: 130px; }
   .dm-bar { right: 28px; bottom: 76px; }
   .dm-replay, .dm-install { top: 72px; }
   .dm-howto { top: 110px; }
