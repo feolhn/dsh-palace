@@ -1,10 +1,9 @@
 // 演示站构建：demo/src → demo/dist（Cloudflare Pages 发布这个目录）。先在 demo/ 里 npm ci，再 node demo/build.mjs [--serve]
 import { build } from 'esbuild'
-import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { epub } from './book.mjs'
+import { basename, dirname, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const out = resolve(here, 'dist')
@@ -59,14 +58,31 @@ cpSync(resolve(vendor, 'themes'), resolve(out, 'assets/themes'), { recursive: tr
 cpSync(resolve(vendor, 'fonts'), resolve(out, 'assets/fonts'), { recursive: true })
 // 阅读器脚本（epub.js、jszip）和它们的许可证
 for (const f of ['epub.min.js', 'jszip.min.js', 'epub.LICENSE.txt', 'jszip.LICENSE.md']) cpSync(resolve(vendor, f), resolve(out, 'assets/reader', f))
-// 示意书页：fakeApi 的 file 请求指向它
-writeFileSync(resolve(out, 'assets/demo-book.epub'), epub())
+// 演示数据：用插件的 Core 读 demo/data/，算成一个 JSON（demo/snapshot.ts）。先打包成一个 Node 脚本再运行，不挑 Node 版本
+const snap = resolve(out, '.snapshot.mjs')
+await build({ entryPoints: [resolve(here, 'snapshot.ts')], outfile: snap, bundle: true, format: 'esm', platform: 'node', target: 'node18', logLevel: 'warning' })
+const { snapshot } = await import(pathToFileURL(snap).href)
+rmSync(snap)
+const data = resolve(here, 'data')
+mkdirSync(resolve(out, 'assets/demo'), { recursive: true })
+const snapped = snapshot(data)
+writeFileSync(resolve(out, 'assets/demo/data.json'), JSON.stringify(snapped))
+// 原文和卡片原图：只复制数据里引用到的（目录里多放的文件不会被发布出去）。原文只放能公开的：公版书、自己写的东西
+const used = { files: new Set(), images: new Set() }
+for (const item of Object.values(snapped.items)) {
+  if (item.source !== null && item.source.type !== 'video') used.files.add(basename(item.source.path))
+  for (const card of item.cards) if (card.image) used.images.add(basename(card.image))
+}
+for (const [d, names] of Object.entries(used)) for (const name of names) {
+  const from = resolve(data, d, name)
+  if (existsSync(from)) cpSync(from, resolve(out, 'assets/demo', d, name))
+}
 console.log('built demo/dist')
 
 if (process.argv.includes('--serve')) {
   const { createServer } = await import('node:http')
   const { createReadStream, existsSync, statSync } = await import('node:fs')
-  const types = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml', woff2: 'font/woff2', ttf: 'font/ttf', json: 'application/json', epub: 'application/epub+zip' }
+  const types = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml', woff2: 'font/woff2', ttf: 'font/ttf', json: 'application/json', epub: 'application/epub+zip', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif' }
   const port = Number(process.env.PORT ?? 4195)
   createServer((req, res) => {
     let file = resolve(out, '.' + decodeURIComponent(new URL(req.url, 'http://x').pathname))

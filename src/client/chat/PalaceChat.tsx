@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { chatWorkspace, setActive } from '../api.ts'
 import { canChat, sendText, setDraft } from '../chat.ts'
-import { ChatIntroProvider, focusComposer, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
+import { ChatIntroProvider, demoChatFor, focusComposer, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
 
 const STORE_KEY = 'dsh-palace:chat-sessions'
 
@@ -154,7 +154,7 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, sid
       </header>
       <div className="mp-chat-body">
         {unsupported
-          ? <p className="mp-chat-note">当前版本的 Harness 不支持在这里聊天。可以在对话标题栏点书本按钮，从右侧栏使用宫殿。</p>
+          ? demoChatFor(scope) ?? <p className="mp-chat-note">当前版本的 Harness 不支持在这里聊天。可以在对话标题栏点书本按钮，从右侧栏使用宫殿。</p>
           : error
             ? <p className="mp-chat-note">对话没打开：{error}</p>
             : reference === undefined

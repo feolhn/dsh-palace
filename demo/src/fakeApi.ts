@@ -1,38 +1,56 @@
 /**
- * 假的插件接口：拦截 /api/dsh-palace/ 下的请求，返回播放器当前的演示数据（只读）。
- * 播完后观众可以自己逛（拖动、缩放、换视图、点开格子），改数据的请求一律拒绝。
- * 宫殿画布用的是插件的真实组件，它们照常请求接口，不知道自己在演示站里。
+ * 假的插件接口：拦截 /api/dsh-palace/ 下的请求，返回构建时算好的演示数据（assets/demo/data.json，见 demo/snapshot.ts）。
+ * 宫殿画布、阅览室用的是插件的真实组件，它们照常请求接口，不知道自己在演示站里。
+ * 只读：改数据的请求一律拒绝；「用浏览器打开」（视频、带网址的格子）照常打开。
  */
-import { summaryOf, SCHEMA } from '../../src/shared/palace.ts'
-import type { DemoState } from './script.ts'
+import type { Snapshot } from '../snapshot.ts'
 
-let current: DemoState | undefined
-let rev = 1
+let data: Snapshot | undefined
+const rev = 1
 
-export function setDemoData(s: DemoState): void {
-  current = s
-  rev += 1
+export async function loadDemo(): Promise<Snapshot> {
+  data = await (await fetch('assets/demo/data.json')).json() as Snapshot
+  return data
 }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+const fail = (error: string, status = 400) => json({ ok: false, error }, status)
+const READ_ONLY = '这里是演示，暂时不能修改。装上插件后，就能放进你自己的东西了'
 
-function handle(path: string, url: URL, real: typeof fetch): Response | Promise<Response> {
-  const s = current
-  if (s === undefined) return json({ ok: false, error: '演示还没准备好' }, 503)
+/** 插件里「用系统程序打开」：网址就在新标签页打开，本地文件演示站没有 */
+async function open(d: Snapshot, init: RequestInit | undefined): Promise<Response> {
+  const body = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as { id?: string; sectionId?: string; target?: string }
+  const web = (u: string | undefined) => u !== undefined && /^https?:\/\//.test(u) ? u : undefined
+  const cell = d.palace.cells.find(c => c.id === body.id)
+  const source = body.id === undefined ? undefined : d.items[body.id]?.source
+  const loc = source?.type === 'video'
+    ? d.items[body.id!]?.chapters.flatMap(ch => ch.sections).find(s => s.id === body.sectionId)?.loc
+    : undefined
+  const url = body.target === 'welcome' ? location.href : web(cell?.href) ?? web(loc) ?? (source?.type === 'video' ? web(source.url) : undefined)
+  if (url === undefined) return fail('演示站里打不开本地文件。装上插件后，会用你电脑上的程序打开')
+  window.open(url, '_blank', 'noopener')
+  return json({ ok: true })
+}
+
+function handle(path: string, url: URL, init: RequestInit | undefined, real: typeof fetch): Response | Promise<Response> {
+  const d = data
+  if (d === undefined) return fail('演示还没准备好', 503)
+  const id = url.searchParams.get('id') ?? ''
   switch (path) {
     case 'rev': return json({ ok: true, rev })
-    case 'palace': {
-      const summaries = Object.fromEntries(s.cells.filter(c => c.kind !== 'group').map(c => [c.id, summaryOf(s.items[c.id])]))
-      return json({ ok: true, rev, palace: { schema: SCHEMA, cells: s.cells }, summaries, dataDir: '演示数据' })
+    case 'palace': return json({ ok: true, rev, palace: d.palace, summaries: d.summaries, dataDir: '演示数据' })
+    case 'item': return d.items[id] === undefined ? fail('找不到这个格子', 404) : json({ ok: true, rev, item: d.items[id] })
+    case 'arcs': return json({ ok: true, rev, arcs: d.arcs })
+    // 原文和原图：构建时从 demo/data/files、images 复制过来，source.path 写文件名
+    case 'file': {
+      const s = d.items[id]?.source
+      return s === undefined || s === null || s.type === 'video' ? fail('找不到这个文件', 404) : real(`assets/demo/files/${encodeURIComponent(s.path.split('/').pop()!)}`)
     }
-    case 'item': {
-      const item = s.items[url.searchParams.get('id') ?? '']
-      return item === undefined ? json({ ok: false, error: '找不到这个格子' }, 404) : json({ ok: true, rev, item })
-    }
-    // 所有书都打开同一本示意书页（构建时由 demo/book.mjs 生成）
-    case 'file': return s.items[url.searchParams.get('id') ?? '']?.source?.type === 'epub' ? real('assets/demo-book.epub') : json({ ok: false, error: '找不到这个文件' }, 404)
-    case 'arcs': return json({ ok: true, rev, arcs: s.arcs.map(a => ({ ...a, strands: 1, lastAt: '2026-11-01T00:00:00.000Z' })) })
-    default: return json({ ok: false, error: '这里是演示，暂时不能修改。装上插件后，就能放进你自己的东西了' }, 400)
+    case 'image': return real(`assets/demo/images/${encodeURIComponent((url.searchParams.get('name') ?? '').split('/').pop()!)}`)
+    case 'open': return open(d, init)
+    // 打开对话时上报当前格子：演示里没人听，回个成功就行
+    case 'active': return json({ ok: true })
+    default: return fail(READ_ONLY)
   }
 }
 
@@ -41,6 +59,6 @@ export function installFakeApi(): void {
   window.fetch = async (input, init) => {
     const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url, document.baseURI)
     const m = /\/api\/dsh-palace\/([a-z-]+)$/.exec(url.pathname)
-    return m === null ? real(input, init) : handle(m[1], url, real)
+    return m === null ? real(input, init) : handle(m[1], url, init, real)
   }
 }

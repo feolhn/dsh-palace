@@ -2,6 +2,7 @@
   "name": "dsh-palace-demo",
   "private": true,
   "description": "Memory Palace 演示站（#107）的构建依赖。和插件分开装：插件运行时用宿主的 React，不打包进去",
+  "type": "module",
   "scripts": {
     "build": "node build.mjs"
   },

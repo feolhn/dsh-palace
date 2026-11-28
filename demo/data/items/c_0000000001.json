@@ -1,0 +1,13 @@
+{
+  "schema": 2,
+  "id": "c_0000000001",
+  "source": null,
+  "chapters": [{ "id": "ch_0000000001", "title": "目录", "sections": [
+    { "id": "s_0000000001", "title": "第一节", "done": true, "doneAt": "2026-10-03T08:00:00.000Z" },
+    { "id": "s_0000000002", "title": "第二节", "done": false }
+  ]}],
+  "cards": [
+    { "id": "k_0000000001", "type": "thought", "sectionId": "s_0000000001", "note": "（样例）万物彼此相连，这句话我想了很久。", "createdAt": "2026-10-03T08:00:00.000Z" }
+  ],
+  "inspirations": []
+}

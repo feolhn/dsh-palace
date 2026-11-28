@@ -39,6 +39,14 @@ export interface WorkspacesService {
   rename?(workspaceId: string, title: string): Promise<unknown>
 }
 
+/**
+ * 演示站（demo/）没有 Harness 会话：它可以登记一个只读的替身，显示在对话面板里（素材包里的聊天记录）。
+ * 插件里不会登记，面板照常显示「不支持」的提示。
+ */
+let demoChat: ((scope: string) => ReactNode) | undefined
+export function setDemoChat(render: (scope: string) => ReactNode): void { demoChat = render }
+export const demoChatFor = (scope: string): ReactNode => demoChat?.(scope)
+
 let getService: ((name: string) => unknown) | undefined
 
 /** 记下前端上下文的 get；服务用到时再取（插件加载顺序可能早于这些服务）。 */
