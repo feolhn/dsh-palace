@@ -36,8 +36,9 @@ const defaultDataDir = () => join(homedir(), 'Documents', 'dsh-palace-data')
 
 export function apply(ctx: HostContext, config: Config = {}): void {
   const dir = config.dataDir ?? defaultDataDir()
-  // 第一次用（数据目录还不存在）：放一格「什么是 Memory Palace」，免得一进来是空白画布（#107）
-  const firstRun = !existsSync(dir)
+  // 第一次用（还没有 palace.json，包括预先建好的空目录）：放一格「什么是 Memory Palace」，免得一进来是空白画布（#107）
+  // 删掉这一格后 palace.json 已经存在，重启不会再放
+  const firstRun = !existsSync(join(dir, 'palace.json'))
   const store = new PalaceStore(dir)
   if (firstRun) void seedWelcome(store).catch(error => console.warn('[dsh-palace] 放入介绍格子失败', error))
   const active: ActiveItems = new Map()

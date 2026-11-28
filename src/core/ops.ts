@@ -127,12 +127,12 @@ export const WELCOME_URL = 'https://dsh-palace.pages.dev'
  * 只在新数据目录里调用一次，用户删掉后不会再出现。不在 HTTP 白名单里。
  */
 export async function seedWelcome(store: PalaceStore): Promise<Cell> {
-  const cell = await addCell(store, { kind: 'note', title: '什么是 Memory Palace', subtitle: '点开看看 ↗', col: 0, row: 0 })
+  // 一次写入完整的格子，不会留下没有网址的半成品
   return store.mutate((tx) => {
-    const c = tx.palace.cells.find(x => x.id === cell.id)!
-    c.href = WELCOME_URL
-    c.icon = 'open-book'
-    return c
+    const cell: Cell = { id: newId('c'), kind: 'note', parentId: null, ...firstEmptySlot(tx.palace, null), title: '什么是 Memory Palace', subtitle: '点开看看 ↗', icon: 'open-book', href: WELCOME_URL, createdAt: nowIso() }
+    tx.palace.cells.push(cell)
+    tx.createItem(emptyItem(cell.id, null))
+    return cell
   })
 }
 
