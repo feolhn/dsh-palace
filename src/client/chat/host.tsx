@@ -75,6 +75,20 @@ interface PanelProps {
 }
 interface SessionState { blank: boolean; awaitingFirstTurn: boolean; running: boolean; promptAttempted: boolean; openState: string }
 
+/** 聚焦对话面板里的输入框，光标放到末尾。输入框还没渲染出来时返回 false。 */
+export function focusComposer(panel: Element | null): boolean {
+  const box = panel?.querySelector<HTMLElement>('[data-composer-seat] textarea, [data-composer-seat] [contenteditable]')
+  if (box === null || box === undefined) return false
+  box.focus()
+  if (box instanceof HTMLTextAreaElement) { box.setSelectionRange(box.value.length, box.value.length); return true }
+  const range = document.createRange()
+  range.selectNodeContents(box)
+  range.collapse(false)
+  getSelection()?.removeAllRanges()
+  getSelection()?.addRange(range)
+  return true
+}
+
 function FixedChatView(props: { renderSlot: (name: string, p: Record<string, unknown>) => ReactNode }) {
   return <>{props.renderSlot('conversation.session', { view: 'chat' })}</>
 }
@@ -94,17 +108,7 @@ export function ChatSlotPanel({ sessionId, useSession, useConversation, useSessi
   // 点开头：放进输入框，光标停在末尾接着写（以「……」结尾的本来就是半句）；不直接发
   const pick = (button: HTMLElement, text: string) => {
     if (!setDraft(sessionId, text)) return
-    requestAnimationFrame(() => {
-      const box = button.closest('.mp-chat-shell')?.querySelector<HTMLElement>('[data-composer-seat] textarea, [data-composer-seat] [contenteditable]')
-      if (box === null || box === undefined) return
-      box.focus()
-      if (box instanceof HTMLTextAreaElement) { box.setSelectionRange(box.value.length, box.value.length); return }
-      const range = document.createRange()
-      range.selectNodeContents(box)
-      range.collapse(false)
-      getSelection()?.removeAllRanges()
-      getSelection()?.addRange(range)
-    })
+    requestAnimationFrame(() => { focusComposer(button.closest('.mp-chat')) })
   }
   return (
     <div className="mp-chat-shell">

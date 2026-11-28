@@ -200,6 +200,9 @@ export async function mountEpub(el: HTMLElement, opts: {
     if (quote !== '') opts.onSelect({ quote, loc: cfi })
   })
   const onKey = (e: KeyboardEvent) => {
+    // 宿主页面上的监听也会收到聊天输入框里的按键：在能输入文字的地方，左右键只移动光标（#121）
+    const t = e.target as HTMLElement | null
+    if (t?.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return
     if (e.key === 'ArrowLeft') prev()
     if (e.key === 'ArrowRight') next()
   }
