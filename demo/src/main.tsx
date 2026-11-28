@@ -115,6 +115,17 @@ function Demo() {
     if (run.current === id) { setShown(enterScene(state)); setEnded(true) }
   }
 
+  /** 跳过：直接到播完的样子，进入自由浏览 */
+  const skip = async () => {
+    ++run.current // 停掉正在播的循环
+    const s = stateAt(START_STATE, SCENES, SCENES.length)
+    localStorage.setItem(VIEW_KEY, s.iso ? 'iso' : 'flat')
+    setDemoData(s)
+    await refreshPalace()
+    const last = SCENES.length - 1
+    setShown(s); setScene(last); setElapsed(sceneLength(SCENES[last])); setMount(n => n + 1); setPaused(false); setEnded(true)
+  }
+
   useEffect(() => { void seek(0) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // 空格暂停 / 继续；焦点在按钮、链接上时留给它们（比如用键盘选进度条上的某一幕）
@@ -140,7 +151,10 @@ function Demo() {
           {chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
         </div>
       )}
-      {ended && <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>}
+      {/* 同一个位置：播放时「跳过」直接进自由浏览，播完变「重播」 */}
+      {ended
+        ? <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>
+        : <button type="button" className="dm-replay" onClick={() => void skip()}>跳过 ⏭</button>}
       {paused && !ended && <div className="dm-paused">已暂停 · 点画面继续</div>}
       <nav className="dm-bar" aria-label="演示进度">
         {SCENES.map((sc, i) => {
