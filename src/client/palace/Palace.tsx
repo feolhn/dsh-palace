@@ -356,6 +356,51 @@ export function Palace() {
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
+  // 手机双指缩放：两根手指同时在画布上就是缩放（以两指中点为锚）加平移；第二指一按下就取消单指的拖格 / 平移，
+  // 直到手指全部抬起，剩下那根手指不再算点击或拖动。桌面触控板的捏合走上面的 wheel，不经过这里
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ dist: number; x: number; y: number }>()
+  useEffect(() => {
+    const el = rootRef.current
+    if (el === null) return
+    const at = (e: PointerEvent) => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top } }
+    const pair = () => {
+      const [a, b] = [...touches.current.values()]
+      return { dist: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    }
+    const down = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch' || (e.target as HTMLElement).closest('.mp-room, .mp-dialog, .mp-chat')) return
+      touches.current.set(e.pointerId, at(e))
+      if (touches.current.size === 2 && live.current.proj.open <= 0.001) { pinch.current = pair(); setGesture(undefined) }
+    }
+    const move = (e: PointerEvent) => {
+      if (!touches.current.has(e.pointerId)) return
+      touches.current.set(e.pointerId, at(e))
+      const last = pinch.current
+      if (last === undefined || touches.current.size < 2) return
+      const now = pair()
+      if (last.dist > 0) zoomAt(now.dist / last.dist, now.x, now.y)
+      const d = delta(live.current.m, now.x - last.x, now.y - last.y)
+      setCam(c => (c === undefined ? c : { ...c, x: c.x + d.x, y: c.y + d.y }))
+      pinch.current = now
+    }
+    const up = (e: PointerEvent) => {
+      touches.current.delete(e.pointerId)
+      if (touches.current.size === 0) pinch.current = undefined
+      else if (pinch.current !== undefined && touches.current.size === 1) pinch.current = { dist: 0, x: NaN, y: NaN } // 还在缩放手势里，等手指都抬起
+    }
+    el.addEventListener('pointerdown', down, true)
+    el.addEventListener('pointermove', move, true)
+    el.addEventListener('pointerup', up, true)
+    el.addEventListener('pointercancel', up, true)
+    return () => {
+      el.removeEventListener('pointerdown', down, true)
+      el.removeEventListener('pointermove', move, true)
+      el.removeEventListener('pointerup', up, true)
+      el.removeEventListener('pointercancel', up, true)
+    }
+  }, [])
+
   // ---------- 拖动 ----------
 
   const local = (e: { clientX: number; clientY: number }) => {
@@ -364,6 +409,7 @@ export function Palace() {
   }
 
   const onBackgroundDown = (e: RPointerEvent) => {
+    if (pinch.current !== undefined) return
     if (e.button !== 0 || cam === undefined) return
     // 阅览室开着：点外面 = 关上；阅读时点书外面先回到笔记（原型「阅读器外短点击回到卡片」）
     if (selected !== undefined) {
@@ -379,6 +425,7 @@ export function Palace() {
   }
 
   const onCellDown = (e: RPointerEvent, cell: Cell) => {
+    if (pinch.current !== undefined) return
     if (e.button !== 0) return
     e.stopPropagation()
     const p = local(e)
@@ -387,6 +434,7 @@ export function Palace() {
   }
 
   const onMove = (e: RPointerEvent) => {
+    if (pinch.current !== undefined) return
     if (gesture === undefined || e.pointerId !== gesture.id) return
     const p = local(e)
     const moved = gesture.moved || Math.hypot(p.x - gesture.sx, p.y - gesture.sy) > DRAG_THRESHOLD
@@ -400,6 +448,7 @@ export function Palace() {
   }
 
   const onUp = (e: RPointerEvent) => {
+    if (pinch.current !== undefined) return
     if (gesture === undefined || e.pointerId !== gesture.id) return
     setGesture(undefined)
     // 用松手的位置再判断一次（移动事件来得太快、还没重新渲染时，gesture 里的状态可能是旧的）

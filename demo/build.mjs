@@ -33,6 +33,12 @@ const noPdf = {
   },
 }
 
+/** 浏览器包里的 node:* 换成空壳（demo/src/nodeStub.js）：Core 的 ops 在演示站里跑纯逻辑 */
+const nodeStub = {
+  name: 'node-stub',
+  setup(b) { b.onResolve({ filter: /^node:/ }, () => ({ path: resolve(here, 'src/nodeStub.js') })) },
+}
+
 rmSync(out, { recursive: true, force: true })
 mkdirSync(out, { recursive: true })
 await build({
@@ -44,7 +50,7 @@ await build({
   target: 'es2022',
   jsx: 'automatic',
   minify: true,
-  plugins: [noPdf, raw],
+  plugins: [noPdf, raw, nodeStub],
   // 插件源码（../src/client）里的 react 从演示站自己的依赖里找
   nodePaths: [resolve(here, 'node_modules')],
   define: { 'process.env.NODE_ENV': '"production"' },

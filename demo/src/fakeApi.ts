@@ -1,15 +1,24 @@
 /**
  * 假的插件接口：拦截 /api/dsh-palace/ 下的请求，返回构建时算好的演示数据（assets/demo/data.json，见 demo/snapshot.ts）。
  * 宫殿画布、阅览室用的是插件的真实组件，它们照常请求接口，不知道自己在演示站里。
- * 只读：改数据的请求一律拒绝；「用浏览器打开」（视频、带网址的格子）照常打开。
+ * 基本只读：挪格子、拖成组、改名、换图标用 Core 自己的 ops 在内存里改（刷新就复原），别的修改一律拒绝；
+ * 「用浏览器打开」（视频、带网址的格子）照常打开。
  */
+import { groupCells, moveCell, updateCell } from '../../src/core/ops.ts'
+import type { PalaceStore } from '../../src/core/store.ts'
 import type { Snapshot } from '../snapshot.ts'
+import { memStore } from './memStore.ts'
 
 let data: Snapshot | undefined
-const rev = 1
+let store: PalaceStore | undefined
+let rev = 1
+
+/** 访客可以试的修改：只动布局和格子外观，规则和插件完全一样 */
+const TRY_OPS: Record<string, (store: PalaceStore, args: never) => Promise<unknown>> = { moveCell, groupCells, updateCell }
 
 export async function loadDemo(): Promise<Snapshot> {
   data = await (await fetch('assets/demo/data.json')).json() as Snapshot
+  store = memStore(data)
   return data
 }
 
@@ -48,6 +57,15 @@ function handle(path: string, url: URL, init: RequestInit | undefined, real: typ
     }
     case 'image': return real(`assets/demo/images/${encodeURIComponent((url.searchParams.get('name') ?? '').split('/').pop()!)}`)
     case 'open': return open(d, init)
+    case 'op': {
+      const { op, args } = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as { op?: string; args?: unknown }
+      const run = op === undefined ? undefined : TRY_OPS[op]
+      if (run === undefined || store === undefined) return fail(READ_ONLY)
+      return run(store, (args ?? {}) as never).then(
+        (result) => { rev += 1; return json({ ok: true, rev, result: result ?? null }) },
+        (e: Error) => fail(e.message),
+      )
+    }
     // 打开对话时上报当前格子：演示里没人听，回个成功就行
     case 'active': return json({ ok: true })
     default: return fail(READ_ONLY)

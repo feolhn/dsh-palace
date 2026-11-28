@@ -1,9 +1,9 @@
 /**
  * 演示站入口（#107）：一座只读的宫殿，访客自己逛。
  * 宫殿、阅览室是插件的真实组件，数据来自 demo/data/（构建时算成 assets/demo/data.json）。
- * 对话面板里是素材包里的聊天记录；点输入框提示装插件，打开安装面板。
+ * 对话面板里是素材包里的聊天记录；访客可以试发一句，下面提示装插件。挪格子、换图标在内存里生效，刷新复原。
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import notebookCss from '../../src/client/notebook/notebook.css?raw'
 import palaceCss from '../../src/client/palace/palace.css?raw'
@@ -28,15 +28,45 @@ if (localStorage.getItem('dsh-palace:view') === null) localStorage.setItem('dsh-
 /** 对话面板里点输入框 → 打开安装面板（两处不在同一棵组件树里，用事件传） */
 const ASK_INSTALL = 'dm-ask-install'
 
-function DemoChat({ lines }: { lines: ChatLine[] | undefined }) {
+/** 访客在演示里试发的话：只留在这个页面里（关掉面板再打开还在，刷新就没了） */
+const tried = new Map<string, string[]>()
+
+function DemoChat({ scope, lines }: { scope: string; lines: ChatLine[] | undefined }) {
+  const [mine, setMine] = useState(() => tried.get(scope) ?? [])
+  const [draft, setDraft] = useState('')
+  const end = useRef<HTMLDivElement>(null)
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [mine.length])
+  const send = () => {
+    const text = draft.trim()
+    if (text === '') return
+    const next = [...mine, text]
+    tried.set(scope, next); setMine(next); setDraft('')
+  }
+  const empty = (lines === undefined || lines.length === 0) && mine.length === 0
   return (
     <div className="dm-chat-log">
-      {lines === undefined || lines.length === 0
+      {empty
         ? <p className="mp-chat-note">这里还没有聊过。</p>
-        : <div className="dm-lines">{lines.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}</div>}
-      <button type="button" className="dm-composer" onClick={() => dispatchEvent(new Event(ASK_INSTALL))}>
-        想到什么，说一句…<span className="dm-send">↑</span>
-      </button>
+        : (
+          <div className="dm-lines">
+            {(lines ?? []).map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
+            {/* 试发的话照常显示；下面接一行系统提示，不冒充 AI 回答 */}
+            {mine.map((t, i) => (
+              <div key={`t${i}`} className="dm-tried">
+                <p className="dm-line dm-user">{t}</p>
+                <p className="dm-system">这是演示，AI 不会回复。装上插件就能真的聊。
+                  <button type="button" className="dm-copy" onClick={() => dispatchEvent(new Event(ASK_INSTALL))}>安装</button></p>
+              </div>
+            ))}
+            <div ref={end} />
+          </div>
+        )}
+      <form className="dm-composer" onSubmit={(e) => { e.preventDefault(); send() }}>
+        <textarea value={draft} rows={1} placeholder="想到什么，说一句…" aria-label="说一句"
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() } }} />
+        <button type="submit" className="dm-send" aria-label="发送" disabled={draft.trim() === ''}>↑</button>
+      </form>
     </div>
   )
 }
@@ -106,6 +136,6 @@ function HowTo({ lead, onClose }: { lead?: string; onClose: () => void }) {
 
 
 void loadDemo().then((d: Snapshot) => {
-  setDemoChat(scope => <DemoChat lines={d.chats[scope]} />)
+  setDemoChat(scope => <DemoChat key={scope} scope={scope} lines={d.chats[scope]} />)
   createRoot(document.getElementById('app')!).render(<Demo />)
 })

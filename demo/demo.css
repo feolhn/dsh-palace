@@ -35,19 +35,29 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-line { margin: 0; padding: 10px 14px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; background: var(--mp-panel, #e0e9e8e6); border: 1px solid var(--mp-edge, #fffffbbf); }
 .dm-user { align-self: flex-end; max-width: 85%; background: var(--mp-fill, #ffffffb3); }
 .dm-ai { align-self: flex-start; max-width: 92%; }
-.dm-composer { position: relative; flex: none; margin: 0 2px 2px; padding: 10px 40px 10px 12px; min-height: 44px; font: inherit; font-size: 13px; line-height: 1.6; text-align: left; color: inherit;
-  border: 1px solid var(--mp-edge, #fffffbbf); background: var(--mp-fill, #ffffffb3); opacity: .7; cursor: text; }
-.dm-composer:hover { opacity: 1; }
-.dm-send { position: absolute; right: 8px; bottom: 8px; width: 26px; height: 26px; display: grid; place-items: center; font-size: 13px; border: 1px solid currentColor; opacity: .5; }
+.dm-composer { position: relative; flex: none; display: flex; margin: 0 2px 2px; border: 1px solid var(--mp-edge, #fffffbbf); background: var(--mp-fill, #ffffffb3); }
+.dm-composer textarea { flex: 1; min-height: 44px; max-height: 120px; box-sizing: border-box; padding: 10px 40px 10px 12px; font: inherit; font-size: 13px; line-height: 1.6; color: inherit; background: none; border: 0; outline: none; resize: none; }
+.dm-send { position: absolute; right: 8px; bottom: 8px; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; font: inherit; font-size: 13px; color: inherit; background: none; border: 1px solid currentColor; cursor: pointer; }
+.dm-send:disabled { opacity: .4; cursor: default; }
+/* 试发后的系统提示：居中小字，和 AI 气泡区分开，不冒充回答 */
+.dm-tried { display: flex; flex-direction: column; gap: 6px; }
+.dm-system { align-self: center; margin: 0; font-size: 12px; line-height: 1.7; text-align: center; opacity: .75; }
 
 @keyframes dm-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .dm-hint, .dm-howto { animation: none; } }
 
-/* 窄窗口（手机）：「安装」和引导挪到标题下面，不和标题抢位置 */
+/* 窄窗口（手机）：
+   - 「安装」和标题在同一行（标题靠左、按钮靠右），引导和安装面板放在这一行下面；
+   - 底栏固定两行：缩放在上一行靠右，其他按钮在下一行。插件底栏默认按宽度自动折行，切视角时 AI 按钮时有时无，缩放就会跳行。
+     用一个占满整行、高度为 0 的伪元素强制换行（只改演示站，插件在桌面窄侧栏里保持原样） */
 @media (max-width: 760px) {
-  .dm-install { top: 72px; }
-  .dm-howto { top: 110px; }
-  .dm-hint { top: 120px; }
+  .dm-root .mp-wordmark { font-size: 22px; }
+  .dm-install { top: 22px; right: 20px; }
+  .dm-howto { top: 66px; right: 20px; width: calc(100vw - 40px); }
+  .dm-hint { top: 76px; }
+  .dm-root .mp-footer { flex-wrap: wrap; row-gap: 4px; padding-bottom: env(safe-area-inset-bottom); }
+  .dm-root .mp-footer > .mp-zoom { order: -2; }
+  .dm-root .mp-footer::before { content: ""; order: -1; flex-basis: 100%; height: 0; }
 }
 /* 手机 Safari 会把 16px 以下的输入框在聚焦时自动放大（点「＋」会碰到） */
 @media (pointer: coarse) { .dm-root :is(input, textarea, select) { font-size: 16px !important; } }
