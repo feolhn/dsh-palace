@@ -24,6 +24,8 @@ export interface Cell {
   subtitle?: string
   /** 图标名（vendor/themes/<皮肤>/icons/<icon>.*）。不填时按 id 挑一个固定的。 */
   icon?: string
+  /** 点开直接用浏览器打开的网址（http / https），不进阅览室。目前只有首次打开时放的「什么是 Memory Palace」（#107） */
+  href?: string
   createdAt: string
 }
 

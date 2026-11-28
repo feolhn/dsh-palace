@@ -54,6 +54,7 @@ dsh-palace-data/
 | `col`, `row` | 整数坐标。最外层可以是负数；分组里从 0 开始 |
 | `title`, `subtitle` | 格子上显示的文字。subtitle 是「备注」，可选：标题上方一行小字，用户想填什么都行（作者、另一种语言的书名……） |
 | `icon` | 可选：图标名。16 个基础图标（`src/client/palace/icons.ts`）每套皮肤各画一份；皮肤还可以在 §4.5 的 `icons.more` 里多画一些。图片按 `icons.file` 找，当前皮肤没有这个图标时借画了它的皮肤的图。不填时前端按 id 固定挑一个，分组默认彩虹 |
+| `href` | 可选：点开直接用浏览器打开的网址（http / https），不进阅览室。目前只有第一次创建数据目录时放进的「什么是 Memory Palace」（指向演示网页 `https://dsh-palace.pages.dev`，#107）；HTTP 和 AI 工具都不能设置 |
 
 规则：
 - 同一层里 `(parentId, col, row)` 不能重复。移动到有格子的位置 = 两个格子互换，一次写入完成。
@@ -231,7 +232,7 @@ function mountEpub(el: HTMLElement, opts: {
 | GET | `page-text?id=&pages=1,2` | `{ pages: [{page,text}], scanned: [页码] }`，PDF 选目录页用 |
 | GET | `asset?f=` | 前端需要的静态资源：`reader/epub.min.js`、`reader/jszip.min.js`（白名单），pdf.js 的 CMap 等，界面字体 `fonts/*.woff2`，皮肤的图片和字体 `themes/<id>/[子目录/]<名字>`（webp、png、svg、ttf、woff2；`theme.json` 打包在前端里，不从这里读） |
 | POST | `pick-file` | macOS 弹出文件选择框 |
-| POST | `open` | 用系统程序打开原文或数据目录 |
+| POST | `open` | 用系统程序打开原文或数据目录；格子带 `href` 时打开这个网址 |
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |
 | GET | `arcs` | `{ rev, arcs }`：电弧，`[{ from, to, strands, why, lastAt, links }]`，按股数排序（见 §8） |
 | POST | `cut-arc` | `{ from, to }`：用户剪断两格之间的电弧 |

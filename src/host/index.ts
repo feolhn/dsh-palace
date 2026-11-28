@@ -2,9 +2,11 @@
  * dsh-palace Host 入口：注册 AI 工具 + 前端用的 HTTP 接口。
  * 数据目录默认 ~/Documents/dsh-palace-data，可在 profile 的 cordis.patch.yml 里用 config.dataDir 修改。
  */
+import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Memory } from '../core/memory.ts'
+import { seedWelcome } from '../core/ops.ts'
 import { PalaceStore } from '../core/store.ts'
 import { createRoutes, type ActiveItems } from './routes.ts'
 import { createTools } from './tools.ts'
@@ -34,7 +36,10 @@ const defaultDataDir = () => join(homedir(), 'Documents', 'dsh-palace-data')
 
 export function apply(ctx: HostContext, config: Config = {}): void {
   const dir = config.dataDir ?? defaultDataDir()
+  // 第一次用（数据目录还不存在）：放一格「什么是 Memory Palace」，免得一进来是空白画布（#107）
+  const firstRun = !existsSync(dir)
   const store = new PalaceStore(dir)
+  if (firstRun) void seedWelcome(store).catch(error => console.warn('[dsh-palace] 放入介绍格子失败', error))
   const active: ActiveItems = new Map()
   const memory = new Memory(store)
 

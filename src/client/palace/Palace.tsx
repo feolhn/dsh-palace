@@ -7,6 +7,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from 'react'
 import type { Cell, CellSummary } from '../../shared/palace.ts'
+import { openSource } from '../api.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { Room, RoomTabs } from './Room.tsx'
 import { Orb } from './Orb.tsx'
@@ -413,6 +414,7 @@ export function Palace() {
     const { cell } = gesture
     if (!gesture.moved) {
       // 轴测视图里分组本来就是展开的
+      if (cell.href !== undefined) { openSource(cell.id).catch((e: Error) => setOpError(e.message)); return }
       if (cell.kind === 'group') { if (!spreading && openGroup !== cell.id) enterGroup(cell) } else { setOrbChat(undefined); setSelected(cell.id) } // 首页的光球对话先收起，不和「与书对话」同时出现（#66）
       return
     }
