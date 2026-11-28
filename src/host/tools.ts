@@ -120,9 +120,10 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
         + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或视频（url，剧、综艺、课都算），可选 title、subtitle（备注：格子上标题上方的一行小字，用户想填什么都行，常见是作者或另一种语言的书名）。title 用书的原名，大小写照原书（如 Invention of Nature），不带文件名里的 - _ 《》 等符号；外文书可把中文译名放 subtitle、target_date（YYYY-MM-DD）。'
         + 'parent_id 填分组 id 可以直接放进分组（分组里不能再放分组）。'
         + '视频链接按平台处理：B 站（带 BV 号或 b23.tv 短链）直接传 url，会自动读出分 P / 合集和每一集的链接，title 可不填；'
-        + 'YouTube：传 url 和视频或播放列表的标题，再读网页或搜索拿到每个视频的标题和链接，用 palace_set_outline 写成目录（每集带 url）；'
-        + '其他平台（Netflix、爱奇艺、芒果 TV、腾讯视频、课程网站……）：从链接和用户的话认出作品，title 用作品的正式名，传 url，'
-        + '再上网查分集（分季就一季一章）和每一集的链接，用 palace_set_outline 写入。连载中的只写已经查实的集数，查不到链接就只写标题。'
+        + 'YouTube：传 url 和视频或播放列表的标题；其他平台（Netflix、爱奇艺、芒果 TV、腾讯视频、课程网站……）：从链接和用户的话认出作品，title 用作品的正式名，传 url。'
+        + '这两类建好后先停下：告诉用户已经放进来了，问要不要上网查分集和每一集的链接（要花一两分钟）；用户在原话里已经要了目录就直接查。'
+        + '查的时候分季就一季一章，用 palace_set_outline 写入（每集尽量带 url）；连载中的只写已经查实的集数，查不到链接就只写标题。'
+        + '同样的规矩适用于任何要花时间的补全（上网查目录、读很多页……）：先建格子，再问用户；几秒内就能完成的（B 站接口、PDF 书签、EPUB 目录）照旧自动做。'
         + '没有原文、也不需要按集打勾的（比如只是想聊一部剧），用 kind=note。',
       parameters: {
         kind: { type: 'string', enum: ['group', 'note', 'book'], required: true },
@@ -146,7 +147,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
           if (item.source?.type === 'video') {
             return total > 0
               ? `已添加视频《${c.title}》 id=${c.id}，共 ${total} 集。`
-              : `已添加视频《${c.title}》 id=${c.id}，还没有分集目录：请上网查这部作品的分集和每一集的链接，用 palace_set_outline 写入。`
+              : `已添加视频《${c.title}》 id=${c.id}，还没有分集目录。先告诉用户已经放进来了，问要不要上网查分集和每一集的链接（要花一两分钟）；用户已经要了目录就直接查，查好用 palace_set_outline 写入。`
           }
           if (item.source?.type === 'epub') return `已添加《${c.title}》 id=${c.id}。用户第一次在笔记本里打开阅读时会自动读出目录。`
           return `已添加《${c.title}》 id=${c.id}，共 ${item.source?.type === 'pdf' ? item.source.pageCount : '?'} 页。`

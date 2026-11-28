@@ -246,7 +246,7 @@ function mountEpub(el: HTMLElement, opts: {
 | 工具 | 作用 |
 |---|---|
 | `palace_overview` | 列出宫殿里的格子和进度；传 `item_id` 时返回完整目录和卡片 |
-| `palace_add` | 新建分组、书（pdf / epub / 视频）、笔记格子。视频按平台处理的清单写在工具说明里：B 站读接口；其他平台 `title` 必填，再由 AI 上网查分集 |
+| `palace_add` | 新建分组、书（pdf / epub / 视频）、笔记格子。视频按平台处理的清单写在工具说明里：B 站读接口；其他平台 `title` 必填，建好后 AI 先问用户要不要上网查分集（要花时间的补全一律先问） |
 | `palace_read` | 读 PDF 指定页的文字，并说明哪些读不出（扫描页） |
 | `palace_set_outline` | 写入两级目录。节可带 `page`（PDF 页序号）或 `url`（视频这一集的链接，只收 http / https） |
 | `palace_set_target_dates` | 批量设置目标日期 |
