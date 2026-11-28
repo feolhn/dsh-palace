@@ -117,15 +117,21 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
     defineTool({
       name: 'palace_add',
       description: '往宫殿里放东西。kind=group 新建分组（title）；kind=note 新建笔记格子（title，用于没有原文的东西：日记、心情、追剧）；'
-        + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或 B 站视频课（url），可选 title、subtitle（备注：格子上标题上方的一行小字，用户想填什么都行，常见是作者或另一种语言的书名）。title 用书的原名，大小写照原书（如 Invention of Nature），不带文件名里的 - _ 《》 等符号；外文书可把中文译名放 subtitle、target_date（YYYY-MM-DD）。'
-        + 'parent_id 填分组 id 可以直接放进分组（分组里不能再放分组）。',
+        + 'kind=book 添加 PDF / EPUB（path 为绝对路径）或视频（url，剧、综艺、课都算），可选 title、subtitle（备注：格子上标题上方的一行小字，用户想填什么都行，常见是作者或另一种语言的书名）。title 用书的原名，大小写照原书（如 Invention of Nature），不带文件名里的 - _ 《》 等符号；外文书可把中文译名放 subtitle、target_date（YYYY-MM-DD）。'
+        + 'parent_id 填分组 id 可以直接放进分组（分组里不能再放分组）。'
+        + '视频链接按平台处理：B 站（带 BV 号或 b23.tv 短链）直接传 url，会自动读出分 P / 合集和每一集的链接，title 可不填；'
+        + 'YouTube：传 url 和视频或播放列表的标题；其他平台（Netflix、爱奇艺、芒果 TV、腾讯视频、课程网站……）：从链接和用户的话认出作品，title 用作品的正式名，传 url。'
+        + '这两类建好后先停下：告诉用户已经放进来了，问要不要上网查分集和每一集的链接（要花一两分钟）；用户在原话里已经要了目录就直接查。'
+        + '查的时候分季就一季一章，用 palace_set_outline 写入（每集尽量带 url）；连载中的只写已经查实的集数，查不到链接就只写标题。'
+        + '同样的规矩适用于任何要花时间的补全（上网查目录、读很多页……）：先建格子，再问用户；几秒内就能完成的（B 站接口、PDF 书签、EPUB 目录）照旧自动做。'
+        + '没有原文、也不需要按集打勾的（比如只是想聊一部剧），用 kind=note。',
       parameters: {
         kind: { type: 'string', enum: ['group', 'note', 'book'], required: true },
         title: { type: 'string' },
         subtitle: { type: 'string' },
         parent_id: { type: 'string' },
         path: { type: 'string', description: 'book：PDF 或 EPUB 的绝对路径' },
-        url: { type: 'string', description: 'book：B 站视频链接' },
+        url: { type: 'string', description: 'book：视频链接（http / https）' },
         target_date: { type: 'string' },
       },
       output: stringOut,
@@ -138,7 +144,11 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
           const c = await addBook(store, { file: args.path, url: args.url, title: args.title, subtitle: args.subtitle, parentId: args.parent_id, targetDate: args.target_date }, exec.signal)
           const item = store.getItem(c.id)
           const total = progressOf(item).total
-          if (item.source?.type === 'video') return `已添加视频课《${c.title}》 id=${c.id}，共 ${total} 集。`
+          if (item.source?.type === 'video') {
+            return total > 0
+              ? `已添加视频《${c.title}》 id=${c.id}，共 ${total} 集。`
+              : `已添加视频《${c.title}》 id=${c.id}，还没有分集目录。先告诉用户已经放进来了，问要不要上网查分集和每一集的链接（要花一两分钟）；用户已经要了目录就直接查，查好用 palace_set_outline 写入。`
+          }
           if (item.source?.type === 'epub') return `已添加《${c.title}》 id=${c.id}。用户第一次在笔记本里打开阅读时会自动读出目录。`
           return `已添加《${c.title}》 id=${c.id}，共 ${item.source?.type === 'pdf' ? item.source.pageCount : '?'} 页。`
             + (total > 0
@@ -197,7 +207,8 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
       name: 'palace_set_outline',
       description: '写入（覆盖）书的目录结构，只要两级：章 › 节。没有分节的章，sections 留空即可（会自动算作一节）。'
         + '标题保持原书写法，去掉页码和省略号。重新生成目录时，标题不变的节会保留完成状态。'
-        + '页码 page 可选，填 PDF 页序号（书上印的页码 + 偏移量）；不确定就不填。',
+        + '页码 page 可选，填 PDF 页序号（书上印的页码 + 偏移量）；不确定就不填。'
+        + '视频的每一集可以填 url（这一集的播放链接，http / https），用户点「播放」直接打开；不填就打开作品链接。',
       parameters: {
         item_id: { type: 'string', required: true },
         chapters: {
@@ -216,6 +227,7 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
                   properties: {
                     title: { type: 'string', required: true },
                     page: { type: 'integer' },
+                    url: { type: 'string' },
                   },
                 },
               },
@@ -226,9 +238,15 @@ export function createTools(store: PalaceStore, active: ActiveItems, memory = ne
       output: stringOut,
       async execute(args) {
         return guard(async () => {
-          const input = (args.chapters as { title: string; sections?: { title: string; page?: number }[] }[]).map(c => ({
+          // 节的 loc：PDF 是页码，视频是这一集的链接
+          let video = false
+          try { video = store.getItem(String(args.item_id)).source?.type === 'video' } catch { /* id 不对，交给 setOutline 报错 */ }
+          const locOf = (x: { page?: number; url?: string }) => video
+            ? (typeof x.url === 'string' && /^https?:\/\/\S+$/.test(x.url.trim()) ? { loc: x.url.trim() } : {})
+            : (Number.isInteger(x.page) ? { loc: String(x.page) } : {})
+          const input = (args.chapters as { title: string; sections?: { title: string; page?: number; url?: string }[] }[]).map(c => ({
             title: c.title,
-            sections: (c.sections ?? []).map(s => ({ title: s.title, ...(Number.isInteger(s.page) ? { loc: String(s.page) } : {}) })),
+            sections: (c.sections ?? []).map(s => ({ title: s.title, ...locOf(s) })),
           }))
           const item = await core.setOutline(store, { id: args.item_id, chapters: input, source: 'ai' })
           return `已写入目录：${item.chapters.length} 章 ${progressOf(item).total} 节。用户可以在右侧笔记本里查看和打勾。`

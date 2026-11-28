@@ -8,7 +8,7 @@ import { basename, extname, isAbsolute, join } from 'node:path'
 import * as core from '../core/ops.ts'
 import { newId, ShelfError, type PalaceStore } from '../core/store.ts'
 import type { SourceRef } from '../shared/palace.ts'
-import { readVideoCourse } from './bilibili.ts'
+import { isBilibili, readVideoCourse } from './bilibili.ts'
 import { readPdfInfo } from './pdf.ts'
 
 export function expandHome(path: string): string {
@@ -26,7 +26,15 @@ export async function addBook(store: PalaceStore, args: { file?: unknown; url?: 
   let outline: core.OutlineInput[] = []
   let outlineSource: 'bookmarks' | 'video' | undefined
   if (typeof args.url === 'string' && args.url.trim() !== '') {
-    const course = await readVideoCourse(args.url.trim(), signal).catch((error: Error) => { cancelled(); throw new ShelfError(error.message) })
+    const url = args.url.trim()
+    if (!isBilibili(url)) {
+      // 其他平台没有接口可读：只记下作品链接，标题由 AI 认出作品后填，分集由 AI 查好再写目录（#123）
+      if (!/^https?:\/\/\S+$/.test(url)) throw new ShelfError('视频链接要以 http:// 或 https:// 开头')
+      if (typeof args.title !== 'string' || args.title.trim() === '') throw new ShelfError('不是 B 站链接时要填作品名')
+      cancelled()
+      return core.addCell(store, { kind: 'book', title: args.title.trim(), subtitle: args.subtitle, source: { type: 'video', url }, parentId: args.parentId, targetDate: args.targetDate })
+    }
+    const course = await readVideoCourse(url, signal).catch((error: Error) => { cancelled(); throw new ShelfError(error.message) })
     source = { type: 'video', url: course.url }
     title = course.title
     outline = course.chapters.map(c => ({ title: c.title, sections: c.episodes.map(e => ({ title: e.title, loc: e.url })) }))

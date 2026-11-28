@@ -5,7 +5,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { chatWorkspace, setActive } from '../api.ts'
-import { setDraft } from '../chat.ts'
+import { canChat, sendText, setDraft } from '../chat.ts'
 import { ChatIntroProvider, focusComposer, sessionsService, useChatSlots, workspacesService, type SessionReference } from './host.tsx'
 
 const STORE_KEY = 'dsh-palace:chat-sessions'
@@ -57,7 +57,7 @@ async function sessionFor(scope: string, fresh: boolean): Promise<string> {
   return id
 }
 
-export function PalaceChat({ scope, itemId, heading, context, prompts, dock, side = false, seed, onSession, onClose }: {
+export function PalaceChat({ scope, itemId, heading, context, prompts, dock, side = false, seed, send, onSession, onClose }: {
   /** 'palace' 或格子 id：决定用哪个会话 */
   scope: string
   /** 书 / 笔记的 id：AI 记卡片时默认记到这里 */
@@ -74,6 +74,8 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, sid
   onSession?: (sessionId: string | undefined) => void
   /** 放进输入框的一段话（阅读器划词「问问 AI」）。n 变了就再放一次；只放不发 */
   seed?: { text: string; n: number }
+  /** 替用户发出去的一条消息（「＋」里写的内容）。n 变了就再发一次 */
+  send?: { text: string; n: number }
   onClose: () => void
 }) {
   const panel = useRef<HTMLElement>(null)
@@ -121,6 +123,20 @@ export function PalaceChat({ scope, itemId, heading, context, prompts, dock, sid
     put()
     return () => cancelAnimationFrame(frame)
   }, [sessionId, seed?.n])
+
+  // 会话打开后替用户发出 send；同一条（n）只发一次
+  const sent = useRef<number>()
+  useEffect(() => {
+    if (send === undefined || sessionId === undefined || sent.current === send.n) return
+    let frame = 0, tries = 0
+    const go = () => {
+      if (!canChat(sessionId)) { if (++tries < 120) frame = requestAnimationFrame(go); else setError('未连接 AI'); return }
+      sent.current = send.n
+      sendText(sessionId, send.text).catch((e: Error) => setError(e.message))
+    }
+    go()
+    return () => cancelAnimationFrame(frame)
+  }, [sessionId, send?.n])
 
   const unsupported = slots === undefined || sessionsService() === undefined || error === 'unsupported'
 

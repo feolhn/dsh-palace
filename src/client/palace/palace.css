@@ -165,12 +165,11 @@
 .mp-dialog label small { opacity: .65; font-size: 10px; margin-left: 6px; }
 .mp-dialog input { width: 100%; background: #ffffff28; border: 0; border-bottom: 1px solid #7a99a455; padding: 8px 10px; font-size: 14px; outline: none; }
 .mp-dialog input:focus { border-bottom-color: var(--mp-ink); }
-.mp-row { display: flex; gap: 12px; align-items: center; }
-.mp-kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.mp-kinds button { text-align: left; padding: 10px 12px !important; border: 1px solid var(--mp-edge, #fffffa85) !important; display: flex; flex-direction: column; gap: 4px; }
-.mp-kinds button span { font-size: 14px; }
-.mp-kinds button small { font-size: 10px; line-height: 1.5; opacity: .7; }
-.mp-kinds button.mp-on { background: var(--mp-hover, #ffffff55) !important; border-color: var(--mp-ink) !important; }
+.mp-add-text { width: 100%; resize: none; background: #ffffff28; border: 0; border-bottom: 1px solid #7a99a455; padding: 8px 10px; font: 14px/1.7 var(--mp-sans); color: inherit; outline: none; }
+.mp-add-text:focus { border-bottom-color: var(--mp-ink); }
+.mp-add-alt { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; }
+.mp-add-alt .mp-text-btn { opacity: .7; }
+.mp-add-alt .mp-text-btn:hover { opacity: 1; }
 .mp-dialog-actions { display: flex; justify-content: flex-end; margin-top: 22px; }
 
 /* ---------- AI 对话（嵌入 Harness 原生对话，外框按设计稿的「与宫殿对话」） ---------- */
