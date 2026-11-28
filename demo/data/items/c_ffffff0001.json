@@ -1,0 +1,40 @@
+{
+  "schema": 2,
+  "id": "c_ffffff0001",
+  "source": null,
+  "chapters": [],
+  "cards": [
+    {
+      "id": "k_ffffff0101",
+      "type": "thought",
+      "note": "书、课、剧、播客、日记都能放进同一张格子画布。相同的格子让不同内容并列，也让人能在空间里找回以前放过的东西。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0102",
+      "type": "thought",
+      "note": "用户只管记。整理、归类和建立联系尽量由 AI 在后台完成。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0103",
+      "type": "thought",
+      "note": "带着一本书、一门课或一部剧聊天，更容易说出当时在想什么。目录、卡片和灵感给了对话一个具体的场景。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0104",
+      "type": "thought",
+      "note": "宫殿的交互建立在两件事上：在画布上浏览内容，以及用对话完成操作。换皮肤也能保留这两种用法。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ],
+  "inspirations": [
+    {
+      "id": "i_ffffff0001",
+      "title": "设计讨论原文",
+      "body": "看设计讨论时，可以留意两件事：内容为什么放在格子里，以及为什么从某个具体的格子开始聊。\n\n[查看 Discussion #82](https://github.com/feolhn/dsh-palace/discussions/82)",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ]
+}

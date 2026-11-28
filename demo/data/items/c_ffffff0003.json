@@ -1,0 +1,40 @@
+{
+  "schema": 2,
+  "id": "c_ffffff0003",
+  "source": null,
+  "chapters": [],
+  "cards": [
+    {
+      "id": "k_ffffff0301",
+      "type": "thought",
+      "note": "对话常驻简短背景，例如对用户的理解、宫殿索引和眼下这一格的相关信息。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0302",
+      "type": "thought",
+      "note": "需要想起别的格子时，先从索引找线索，再按需查看那格的卡片和灵感，找到对应的原话。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0303",
+      "type": "thought",
+      "note": "只把必要的线索带进每轮对话，避免格子多了以后，重要的内容被埋在过长的背景里。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0304",
+      "type": "thought",
+      "note": "联想遵循「少而准」。找到两端的具体证据，才能说清楚它们为什么有关系。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ],
+  "inspirations": [
+    {
+      "id": "i_ffffff0003",
+      "title": "设计讨论原文",
+      "body": "可以用一段新对话来检验：只说一个想法，看看 AI 能否找到相关的格子，并指出具体出处。\n\n[查看 Discussion #81](https://github.com/feolhn/dsh-palace/discussions/81)",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ]
+}

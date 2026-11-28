@@ -1,0 +1,112 @@
+{
+  "schema": 2,
+  "id": "c_0868f17ad2",
+  "source": {
+    "type": "epub",
+    "path": "humboldt-7014-sample.epub"
+  },
+  "chapters": [
+    {
+      "id": "ch_01a6e6a5b2",
+      "title": "CHAPTER 2.16. LAKE OF TACARIGUA. HOT SPRINGS OF MARIARA. TOWN OF NUEVA VALENCIA DEL REY. DESCENT TOWARDS THE COASTS OF PORTO CABELLO.",
+      "sections": [
+        {
+          "id": "s_ceb5439a8c",
+          "title": "CHAPTER 2.16. LAKE OF TACARIGUA. HOT SPRINGS OF MARIARA. TOWN OF NUEVA VALENCIA DEL REY. DESCENT TOWARDS THE COASTS OF PORTO CABELLO.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1e7c8742a3",
+      "title": "CHAPTER 2.17. MOUNTAINS WHICH SEPARATE THE VALLEYS OF ARAGUA FROM THE LLANOS OF CARACAS. VILLA DE CURA. PARAPARA. LLANOS OR STEPPES. CALABOZO.",
+      "sections": [
+        {
+          "id": "s_12c2158b6d",
+          "title": "CHAPTER 2.17. MOUNTAINS WHICH SEPARATE THE VALLEYS OF ARAGUA FROM THE LLANOS OF CARACAS. VILLA DE CURA. PARAPARA. LLANOS OR STEPPES. CALABOZO.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_3c764a237d",
+      "title": "CHAPTER 2.18. SAN FERNANDO DE APURE. INTERTWININGS AND BIFURCATIONS OF THE RIVERS APURE AND ARAUCA. NAVIGATION ON THE RIO APURE.",
+      "sections": [
+        {
+          "id": "s_3342073bc5",
+          "title": "CHAPTER 2.18. SAN FERNANDO DE APURE. INTERTWININGS AND BIFURCATIONS OF THE RIVERS APURE AND ARAUCA. NAVIGATION ON THE RIO APURE.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1e3928b278",
+      "title": "CHAPTER 2.19. JUNCTION OF THE APURE AND THE ORINOCO. MOUNTAINS OF ENCARAMADA. URUANA. BARAGUAN. CARICHANA. MOUTH OF THE META. ISLAND OF PANUMANA.",
+      "sections": [
+        {
+          "id": "s_69e7a5dee4",
+          "title": "CHAPTER 2.19. JUNCTION OF THE APURE AND THE ORINOCO. MOUNTAINS OF ENCARAMADA. URUANA. BARAGUAN. CARICHANA. MOUTH OF THE META. ISLAND OF PANUMANA.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d34e286d07",
+      "title": "CHAPTER 2.20. THE MOUTH OF THE RIO ANAVENI. PEAK OF UNIANA. MISSION OF ATURES. CATARACT, OR RAUDAL OF MAPARA. ISLETS OF SURUPAMANA AND UIRAPURI.",
+      "sections": [
+        {
+          "id": "s_55ab801f7f",
+          "title": "CHAPTER 2.20. THE MOUTH OF THE RIO ANAVENI. PEAK OF UNIANA. MISSION OF ATURES. CATARACT, OR RAUDAL OF MAPARA. ISLETS OF SURUPAMANA AND UIRAPURI.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1f5b383eb4",
+      "title": "CHAPTER 2.21. RAUDAL OF GARCITA. MAYPURES. CATARACTS OF QUITUNA. MOUTH OF THE VICHADA AND THE ZAMA. ROCK OF ARICAGUA. SIQUITA.",
+      "sections": [
+        {
+          "id": "s_cfacdff4ef",
+          "title": "CHAPTER 2.21. RAUDAL OF GARCITA. MAYPURES. CATARACTS OF QUITUNA. MOUTH OF THE VICHADA AND THE ZAMA. ROCK OF ARICAGUA. SIQUITA.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_92e2076155",
+      "title": "CHAPTER 2.22. SAN FERNANDO DE ATABAPO. SAN BALTHASAR. THE RIVERS TEMI AND TUAMINI. JAVITA. PORTAGE FROM THE TUAMINI TO THE RIO NEGRO.",
+      "sections": [
+        {
+          "id": "s_590d3a35b0",
+          "title": "CHAPTER 2.22. SAN FERNANDO DE ATABAPO. SAN BALTHASAR. THE RIVERS TEMI AND TUAMINI. JAVITA. PORTAGE FROM THE TUAMINI TO THE RIO NEGRO.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_fcfb230051",
+      "title": "CHAPTER 2.23. THE RIO NEGRO. BOUNDARIES OF BRAZIL. THE CASSIQUIARE. BIFURCATION OF THE ORINOCO.",
+      "sections": [
+        {
+          "id": "s_f78ca6c5bf",
+          "title": "CHAPTER 2.23. THE RIO NEGRO. BOUNDARIES OF BRAZIL. THE CASSIQUIARE. BIFURCATION OF THE ORINOCO.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_72b9995bce",
+      "title": "CHAPTER 2.24. THE UPPER ORINOCO, FROM THE ESMERALDA TO THE CONFLUENCE OF THE GUAVIARE. SECOND PASSAGE ACROSS THE CATARACTS OF ATURES AND MAYPURES. THE LOWER ORINOCO, BETWEEN THE MOUTH OF THE RIO APURE, AND ANGOSTURA THE CAPITAL OF SPANISH GUIANA.",
+      "sections": [
+        {
+          "id": "s_c3f2a8fbd7",
+          "title": "CHAPTER 2.24. THE UPPER ORINOCO, FROM THE ESMERALDA TO THE CONFLUENCE OF THE GUAVIARE. SECOND PASSAGE ACROSS THE CATARACTS OF ATURES AND MAYPURES. THE LOWER ORINOCO, BETWEEN THE MOUTH OF THE RIO APURE, AND ANGOSTURA THE CAPITAL OF SPANISH GUIANA.",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "inspirations": [],
+  "outlineSource": "ai"
+}

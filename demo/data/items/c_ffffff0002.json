@@ -1,0 +1,40 @@
+{
+  "schema": 2,
+  "id": "c_ffffff0002",
+  "source": null,
+  "chapters": [],
+  "cards": [
+    {
+      "id": "k_ffffff0201",
+      "type": "thought",
+      "note": "记忆分成证据、理解和呈现。卡片、灵感及联想记录是证据，格子页和对用户的理解可以从这些证据重建。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0202",
+      "type": "thought",
+      "note": "判断什么值得记时，用具体标准：三周后，朋友还会主动提起这件事吗？",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0203",
+      "type": "thought",
+      "note": "用户自己的纠正也是需要保留的证据。记忆更新时应尊重这些纠正。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0204",
+      "type": "thought",
+      "note": "电弧让联想在宫殿里可见。两端都需要证据，用户可以剪断不合适的联系。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ],
+  "inspirations": [
+    {
+      "id": "i_ffffff0002",
+      "title": "设计讨论原文",
+      "body": "读设计稿时，可以顺着一条电弧想一想：它连的是什么，依据在哪里，哪些内容又可以从依据重新得到。\n\n[查看 Discussion #80](https://github.com/feolhn/dsh-palace/discussions/80)",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ]
+}

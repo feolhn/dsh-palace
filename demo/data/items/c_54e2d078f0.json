@@ -1,0 +1,101 @@
+{
+  "schema": 2,
+  "id": "c_54e2d078f0",
+  "source": {
+    "type": "epub",
+    "path": "humboldt-7254-sample.epub"
+  },
+  "chapters": [
+    {
+      "id": "ch_1ece7b0708",
+      "title": "CHAPTER 3.25. SPANISH GUIANA. ANGOSTURA. PALM-INHABITING TRIBES. MISSIONS OF THE CAPUCHINS. THE LAGUNA PARIME. EL DORADO. LEGENDARY TALES OF THE EARLY VOYAGERS.",
+      "sections": [
+        {
+          "id": "s_b613c0d0d0",
+          "title": "CHAPTER 3.25. SPANISH GUIANA. ANGOSTURA. PALM-INHABITING TRIBES. MISSIONS OF THE CAPUCHINS. THE LAGUNA PARIME. EL DORADO. LEGENDARY TALES OF THE EARLY VOYAGERS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1dc656b07a",
+      "title": "CHAPTER 3.26. THE LLANOS DEL PAO, OR EASTERN PART OF THE PLAINS OF VENEZUELA. MISSIONS OF THE CARIBS. LAST VISIT TO THE COAST OF NUEVA BARCELONA, CUMANA, AND ARAYA.",
+      "sections": [
+        {
+          "id": "s_069d780b21",
+          "title": "CHAPTER 3.26. THE LLANOS DEL PAO, OR EASTERN PART OF THE PLAINS OF VENEZUELA. MISSIONS OF THE CARIBS. LAST VISIT TO THE COAST OF NUEVA BARCELONA, CUMANA, AND ARAYA.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_5ff6e974f7",
+      "title": "CHAPTER 3.27. POLITICAL STATE OF THE PROVINCES OF VENEZUELA. EXTENT OF TERRITORY. POPULATION. NATURAL PRODUCTIONS. EXTERNAL TRADE. COMMUNICATIONS BETWEEN THE DIFFERENT PROVINCES COMPRISING THE REPUBLIC OF COLUMBIA.",
+      "sections": [
+        {
+          "id": "s_9148646584",
+          "title": "CHAPTER 3.27. POLITICAL STATE OF THE PROVINCES OF VENEZUELA. EXTENT OF TERRITORY. POPULATION. NATURAL PRODUCTIONS. EXTERNAL TRADE. COMMUNICATIONS BETWEEN THE DIFFERENT PROVINCES COMPRISING THE REPUBLIC OF COLUMBIA.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_025e9a8cfb",
+      "title": "CHAPTER 3.28. PASSAGE FROM THE COAST OF VENEZUELA TO THE HAVANA. GENERAL VIEW OF THE POPULATION OF THE WEST INDIA ISLANDS, COMPARED WITH THE POPULATION OF THE NEW CONTINENT, WITH RESPECT TO DIVERSITY OF RACES, PERSONAL LIBERTY, LANGUAGE, AND WORSHIP.",
+      "sections": [
+        {
+          "id": "s_652a947839",
+          "title": "CHAPTER 3.28. PASSAGE FROM THE COAST OF VENEZUELA TO THE HAVANA. GENERAL VIEW OF THE POPULATION OF THE WEST INDIA ISLANDS, COMPARED WITH THE POPULATION OF THE NEW CONTINENT, WITH RESPECT TO DIVERSITY OF RACES, PERSONAL LIBERTY, LANGUAGE, AND WORSHIP.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_a4ad2482c3",
+      "title": "CHAPTER 3.29. POLITICAL ESSAY ON THE ISLAND OF CUBA. THE HAVANNAH. HILLS OF GUANAVACOA, CONSIDERED IN THEIR GEOLOGICAL RELATIONS. VALLEY OF LOS GUINES, BATABANO, AND PORT OF TRINIDAD. THE KING AND QUEEN'S GARDENS.",
+      "sections": [
+        {
+          "id": "s_f36eb29025",
+          "title": "CHAPTER 3.29. POLITICAL ESSAY ON THE ISLAND OF CUBA. THE HAVANNAH. HILLS OF GUANAVACOA, CONSIDERED IN THEIR GEOLOGICAL RELATIONS. VALLEY OF LOS GUINES, BATABANO, AND PORT OF TRINIDAD. THE KING AND QUEEN'S GARDENS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1b7853b57c",
+      "title": "CHAPTER 3.30. PASSAGE FROM TRINIDAD DE CUBA TO RIO SINU. CARTHAGENA. AIR VOLCANOES OF TURBACO. CANAL OF MAHATES.",
+      "sections": [
+        {
+          "id": "s_eb7845b4ff",
+          "title": "CHAPTER 3.30. PASSAGE FROM TRINIDAD DE CUBA TO RIO SINU. CARTHAGENA. AIR VOLCANOES OF TURBACO. CANAL OF MAHATES.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_f71fd9eb29",
+      "title": "CHAPTER 3.31. CUBA AND THE SLAVE TRADE.",
+      "sections": [
+        {
+          "id": "s_8406c555b7",
+          "title": "CHAPTER 3.31. CUBA AND THE SLAVE TRADE.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d0dac71486",
+      "title": "CHAPTER 3.32. GEOGNOSTIC DESCRIPTION OF SOUTH AMERICA, NORTH OF THE RIVER AMAZON, AND EAST OF THE MERIDIAN OF THE SIERRA NEVADA DE MERIDA.",
+      "sections": [
+        {
+          "id": "s_fe1a1c3c10",
+          "title": "CHAPTER 3.32. GEOGNOSTIC DESCRIPTION OF SOUTH AMERICA, NORTH OF THE RIVER AMAZON, AND EAST OF THE MERIDIAN OF THE SIERRA NEVADA DE MERIDA.",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "cards": [],
+  "inspirations": [],
+  "outlineSource": "ai"
+}

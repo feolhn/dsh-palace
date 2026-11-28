@@ -1,0 +1,140 @@
+{
+  "schema": 2,
+  "id": "c_a0186b35c7",
+  "source": null,
+  "chapters": [
+    {
+      "id": "ch_b77ac4d5d1",
+      "title": "版权信息",
+      "sections": [
+        {
+          "id": "s_b768802df8",
+          "title": "版权信息",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_cdecf7ad7c",
+      "title": "目录",
+      "sections": [
+        {
+          "id": "s_f7ffe0a5ad",
+          "title": "目录",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_2193aa04b4",
+      "title": "你一生的故事",
+      "sections": [
+        {
+          "id": "s_78934289d5",
+          "title": "你一生的故事",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d26798507a",
+      "title": "巴比伦塔",
+      "sections": [
+        {
+          "id": "s_3fff2a84fb",
+          "title": "巴比伦塔",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_10becd5a35",
+      "title": "领悟",
+      "sections": [
+        {
+          "id": "s_a508f98809",
+          "title": "领悟",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_9b27ea5ef8",
+      "title": "除以零",
+      "sections": [
+        {
+          "id": "s_9d1dbcdc1a",
+          "title": "除以零",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_816d64324c",
+      "title": "七十二个字母",
+      "sections": [
+        {
+          "id": "s_b910ff6260",
+          "title": "七十二个字母",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_33b123affa",
+      "title": "人类科学之演变",
+      "sections": [
+        {
+          "id": "s_0d7eca3a85",
+          "title": "人类科学之演变",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d3a7e386a7",
+      "title": "地狱是上帝不在的地方",
+      "sections": [
+        {
+          "id": "s_2a180d3420",
+          "title": "地狱是上帝不在的地方",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_90a30ecbfd",
+      "title": "赏心悦目：审美干扰镜提案风波纪实",
+      "sections": [
+        {
+          "id": "s_32dfc03f4d",
+          "title": "赏心悦目：审美干扰镜提案风波纪实",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_91c4255496",
+      "title": "注释",
+      "sections": [
+        {
+          "id": "s_2365186aa2",
+          "title": "注释",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "k_c7ab082e30",
+      "type": "excerpt",
+      "createdAt": "2026-11-22T07:03:29.780Z",
+      "quote": "从一开始我就知道结局，我选定了自己要走的路，也就是未来的必经之路。我循路而前，满怀喜悦，也许是满怀痛苦。我的未来，它究竟是最小化，还是最大化？",
+      "note": "明知结局仍要经历，永恒回归。 全然的接受这条路上所有欢欣与惊奇、坎坷和崎岖，在全知的状态下，全然的热爱。"
+    }
+  ],
+  "inspirations": [],
+  "finishedAt": "2026-11-22",
+  "outlineSource": "toc"
+}
