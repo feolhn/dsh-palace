@@ -29,7 +29,8 @@ const TICK = 50
 function Demo() {
   const [shown, setShown] = useState<DemoState>(() => stateAt(START_STATE, SCENES, 0))
   const [scene, setScene] = useState(0)
-  const [step, setStep] = useState(0) // 这一幕已经做完几个动作
+  const [elapsed, setElapsed] = useState(0) // 这一幕播了多少毫秒（暂停不计），进度条按它连续前进
+  const [howto, setHowto] = useState(false)
   const [paused, setPaused] = useState(false)
   const [mount, setMount] = useState(0) // 换了它就重新挂载宫殿（跳转时用）
   const run = useRef(0) // 每次跳转加一，旧的播放循环看到就停
@@ -52,7 +53,7 @@ function Demo() {
       for (let left = ms; left > 0;) {
         await sleep(TICK)
         if (run.current !== id) return false
-        if (!pausedRef.current) left -= TICK
+        if (!pausedRef.current) { left -= TICK; setElapsed(e => e + TICK) }
       }
       return run.current === id
     }
@@ -60,12 +61,13 @@ function Demo() {
     localStorage.setItem(VIEW_KEY, s.iso ? 'iso' : 'flat')
     setDemoData(s)
     await refreshPalace()
-    setShown(s); setScene(index); setStep(0); setMount(n => n + 1)
+    setShown(s); setScene(index); setElapsed(0); setMount(n => n + 1)
     await sleep(600)
     let state = s
     for (let i = index; i < SCENES.length; i++) {
-      if (i !== index) { state = enterScene(state); setShown(state); setScene(i); setStep(0) }
-      for (const [k, a] of SCENES[i].actions.entries()) {
+      if (i !== index) { state = enterScene(state); setShown(state); setScene(i); setElapsed(0) }
+      let done = 0 // 已播完的动作时长之和：每个动作结束时对齐一次，免得计时累计误差
+      for (const a of SCENES[i].actions) {
         if (run.current !== id) return
         while (pausedRef.current) { if (!await hold(TICK)) return }
         state = apply(state, a)
@@ -74,7 +76,8 @@ function Demo() {
         else void refreshPalace()
         setShown(state)
         if (!await hold(durationOf(a))) return
-        setStep(k + 1)
+        done += durationOf(a)
+        setElapsed(done)
       }
     }
   }
@@ -107,7 +110,7 @@ function Demo() {
       {paused && <div className="dm-paused">已暂停 · 点画面继续</div>}
       <nav className="dm-bar" aria-label="演示进度">
         {SCENES.map((sc, i) => {
-          const fill = i < scene ? 1 : i > scene ? 0 : SCENES[i].actions.slice(0, step).reduce((t, a) => t + durationOf(a), 0) / sceneLength(sc)
+          const fill = i < scene ? 1 : i > scene ? 0 : Math.min(1, elapsed / sceneLength(sc))
           return (
             <button key={sc.id} type="button" className={`dm-seg ${i === scene ? 'dm-on' : ''}`} style={{ flexGrow: sceneLength(sc) }}
               onClick={() => { setPaused(false); void seek(i) }}>
@@ -117,8 +120,30 @@ function Demo() {
           )
         })}
       </nav>
-      <a className="dm-install" href="https://github.com/feolhn/dsh-palace#安装">安装</a>
+      {/* 安装：打开时暂停，看完关掉接着播 */}
+      <button type="button" className="dm-install" aria-expanded={howto} onClick={() => { setHowto(h => !h); setPaused(true) }}>安装</button>
+      {howto && <HowTo onClose={() => setHowto(false)} />}
     </div>
+  )
+}
+
+/** 安装步骤，和 README「安装」一节保持一致 */
+function HowTo({ onClose }: { onClose: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => { void navigator.clipboard?.writeText('dsh-palace').then(() => setCopied(true)) }
+  return (
+    <section className="dm-howto" aria-label="安装步骤">
+      <h2>在 DeepSeek Harness 里安装</h2>
+      <ol>
+        <li>还没有 Harness 的话，先到<a href="https://www.deepseek.com/harness/" target="_blank" rel="noreferrer">官网</a>下载桌面版并安装。</li>
+        <li>打开 Harness，进入插件安装界面。</li>
+        <li>输入 <code>dsh-palace</code><button type="button" className="dm-copy" onClick={copy}>{copied ? '已复制' : '复制'}</button>，点安装。</li>
+        <li>完全退出 Harness，再重新打开。</li>
+        <li>左侧导航出现「Memory Palace」，就装好了。</li>
+      </ol>
+      <p className="dm-soon">Claude、ChatGPT 即将支持。</p>
+      <button type="button" className="dm-copy dm-close" onClick={onClose}>关闭</button>
+    </section>
   )
 }
 

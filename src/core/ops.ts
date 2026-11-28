@@ -129,7 +129,8 @@ export const WELCOME_URL = 'https://dsh-palace.pages.dev'
 export async function seedWelcome(store: PalaceStore): Promise<Cell> {
   // 一次写入完整的格子，不会留下没有网址的半成品
   return store.mutate((tx) => {
-    const cell: Cell = { id: newId('c'), kind: 'note', parentId: null, ...firstEmptySlot(tx.palace, null), title: '什么是 Memory Palace', subtitle: '点开看看 ↗', icon: 'open-book', href: WELCOME_URL, createdAt: nowIso() }
+    // 副标题「什么是」+ 主标题「Memory Palace」：主标题最多两行，全写在主标题里会被截断
+    const cell: Cell = { id: newId('c'), kind: 'note', parentId: null, ...firstEmptySlot(tx.palace, null), title: 'Memory Palace', subtitle: '什么是', icon: 'open-book', href: WELCOME_URL, createdAt: nowIso() }
     tx.palace.cells.push(cell)
     tx.createItem(emptyItem(cell.id, null))
     return cell
