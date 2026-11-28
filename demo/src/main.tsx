@@ -31,11 +31,16 @@ function Demo() {
   const [scene, setScene] = useState(0)
   const [elapsed, setElapsed] = useState(0) // 这一幕播了多少毫秒（暂停不计），进度条按它连续前进
   const [howto, setHowto] = useState(false)
+  const [ended, setEnded] = useState(false) // 播完了：解开画布，观众可以自己逛
+  const canvas = useRef<HTMLDivElement>(null)
+  useEffect(() => { canvas.current?.toggleAttribute('inert', !ended) }, [ended])
   const [paused, setPaused] = useState(false)
   const [mount, setMount] = useState(0) // 换了它就重新挂载宫殿（跳转时用）
   const run = useRef(0) // 每次跳转加一，旧的播放循环看到就停
   const pausedRef = useRef(false)
   pausedRef.current = paused
+  const endedRef = useRef(false)
+  endedRef.current = ended
   const stage = useRef<HTMLDivElement>(null)
   const skin = themeRoot(useThemeId())
 
@@ -48,6 +53,7 @@ function Demo() {
   /** 跳到第 index 幕的开头：瞬间重放前面的动作，重新挂载宫殿，然后从这里播 */
   const seek = async (index: number) => {
     const id = ++run.current
+    setEnded(false)
     /** 等 ms 毫秒，暂停时不计时；跳转了就提前返回 false */
     const hold = async (ms: number) => {
       for (let left = ms; left > 0;) {
@@ -80,13 +86,15 @@ function Demo() {
         setElapsed(done)
       }
     }
+    // 播完：收起字幕和对话，把画布让给观众
+    if (run.current === id) { setShown(enterScene(state)); setEnded(true) }
   }
 
   useEffect(() => { void seek(0) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     // 空格暂停 / 继续；焦点在按钮、链接上时留给它们（比如用键盘选进度条上的某一幕）
     const key = (e: KeyboardEvent) => {
-      if (e.key !== ' ' || (e.target as Element | null)?.closest?.('button, a, input, textarea, select')) return
+      if (e.key !== ' ' || endedRef.current || (e.target as Element | null)?.closest?.('button, a, input, textarea, select')) return
       e.preventDefault()
       setPaused(p => !p)
     }
@@ -96,8 +104,8 @@ function Demo() {
 
   return (
     <div className={`dm-root ${skin.className}`} style={skin.style}>
-      <div ref={stage} className="dm-stage" data-mp-host onClick={(e) => { if (e.isTrusted) setPaused(p => !p) }}>
-        <div className="dm-canvas" ref={el => el?.setAttribute('inert', '')}>
+      <div ref={stage} className={`dm-stage ${ended ? 'dm-ended' : ''}`} data-mp-host onClick={(e) => { if (e.isTrusted && !ended) setPaused(p => !p) }}>
+        <div className="dm-canvas" ref={canvas}>
           <Palace key={mount} />
         </div>
       </div>
@@ -107,7 +115,8 @@ function Demo() {
           {shown.chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
         </div>
       )}
-      {paused && <div className="dm-paused">已暂停 · 点画面继续</div>}
+      {ended && <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>}
+      {paused && !ended && <div className="dm-paused">已暂停 · 点画面继续</div>}
       <nav className="dm-bar" aria-label="演示进度">
         {SCENES.map((sc, i) => {
           const fill = i < scene ? 1 : i > scene ? 0 : Math.min(1, elapsed / sceneLength(sc))

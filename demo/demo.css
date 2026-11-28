@@ -3,7 +3,9 @@ html, body, #app { margin: 0; height: 100%; }
 body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif; }
 .dm-root { position: relative; height: 100%; overflow: hidden; color: var(--mp-ink, #294c60); }
 .dm-stage { position: absolute; inset: 0; cursor: pointer; }
-.dm-canvas { position: absolute; inset: 0; pointer-events: none; } /* 只看不操作：点画面就是暂停 / 继续；inert 挡住键盘 */
+.dm-canvas { position: absolute; inset: 0; pointer-events: none; } /* 播放时只看不操作：点画面就是暂停 / 继续；inert 挡住键盘 */
+.dm-ended { cursor: auto; }
+.dm-ended .dm-canvas { pointer-events: auto; } /* 播完了观众可以自己逛；改数据的操作由假接口拒绝 */
 /* 底栏和光球照常显示：观众看完能在插件里认出同一套入口（画布 inert，点不到）。演示的进度条让到左下，「安装」放右上 */
 
 /* 定位文案：无框无底，纯白居中；淡淡的阴影保证浅色背景上也看得清 */
@@ -21,6 +23,7 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-fill { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: currentColor; transform-origin: 0 0; transition: transform .05s linear; } /* 跟着播放器的时钟走，一格 50ms */
 .dm-name { position: absolute; left: 0; top: 9px; font-size: 12px; opacity: .55; }
 .dm-seg.dm-on .dm-name, .dm-seg:hover .dm-name { opacity: 1; }
+.dm-replay { position: absolute; z-index: 20; right: 96px; top: 12px; padding: 6px 14px; font: inherit; font-size: 13px; color: inherit; background: var(--mp-panel, #e0e9e8cc); border: 1px solid currentColor; cursor: pointer; }
 .dm-install { position: absolute; z-index: 20; right: 24px; top: 12px; padding: 6px 14px; font: inherit; font-size: 13px; color: inherit; background: var(--mp-panel, #e0e9e8cc); border: 1px solid currentColor; cursor: pointer; }
 .dm-howto { position: absolute; z-index: 21; right: 24px; top: 50px; width: min(360px, calc(100vw - 48px)); padding: 18px 20px; font-size: 14px; line-height: 1.7;
   background: var(--mp-panel, #e0e9e8f2); border: 1px solid var(--mp-edge, #fffffbbf); box-shadow: 0 10px 30px #3653631f; animation: dm-in .25s ease both; }
