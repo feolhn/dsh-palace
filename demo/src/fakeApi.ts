@@ -1,5 +1,6 @@
 /**
  * 假的插件接口：拦截 /api/dsh-palace/ 下的请求，返回播放器当前的演示数据（只读）。
+ * 播完后观众可以自己逛（拖动、缩放、换视图、点开格子），改数据的请求一律拒绝。
  * 宫殿画布用的是插件的真实组件，它们照常请求接口，不知道自己在演示站里。
  */
 import { summaryOf, SCHEMA } from '../../src/shared/palace.ts'
@@ -29,7 +30,7 @@ function handle(path: string, url: URL): Response {
       return item === undefined ? json({ ok: false, error: '找不到这个格子' }, 404) : json({ ok: true, rev, item })
     }
     case 'arcs': return json({ ok: true, rev, arcs: s.arcs.map(a => ({ ...a, strands: 1, lastAt: '2026-11-01T00:00:00.000Z' })) })
-    default: return json({ ok: false, error: '演示站里不能这样做' }, 400)
+    default: return json({ ok: false, error: '这里是演示，暂时不能修改。装上插件后，就能放进你自己的东西了' }, 400)
   }
 }
 
