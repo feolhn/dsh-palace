@@ -6,11 +6,12 @@
 import type { NewCell, Scene } from '../script.ts'
 import { opening } from './00-opening.ts'
 import { addThings } from './01-add.ts'
-import { connect } from './02-connect.ts'
+import { readAndTalk } from './02-read.ts'
+import { connect } from './03-connect.ts'
 
 /** 开场时宫殿里已有的几格 */
 export const START: NewCell[] = [
-  { id: 'kosmos', title: '宇宙', subtitle: '洪堡', kind: 'book', icon: 'earth', col: 0, row: 0, progress: 0.4 },
+  { id: 'kosmos', title: '宇宙', subtitle: '洪堡', kind: 'book', icon: 'earth', col: 0, row: 0, progress: 0.4, sample: true },
   { id: 'walk', title: '散步时想到的', icon: 'teardrop', col: 1, row: 0 },
   { id: 'mountain', title: '去年爬的那座山', icon: 'snow-mountain', col: 0, row: 1 },
 ]
@@ -18,4 +19,4 @@ export const START: NewCell[] = [
 /** 开场是不是轴测视图 */
 export const START_ISO = true
 
-export const SCENES: Scene[] = [opening, addThings, connect]
+export const SCENES: Scene[] = [opening, addThings, readAndTalk, connect]

@@ -6,19 +6,20 @@ import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import notebookCss from '../../src/client/notebook/notebook.css?raw'
 import palaceCss from '../../src/client/palace/palace.css?raw'
+import readerCss from '../../src/client/readers/reader.css?raw'
 import fontsCss from '../../vendor/fonts/fonts.css?raw'
 import { Palace } from '../../src/client/palace/Palace.tsx'
 import { refreshPalace } from '../../src/client/palace/data.ts'
 import { themeRoot, useThemeId } from '../../src/client/palace/theme.ts'
 import { installFakeApi, setDemoData } from './fakeApi.ts'
-import { apply, durationOf, enterScene, sceneLength, startState, stateAt, type DemoState } from './script.ts'
+import { apply, durationOf, enterScene, SEND_PAUSE, sceneLength, startState, stateAt, TYPE_MS, type Action, type DemoState } from './script.ts'
 import { SCENES, START, START_ISO } from './scenes/index.ts'
 
 // 皮肤图片和字体指向静态文件（构建时复制到 assets/）
 ;(globalThis as { __PALACE_STATIC_ASSETS__?: string }).__PALACE_STATIC_ASSETS__ = 'assets/'
 installFakeApi()
 const style = document.createElement('style')
-style.textContent = [fontsCss.replace(/url\(fonts\//g, 'url(assets/fonts/'), notebookCss, palaceCss].join('\n')
+style.textContent = [fontsCss.replace(/url\(fonts\//g, 'url(assets/fonts/'), notebookCss, palaceCss, readerCss].join('\n')
 document.head.appendChild(style)
 
 const START_STATE = startState(START, START_ISO)
@@ -27,6 +28,7 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const TICK = 50
 
 const FADE_MS = 900
+const PULSE_MS = 900
 const NO_LINES: DemoState['chat'] = []
 
 /** 值变「空」时，把旧值再留 FADE_MS（这段时间 leaving = true，界面淡出）；变成新值则立刻换上 */
@@ -62,6 +64,8 @@ function Demo() {
   // 字幕和对话收起时先淡出再拿掉，不突然消失
   const [caption, captionOut] = useLinger(shown.caption, undefined)
   const [chat, chatOut] = useLinger(shown.chat, NO_LINES)
+  const [panel, panelOut] = useLinger(shown.panel, undefined)
+  const [draft, setDraft] = useState('') // 对话面板输入框里正在打的字
 
   const closeHowto = () => { setHowto(false); setPaused(pausedBeforeHowto.current) }
 
@@ -71,10 +75,29 @@ function Demo() {
     if (btn !== null && btn !== undefined && (btn.getAttribute('aria-pressed') === 'true') !== iso) btn.click()
   }
 
+  const q = <T extends Element>(sel: string) => stage.current?.querySelector<T>(sel) ?? null
+
+  /** 进阅览室：点那本书的图标，和用户在插件里做的一样 */
+  const openBook = (id: string) => q<HTMLButtonElement>(`.mp-cell[data-cell-id="${id}"] .mp-moon`)?.click()
+
+  /** 台本动作在真实宫殿上的反应（数据由假接口给，这里只按插件自己的按钮） */
+  const react = async (a: Action, hold: (ms: number) => Promise<boolean>): Promise<number> => {
+    if (a.do === 'view') toggleView(a.iso)
+    if (a.do === 'read') openBook(a.id)
+    if (a.do === 'leave') {
+      // 阅读 → 笔记 → 宫殿：插件里左上角返回按钮要点两次
+      q<HTMLButtonElement>('.mp-back')?.click()
+      if (!await hold(700)) return 700 // 中途跳转了：不再点，免得关掉新一幕的阅览室
+      q<HTMLButtonElement>('.mp-back')?.click()
+      return 700
+    }
+    return 0
+  }
+
   /** 跳到第 index 幕的开头：瞬间重放前面的动作，重新挂载宫殿，然后从这里播 */
   const seek = async (index: number) => {
     const id = ++run.current
-    setEnded(false)
+    setEnded(false); setDraft('')
     /** 等 ms 毫秒，暂停时不计时；跳转了就提前返回 false */
     const hold = async (ms: number) => {
       // 按真实流逝的时间扣：标签页在后台时浏览器会把定时器拖到一秒一次，按次数扣会慢几十倍
@@ -94,6 +117,7 @@ function Demo() {
     await refreshPalace()
     setShown(s); setScene(index); setElapsed(0); setMount(n => n + 1)
     await sleep(600)
+    if (s.reading !== undefined) openBook(s.reading)
     let state = s
     for (let i = index; i < SCENES.length; i++) {
       if (i !== index) { state = enterScene(state); setShown(state); setScene(i); setElapsed(0) }
@@ -101,12 +125,31 @@ function Demo() {
       for (const a of SCENES[i].actions) {
         if (run.current !== id) return
         while (pausedRef.current) { if (!await hold(TICK)) return }
+        let spent = 0
+        if (a.do === 'chat' && a.open) {
+          // 先让光球（读书时是阅览室里的 AI 入口）闪一下、停一会儿，再打开面板：观众看得出对话从哪里开始
+          const orb = q<HTMLElement>('.mp-orb:not([hidden]), .mp-ai-orb, .mp-room-ai')
+          orb?.classList.add('dm-pulse')
+          const ok = await hold(PULSE_MS)
+          orb?.classList.remove('dm-pulse')
+          if (!ok) return
+          spent = PULSE_MS
+        }
+        if (a.do === 'say' && a.who === 'user' && state.panel !== undefined) {
+          // 在输入框里打字，打完停一下再发出去
+          const chars = [...a.text]
+          for (let n = 1; n <= chars.length; n++) { setDraft(chars.slice(0, n).join('')); if (!await hold(TYPE_MS)) return }
+          if (!await hold(SEND_PAUSE)) return
+          setDraft('')
+          spent = TYPE_MS * chars.length + SEND_PAUSE
+        }
         state = apply(state, a)
         setDemoData(state)
-        if (a.do === 'view') toggleView(a.iso)
-        else void refreshPalace()
+        if (a.do !== 'view') void refreshPalace()
         setShown(state)
-        if (!await hold(durationOf(a))) return
+        spent += await react(a, hold)
+        if (run.current !== id) return
+        if (!await hold(durationOf(a) - spent)) return
         done += durationOf(a)
         setElapsed(done)
       }
@@ -118,6 +161,7 @@ function Demo() {
   /** 跳过：直接到播完的样子，进入自由浏览 */
   const skip = async () => {
     ++run.current // 停掉正在播的循环
+    setDraft('')
     const s = stateAt(START_STATE, SCENES, SCENES.length)
     localStorage.setItem(VIEW_KEY, s.iso ? 'iso' : 'flat')
     setDemoData(s)
@@ -139,22 +183,31 @@ function Demo() {
   }, [])
 
   return (
-    <div className={`dm-root ${skin.className}`} style={skin.style}>
+    <div className={`dm-root ${ended ? 'dm-done' : ''} ${skin.className}`} style={skin.style}>
       <div ref={stage} className={`dm-stage ${ended ? 'dm-ended' : ''}`} data-mp-host onClick={(e) => { if (e.isTrusted && !ended) setPaused(p => !p) }}>
         <div className="dm-canvas" ref={canvas}>
           <Palace key={mount} />
         </div>
       </div>
       {caption !== undefined && <div key={caption} className={`dm-caption ${captionOut ? 'dm-out' : ''}`}>{caption}</div>}
-      {chat.length > 0 && (
-        <div className={`dm-chat ${chatOut ? 'dm-out' : ''}`}>
-          {chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
-        </div>
-      )}
+      {panel !== undefined
+        ? (
+          // 仿插件的对话面板：外框用插件自己的样式（跟着皮肤变），里面的消息和输入框是演示画的（官方控件离开 Harness 跑不起来）
+          <aside className={`mp-chat mp-chat-dock dm-panel ${panelOut ? 'dm-out' : ''}`} aria-label={panel}>
+            <header className="mp-chat-head"><div><span className="mp-eyebrow">A CONVERSATION</span><h2>{panel}</h2></div></header>
+            <div className="dm-lines">{chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}</div>
+            <div className={`dm-composer ${draft !== '' ? 'dm-typing' : ''}`}>{draft !== '' ? draft : '想到什么，说一句…'}<span className="dm-send">↑</span></div>
+          </aside>
+        )
+        : chat.length > 0 && (
+          <div className={`dm-chat ${chatOut ? 'dm-out' : ''}`}>
+            {chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
+          </div>
+        )}
       {/* 同一个位置：播放时「跳过」直接进自由浏览，播完变「重播」 */}
       {ended
         ? <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>
-        : <button type="button" className="dm-replay" onClick={() => void skip()}>跳过 ⏭</button>}
+        : <button type="button" className="dm-replay" onClick={() => void skip()}>跳过</button>}
       {paused && !ended && <div className="dm-paused">已暂停 · 点画面继续</div>}
       <nav className="dm-bar" aria-label="演示进度">
         {SCENES.map((sc, i) => {

@@ -18,7 +18,11 @@ export interface DemoState {
   arcs: DemoArc[]
   iso: boolean
   caption?: string
+  /** 对话面板开着时的标题（「与宫殿对话」「与书对话」）；没开是 undefined */
+  panel?: string
   chat: Line[]
+  /** 正在阅览室里读的那本书（格子 id） */
+  reading?: string
 }
 
 export interface NewCell {
@@ -29,6 +33,8 @@ export interface NewCell {
   icon?: string
   col: number
   row: number
+  /** 挂上示意书页（demo/book.mjs），点图标能进阅览室读。只给台本里真的会读的书挂 */
+  sample?: boolean
   /** 0–1：书的进度（演示用，按节数换算） */
   progress?: number
 }
@@ -37,7 +43,14 @@ export type Action =
   | { do: 'caption'; text: string; ms?: number }
   | { do: 'view'; iso: boolean; ms?: number }
   | { do: 'addCell'; cell: NewCell; ms?: number }
+  /** 用户的话：面板开着时先在输入框里一个字一个字打出来，再发出去 */
   | { do: 'say'; who: 'user' | 'ai'; text: string; ms?: number }
+  /** 打开（先让光球闪一下）/ 收起对话面板 */
+  | { do: 'chat'; open: true; heading: string; ms?: number }
+  | { do: 'chat'; open: false; ms?: number }
+  /** 点书的图标进阅览室读 / 回到宫殿 */
+  | { do: 'read'; id: string; ms?: number }
+  | { do: 'leave'; ms?: number }
   | { do: 'arc'; from: string; to: string; why: string; ms?: number }
   | { do: 'wait'; ms: number }
 
@@ -54,8 +67,8 @@ function cellOf(c: NewCell): { cell: Cell; item: Item } {
   const kind = c.kind ?? 'note'
   const cell: Cell = { id: c.id, kind, parentId: null, col: c.col, row: c.row, title: c.title, createdAt: CREATED,
     ...(c.subtitle !== undefined ? { subtitle: c.subtitle } : {}), ...(c.icon !== undefined ? { icon: c.icon } : {}) }
-  // 书先不挂原文：演示站没有书文件，挂了点图标会去读一个不存在的 EPUB。「边读边聊」那一幕再配示意书页
-  const item = emptyItem(c.id, null)
+  // 只有 sample 的书挂示意书页（fakeApi 的 file 请求返回它）；别的书没有原文，点格子照常进笔记
+  const item = emptyItem(c.id, c.sample === true ? { type: 'epub', path: '' } : null)
   if (c.progress !== undefined) {
     // 十节，按进度勾上前几节，格子上就有进度环
     const done = Math.round(c.progress * 10)
@@ -75,18 +88,31 @@ export function apply(s: DemoState, a: Action): DemoState {
     }
     case 'say': return { ...s, chat: [...s.chat, { who: a.who, text: a.text }] }
     case 'arc': return { ...s, arcs: [...s.arcs, { from: a.from, to: a.to, why: a.why }] }
+    case 'chat': return a.open ? { ...s, panel: a.heading, chat: [] } : { ...s, panel: undefined, chat: [] }
+    case 'read': return { ...s, reading: a.id }
+    case 'leave': return { ...s, reading: undefined }
     case 'wait': return s
   }
 }
 
-/** 每一幕开始时清掉上一幕的字幕和对话，宫殿和视图留着。 */
-export const enterScene = (s: DemoState): DemoState => ({ ...s, caption: undefined, chat: [] })
+/** 每一幕开始时清掉上一幕的字幕、对话和面板，宫殿、视图、阅览室留着。 */
+export const enterScene = (s: DemoState): DemoState => ({ ...s, caption: undefined, chat: [], panel: undefined })
+
+/** 打字速度：每个字的毫秒数，加上打完到发出的停顿 */
+export const TYPE_MS = 90
+export const SEND_PAUSE = 400
 
 /** 停留时长：字幕和对话按字数算（看得完），其他动作留给界面动画。台本里写了 ms 就用台本的。 */
 export function durationOf(a: Action): number {
   if (a.ms !== undefined) return a.ms
-  if (a.do === 'caption' || a.do === 'say') return 1200 + 110 * [...a.text].length
+  if (a.do === 'caption' || a.do === 'say') {
+    const n = [...a.text].length
+    // 用户的话含打字时间（没开面板时就是多停一会儿，保证时长只由台本决定）
+    return 1200 + 110 * n + (a.do === 'say' && a.who === 'user' ? TYPE_MS * n + SEND_PAUSE : 0)
+  }
   if (a.do === 'view') return 1600
+  if (a.do === 'read' || a.do === 'leave') return 2000
+  if (a.do === 'chat') return a.open ? 1900 : 600 // 打开含光球闪一下（约 0.9 秒）
   return 900
 }
 
