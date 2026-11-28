@@ -115,8 +115,8 @@ function outlineOf(toc: NavItem[]): OutlineInput[] {
 
 /** 双页只在宽面板里用（右侧栏窄，自然是单页）。 */
 const SPREAD_MIN = 760
-function spreadFor(el: HTMLElement): 'auto' | 'none' {
-  const mode = el.clientWidth >= SPREAD_MIN ? 'auto' : 'none'
+function spreadFor(el: HTMLElement, single = false): 'auto' | 'none' {
+  const mode = !single && el.clientWidth >= SPREAD_MIN ? 'auto' : 'none'
   // 纸面的书脊跟着实际分页走：单页不画书脊，免得正文跨过中缝
   el.closest('.rd-paper')?.classList.toggle('rd-single', mode === 'none')
   return mode
@@ -124,6 +124,7 @@ function spreadFor(el: HTMLElement): 'auto' | 'none' {
 
 export async function mountEpub(el: HTMLElement, opts: {
   data: ArrayBuffer
+  demoTitlePage?: boolean
   initialLoc?: string
   highlights: string[]
   fontSize: number
@@ -158,7 +159,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     width: '100%',
     height: '100%',
     flow: 'paginated',
-    spread: spreadFor(el),
+    spread: spreadFor(el, opts.demoTitlePage),
     minSpreadWidth: SPREAD_MIN, // 和 spreadFor 用同一个阈值（epub.js 默认 800，两边会对不上）
     allowScriptedContent: false, // 书里的脚本一律不跑
   })
@@ -225,6 +226,13 @@ export async function mountEpub(el: HTMLElement, opts: {
     doc.addEventListener('click', (e) => {
       const tap = press
       press = undefined
+      // 静态演示的豆瓣书目从外层打开，EPUB iframe 继续禁止弹窗。
+      const link = (e.target as Element | null)?.closest?.('a[href]')?.getAttribute('href')
+      if (opts.demoTitlePage && link != null && /^https:\/\/book\.douban\.com\/subject\/\d+\/$/.test(link)) {
+        e.preventDefault()
+        window.open(link, '_blank', 'noopener,noreferrer')
+        return
+      }
       if (!tap || tap.moved || performance.now() - tap.time > 450 || e.detail > 1 || opts.onWord === undefined) return
       if ((e.target as Element | null)?.closest?.('a, button, input, textarea, select')) return
       if (doc.getSelection()?.isCollapsed === false) return
@@ -249,7 +257,7 @@ export async function mountEpub(el: HTMLElement, opts: {
     clearTimeout(resizeTimer)
     resizeTimer = setTimeout(async () => {
       const here = await rendition.currentLocation()
-      rendition.spread(spreadFor(el), SPREAD_MIN)
+      rendition.spread(spreadFor(el, opts.demoTitlePage), SPREAD_MIN)
       rendition.resize(el.clientWidth, el.clientHeight)
       if (here?.start) await rendition.display(here.start.cfi).catch(() => undefined)
     }, 150)

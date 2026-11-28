@@ -1,0 +1,40 @@
+{
+  "schema": 2,
+  "id": "c_ffffff0001",
+  "source": null,
+  "chapters": [],
+  "cards": [
+    {
+      "id": "k_ffffff0101",
+      "type": "thought",
+      "note": "一句话：懂你在想什么的 AI。结构由我们和 AI 来维护，你只管记。整理、归类、建联系都在后台完成，不用先想好放哪、怎么分类。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0102",
+      "type": "thought",
+      "note": "为什么是格子：书架类应用几百本时就找不到，也只装得下书；Notion、Obsidian 要自己搭结构，多数人在这一步就放弃了。格子画布里每样东西排版一致、分量相同，往哪个方向都能排，更像脑子里的记忆宫殿。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0103",
+      "type": "thought",
+      "note": "为什么带着一格聊：对着空白对话框，很难说出真心话。带着一本具体的书、一门课、一部剧去聊，更容易说出真实的想法。宫殿就是这个舞台。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "id": "k_ffffff0105",
+      "type": "thought",
+      "note": "数据是你的：都是你电脑上的普通文件（JSON 和 Markdown），随时能打开、带走。没有账号、云同步和远程服务器，代码全部公开。",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ],
+  "inspirations": [
+    {
+      "id": "i_ffffff0001",
+      "title": "原文：产品哲学",
+      "body": "less is more：AI 时代功能很容易越堆越多，我们反过来，让逻辑越做越清晰。\n\n[读讨论原文 #82 ↗](https://github.com/feolhn/dsh-palace/discussions/82)",
+      "createdAt": "2026-11-28T00:00:00.000Z"
+    }
+  ]
+}

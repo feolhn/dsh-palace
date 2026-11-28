@@ -1,0 +1,209 @@
+{
+  "schema": 2,
+  "id": "c_660bd56cbe",
+  "source": {
+    "type": "epub",
+    "path": "humboldt-6322-sample.epub"
+  },
+  "chapters": [
+    {
+      "id": "ch_0fb599e1c3",
+      "title": "EDITOR'S PREFACE.",
+      "sections": [
+        {
+          "id": "s_03d354ca8a",
+          "title": "EDITOR'S PREFACE.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_43af3efa41",
+      "title": "INTRODUCTION BY THE AUTHOR.",
+      "sections": [
+        {
+          "id": "s_391a705b13",
+          "title": "INTRODUCTION BY THE AUTHOR.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d5a5186573",
+      "title": "CHAPTER 1.1. PREPARATIONS. INSTRUMENTS. DEPARTURE FROM SPAIN. LANDING AT THE CANARY ISLANDS.",
+      "sections": [
+        {
+          "id": "s_f3e74c75fc",
+          "title": "CHAPTER 1.1. PREPARATIONS. INSTRUMENTS. DEPARTURE FROM SPAIN. LANDING AT THE CANARY ISLANDS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_2434343fed",
+      "title": "CHAPTER 1.2. STAY AT TENERIFE. JOURNEY FROM SANTA CRUZ TO OROTAVA. EXCURSION TO THE SUMMIT OF THE PEAK OF TEYDE.",
+      "sections": [
+        {
+          "id": "s_0c00f9edf4",
+          "title": "CHAPTER 1.2. STAY AT TENERIFE. JOURNEY FROM SANTA CRUZ TO OROTAVA. EXCURSION TO THE SUMMIT OF THE PEAK OF TEYDE.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_78f797e5e2",
+      "title": "CHAPTER 1.3. PASSAGE FROM TENERIFE TO SOUTH AMERICA. THE ISLAND OF TOBAGO. ARRIVAL AT CUMANA.",
+      "sections": [
+        {
+          "id": "s_a4e89313ae",
+          "title": "CHAPTER 1.3. PASSAGE FROM TENERIFE TO SOUTH AMERICA. THE ISLAND OF TOBAGO. ARRIVAL AT CUMANA.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_f882cae3fd",
+      "title": "CHAPTER 1.4. FIRST ABODE AT CUMANA. BANKS OF THE MANZANARES.",
+      "sections": [
+        {
+          "id": "s_dc891651ed",
+          "title": "CHAPTER 1.4. FIRST ABODE AT CUMANA. BANKS OF THE MANZANARES.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_711f680ea6",
+      "title": "CHAPTER 1.5. PENINSULA OF ARAYA. SALT-MARSHES. RUINS OF THE CASTLE OF SANTIAGO.",
+      "sections": [
+        {
+          "id": "s_15e6d0cf65",
+          "title": "CHAPTER 1.5. PENINSULA OF ARAYA. SALT-MARSHES. RUINS OF THE CASTLE OF SANTIAGO.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_a27f8f2eb4",
+      "title": "CHAPTER 1.6. MOUNTAINS OF NEW ANDALUCIA. VALLEY OF THE CUMANACOA. SUMMIT OF THE COCOLLAR. MISSIONS OF THE CHAYMAS.",
+      "sections": [
+        {
+          "id": "s_7bf5b19958",
+          "title": "CHAPTER 1.6. MOUNTAINS OF NEW ANDALUCIA. VALLEY OF THE CUMANACOA. SUMMIT OF THE COCOLLAR. MISSIONS OF THE CHAYMAS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_32eb011935",
+      "title": "CHAPTER 1.7. CONVENT OF CARIPE. CAVERN OF THE GUACHARO. NOCTURNAL BIRDS.",
+      "sections": [
+        {
+          "id": "s_68cb64c01a",
+          "title": "CHAPTER 1.7. CONVENT OF CARIPE. CAVERN OF THE GUACHARO. NOCTURNAL BIRDS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_96381d6cc6",
+      "title": "CHAPTER 1.8. DEPARTURE FROM CARIPE. MOUNTAIN AND FOREST OF SANTA MARIA. MISSION OF CATUARO. PORT OF CARIACO.",
+      "sections": [
+        {
+          "id": "s_a153892ba9",
+          "title": "CHAPTER 1.8. DEPARTURE FROM CARIPE. MOUNTAIN AND FOREST OF SANTA MARIA. MISSION OF CATUARO. PORT OF CARIACO.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_5fd13fcaf4",
+      "title": "CHAPTER 1.9. PHYSICAL CONSTITUTION AND MANNERS OF THE CHAYMAS. THEIR LANGUAGE. FILIATION OF THE NATIONS WHICH INHABIT NEW ANDALUCIA. PARIAGOTOS SEEN BY COLUMBUS.",
+      "sections": [
+        {
+          "id": "s_f0818c1aef",
+          "title": "CHAPTER 1.9. PHYSICAL CONSTITUTION AND MANNERS OF THE CHAYMAS. THEIR LANGUAGE. FILIATION OF THE NATIONS WHICH INHABIT NEW ANDALUCIA. PARIAGOTOS SEEN BY COLUMBUS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_19e72f1776",
+      "title": "CHAPTER 1.10. SECOND ABODE AT CUMANA. EARTHQUAKES. EXTRAORDINARY METEORS.",
+      "sections": [
+        {
+          "id": "s_1da560d423",
+          "title": "CHAPTER 1.10. SECOND ABODE AT CUMANA. EARTHQUAKES. EXTRAORDINARY METEORS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_47da05ea90",
+      "title": "CHAPTER 1.11. PASSAGE FROM CUMANA TO LA GUAYRA. MORRO OF NUEVA BARCELONA. CAPE CODERA. ROAD FROM LA GUAYRA TO CARACAS.",
+      "sections": [
+        {
+          "id": "s_4654f7bad5",
+          "title": "CHAPTER 1.11. PASSAGE FROM CUMANA TO LA GUAYRA. MORRO OF NUEVA BARCELONA. CAPE CODERA. ROAD FROM LA GUAYRA TO CARACAS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d725036a7c",
+      "title": "CHAPTER 1.12. GENERAL VIEW OF THE PROVINCES OF VENEZUELA. DIVERSITY OF THEIR INTERESTS. CITY AND VALLEY OF CARACAS.",
+      "sections": [
+        {
+          "id": "s_f936c5643e",
+          "title": "CHAPTER 1.12. GENERAL VIEW OF THE PROVINCES OF VENEZUELA. DIVERSITY OF THEIR INTERESTS. CITY AND VALLEY OF CARACAS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_fa3391b474",
+      "title": "CHAPTER 1.13. ABODE AT CARACAS. MOUNTAINS IN THE VICINITY OF THE TOWN. EXCURSION TO THE SUMMIT OF THE SILLA. INDICATIONS OF MINES.",
+      "sections": [
+        {
+          "id": "s_04d2508416",
+          "title": "CHAPTER 1.13. ABODE AT CARACAS. MOUNTAINS IN THE VICINITY OF THE TOWN. EXCURSION TO THE SUMMIT OF THE SILLA. INDICATIONS OF MINES.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_b8fd84914e",
+      "title": "CHAPTER 1.14. EARTHQUAKES AT CARACAS. CONNECTION OF THOSE PHENOMENA WITH THE VOLCANIC ERUPTIONS OF THE WEST INDIA ISLANDS.",
+      "sections": [
+        {
+          "id": "s_1e726f5229",
+          "title": "CHAPTER 1.14. EARTHQUAKES AT CARACAS. CONNECTION OF THOSE PHENOMENA WITH THE VOLCANIC ERUPTIONS OF THE WEST INDIA ISLANDS.",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_c11aa5dc82",
+      "title": "CHAPTER 1.15. DEPARTURE FROM CARACAS. MOUNTAINS OF SAN PEDRO AND OF LOS TEQUES. LA VICTORIA. VALLEYS OF ARAGUA.",
+      "sections": [
+        {
+          "id": "s_05bf242075",
+          "title": "CHAPTER 1.15. DEPARTURE FROM CARACAS. MOUNTAINS OF SAN PEDRO AND OF LOS TEQUES. LA VICTORIA. VALLEYS OF ARAGUA.",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "k_752dee5b13",
+      "type": "excerpt",
+      "createdAt": "2026-11-22T07:03:29.753Z",
+      "quote": "If a traveller may be permitted to speak of his personal emotions, I shall add, that on that night I experienced the realization of one of the dreams of my early youth.",
+      "note": "达尔文带着洪堡的 personal narrative踏上了小猎犬号，是不是也是同样的感动。",
+      "sectionId": "s_a4e89313ae"
+    }
+  ],
+  "inspirations": [],
+  "outlineSource": "ai"
+}

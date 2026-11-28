@@ -1,0 +1,19 @@
+{
+  "schema": 2,
+  "id": "c_ce187ab20e",
+  "source": {
+    "type": "epub",
+    "path": "fat-tails-title-page.epub"
+  },
+  "chapters": [],
+  "cards": [
+    {
+      "id": "k_a449d29068",
+      "type": "excerpt",
+      "createdAt": "2026-11-22T07:03:29.775Z",
+      "quote": "黑天鹅的核心并非“频繁出现”（这个词经常被这样误用），而在于出现时的影响更大。最肥的肥尾分布只会有一次非常大的极端偏离，而不是多次较大的偏离。",
+      "note": "所有正态分布的事情可能都无足轻重，经验之外的黑天鹅才是影响人生的重要节点。"
+    }
+  ],
+  "inspirations": []
+}

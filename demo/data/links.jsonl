@@ -1,1 +1,10 @@
-{"type":"link","id":"l_0000000001","from":"c_0000000001","to":"c_0000000003","why":"（样例）看清了才知道是连着的","evidence":["k_0000000001","k_0000000002"],"createdAt":"2026-10-10T08:00:00.000Z"}
+{"type": "link", "id": "l_97de8118cf", "from": "c_8c8eca78f8", "to": "c_660bd56cbe", "why": "experienced the realization of one of the dreams of my early youth", "evidence": ["k_7fce259214", "k_752dee5b13"], "createdAt": "2026-11-22T07:04:08.704Z"}
+{"type": "link", "id": "l_983e88ca7d", "from": "c_8c8eca78f8", "to": "c_4ea93ef7a2", "why": "由此观之，生命如此壮丽恢弘", "evidence": ["k_dfc6915d9b", "k_9b6c319851"], "createdAt": "2026-11-22T07:04:08.711Z"}
+{"type": "link", "id": "l_34865ac359", "from": "c_8c8eca78f8", "to": "c_c67169f547", "why": "放开好恶，让生命做主", "evidence": ["k_7fce259214", "k_4c302cb1bb"], "createdAt": "2026-11-22T07:04:08.716Z"}
+{"type": "link", "id": "l_3573bdc6a6", "from": "c_8c8eca78f8", "to": "c_91f7cf89f9", "why": "unknown unknown", "evidence": ["k_dfc6915d9b", "k_4c3f8a6a86"], "createdAt": "2026-11-22T07:04:08.718Z"}
+{"type": "link", "id": "l_ab8d48918b", "from": "c_8c8eca78f8", "to": "c_a0186b35c7", "why": "永恒回归", "evidence": ["k_564cc1862d", "k_c7ab082e30"], "createdAt": "2026-11-22T07:04:08.721Z"}
+{"type": "link", "id": "l_d7d586b668", "from": "c_c67169f547", "to": "c_91f7cf89f9", "why": "如实知见", "evidence": ["k_4c302cb1bb", "k_4c3f8a6a86"], "createdAt": "2026-11-22T07:04:08.725Z"}
+{"type": "link", "id": "l_e93981432f", "from": "c_4ea93ef7a2", "to": "c_a0186b35c7", "why": "Anatta", "evidence": ["k_66a00c59de", "k_c7ab082e30"], "createdAt": "2026-11-22T07:04:08.728Z"}
+{"type": "link", "id": "l_5b338325a5", "from": "c_91f7cf89f9", "to": "c_ce187ab20e", "why": "从不确定中获益", "evidence": ["k_4c3f8a6a86", "k_a449d29068"], "createdAt": "2026-11-22T07:04:08.733Z"}
+{"type": "link", "id": "l_2cf1b6431b", "from": "c_4ea93ef7a2", "to": "c_91f7cf89f9", "why": "Anicca", "evidence": ["k_9b6c319851", "k_f0c0ff189d"], "createdAt": "2026-11-22T07:04:08.737Z"}
+{"type": "link", "id": "l_98810d8fdc", "from": "c_d32424260c", "to": "c_91f7cf89f9", "why": "❤️", "evidence": [], "createdAt": "2026-11-22T07:35:01.903Z"}

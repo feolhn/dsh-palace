@@ -1,0 +1,451 @@
+{
+  "schema": 2,
+  "id": "c_91f7cf89f9",
+  "source": {
+    "type": "epub",
+    "path": "antifragile-title-page.epub"
+  },
+  "chapters": [
+    {
+      "id": "ch_970eb685aa",
+      "title": "封面",
+      "sections": [
+        {
+          "id": "s_9288bfd96d",
+          "title": "封面",
+          "done": true,
+          "doneAt": "2026-11-22T06:51:07.770Z"
+        }
+      ]
+    },
+    {
+      "id": "ch_120cd26df0",
+      "title": "版权信息",
+      "sections": [
+        {
+          "id": "s_2c845918ee",
+          "title": "版权信息",
+          "done": true,
+          "doneAt": "2026-11-22T06:51:08.137Z"
+        }
+      ]
+    },
+    {
+      "id": "ch_682219506f",
+      "title": "献词",
+      "sections": [
+        {
+          "id": "s_d221a4dfb3",
+          "title": "献词",
+          "done": true,
+          "doneAt": "2026-11-22T06:51:08.377Z"
+        }
+      ]
+    },
+    {
+      "id": "ch_14a59fb4ce",
+      "title": "章节概要与阅读导图",
+      "sections": [
+        {
+          "id": "s_2494f9e275",
+          "title": "章节概要与阅读导图",
+          "done": true,
+          "doneAt": "2026-11-22T06:51:10.049Z"
+        }
+      ]
+    },
+    {
+      "id": "ch_32121af64c",
+      "title": "前言",
+      "sections": [
+        {
+          "id": "s_4dfccd3ff9",
+          "title": "前言",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_a8aa17ca58",
+      "title": "第一卷 反脆弱性：介绍",
+      "sections": [
+        {
+          "id": "s_67d60a2c22",
+          "title": "第一卷 反脆弱性：介绍",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_7f96b4a588",
+      "title": "第1章 达摩克利斯之剑和九头蛇怪",
+      "sections": [
+        {
+          "id": "s_c71876eae7",
+          "title": "第1章 达摩克利斯之剑和九头蛇怪",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_7ef96fa4e7",
+      "title": "第2章 随处可见的过度补偿和过度反应",
+      "sections": [
+        {
+          "id": "s_8f72a5cc0c",
+          "title": "第2章 随处可见的过度补偿和过度反应",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_203e344751",
+      "title": "第3章 猫与洗衣机",
+      "sections": [
+        {
+          "id": "s_7ce62952be",
+          "title": "第3章 猫与洗衣机",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_90631678dc",
+      "title": "第4章 杀死我的东西却让其他人更强壮",
+      "sections": [
+        {
+          "id": "s_6194826f0f",
+          "title": "第4章 杀死我的东西却让其他人更强壮",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d9bbcbccd1",
+      "title": "第二卷 现代化与对反脆弱性的否定",
+      "sections": [
+        {
+          "id": "s_58744ad668",
+          "title": "第二卷 现代化与对反脆弱性的否定",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_822829ae70",
+      "title": "第5章 露天市场与办公楼",
+      "sections": [
+        {
+          "id": "s_fb6e0186b6",
+          "title": "第5章 露天市场与办公楼",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1bc9ac4c56",
+      "title": "第6章 告诉他们我爱随机性",
+      "sections": [
+        {
+          "id": "s_a6b86e5e74",
+          "title": "第6章 告诉他们我爱随机性",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_4042d43188",
+      "title": "第7章 天真的干预",
+      "sections": [
+        {
+          "id": "s_9ca3d0b8ce",
+          "title": "第7章 天真的干预",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_cdd7e305ab",
+      "title": "第8章 预测是现代化的产物",
+      "sections": [
+        {
+          "id": "s_ee13c3fffa",
+          "title": "第8章 预测是现代化的产物",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_6e25883fec",
+      "title": "第三卷 非预测性的世界观",
+      "sections": [
+        {
+          "id": "s_2098e38814",
+          "title": "第三卷 非预测性的世界观",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_6398250fcb",
+      "title": "第9章 胖子托尼与脆弱推手",
+      "sections": [
+        {
+          "id": "s_f430379952",
+          "title": "第9章 胖子托尼与脆弱推手",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_828c5b5fe0",
+      "title": "第10章 塞内加的不利因素和有利因素",
+      "sections": [
+        {
+          "id": "s_d0f7130ed2",
+          "title": "第10章 塞内加的不利因素和有利因素",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_f55c6f14e8",
+      "title": "第11章 千万别嫁给摇滚明星",
+      "sections": [
+        {
+          "id": "s_a3070267d3",
+          "title": "第11章 千万别嫁给摇滚明星",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_df1a14620b",
+      "title": "第四卷 可选择性、技术与反脆弱性的智慧",
+      "sections": [
+        {
+          "id": "s_d03728f0c2",
+          "title": "第四卷 可选择性、技术与反脆弱性的智慧",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_ba956b90f0",
+      "title": "第12章 泰勒斯的甜葡萄",
+      "sections": [
+        {
+          "id": "s_396d2dab8a",
+          "title": "第12章 泰勒斯的甜葡萄",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_cc935dac73",
+      "title": "第13章 教鸟儿如何飞行",
+      "sections": [
+        {
+          "id": "s_27f3a91fc7",
+          "title": "第13章 教鸟儿如何飞行",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_0a920917c8",
+      "title": "第14章 当两件事不是“同一回事”时",
+      "sections": [
+        {
+          "id": "s_ead469ec59",
+          "title": "第14章 当两件事不是“同一回事”时",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_d88f6f4daa",
+      "title": "第15章 失败者撰写的历史",
+      "sections": [
+        {
+          "id": "s_4a9c026785",
+          "title": "第15章 失败者撰写的历史",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_598dd6c9d6",
+      "title": "第16章 混乱中的秩序",
+      "sections": [
+        {
+          "id": "s_5611d20069",
+          "title": "第16章 混乱中的秩序",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_6c0b527495",
+      "title": "第17章 胖子托尼与苏格拉底辩论",
+      "sections": [
+        {
+          "id": "s_23c4a34aad",
+          "title": "第17章 胖子托尼与苏格拉底辩论",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_1047123473",
+      "title": "第五卷 非线性与非线性",
+      "sections": [
+        {
+          "id": "s_b396beb001",
+          "title": "第五卷 非线性与非线性",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_93b9cc6305",
+      "title": "第18章 一块大石头与一千颗小石子的区别",
+      "sections": [
+        {
+          "id": "s_eaf13f5489",
+          "title": "第18章 一块大石头与一千颗小石子的区别",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_b416039500",
+      "title": "第19章 炼金石与反炼金石",
+      "sections": [
+        {
+          "id": "s_6e4d0a0fd8",
+          "title": "第19章 炼金石与反炼金石",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_57d6d823af",
+      "title": "第六卷 否定法",
+      "sections": [
+        {
+          "id": "s_2c77cf8363",
+          "title": "第六卷 否定法",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_8fad83d80b",
+      "title": "第20章 时间与脆弱性",
+      "sections": [
+        {
+          "id": "s_3168e70379",
+          "title": "第20章 时间与脆弱性",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_18bc0d66c4",
+      "title": "第21章 医疗、凸性和不透明",
+      "sections": [
+        {
+          "id": "s_152996024c",
+          "title": "第21章 医疗、凸性和不透明",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_b4e1d4f105",
+      "title": "第22章 活得长寿，但不要太长",
+      "sections": [
+        {
+          "id": "s_5297d7f620",
+          "title": "第22章 活得长寿，但不要太长",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_49c6319285",
+      "title": "第七卷 脆弱性与反脆弱性的伦理",
+      "sections": [
+        {
+          "id": "s_d51716bc5a",
+          "title": "第七卷 脆弱性与反脆弱性的伦理",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_8c1459cdb0",
+      "title": "第23章 切身利害：反脆弱性和牺牲他人的可选择性",
+      "sections": [
+        {
+          "id": "s_9a40dd2453",
+          "title": "第23章 切身利害：反脆弱性和牺牲他人的可选择性",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_4f1a30ec13",
+      "title": "第24章 给职业戴上伦理光环",
+      "sections": [
+        {
+          "id": "s_5e9acbf58a",
+          "title": "第24章 给职业戴上伦理光环",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_da78037c81",
+      "title": "第25章 结语",
+      "sections": [
+        {
+          "id": "s_a4d9a2fc5f",
+          "title": "第25章 结语",
+          "done": false
+        }
+      ]
+    },
+    {
+      "id": "ch_e0ff94a525",
+      "title": "后记 从复活到复活",
+      "sections": [
+        {
+          "id": "s_ed8cd7fc95",
+          "title": "后记 从复活到复活",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "k_f0c0ff189d",
+      "type": "excerpt",
+      "createdAt": "2026-11-22T06:51:20.797Z",
+      "sectionId": "s_4dfccd3ff9",
+      "quote": "有些事情能从冲击中受益，当暴露在波动性、随机性、混乱和压力、风险和不确定性下时，它们反而能茁壮成长和壮大。不过，尽管这一现象无处不在，我们还是没有一个词能够用来形容脆弱性的对立面。所以，不妨叫它反脆弱性（antifragile）吧。"
+    },
+    {
+      "id": "k_4c3f8a6a86",
+      "type": "excerpt",
+      "createdAt": "2026-11-22T07:03:29.770Z",
+      "sectionId": "s_5611d20069",
+      "quote": "只要我们的生活遵循正常的秩序，我们就需要一些随机性、混乱性、冒险性、不确定性、自我发现、非致命的挫折等来让生活变得更有意义，这总好过整日离不开排得满满的日程表和闹钟的、自以为是的、结构化的、虚伪的、低效的首席执行官的生活。",
+      "note": "黑天鹅从来都不是坏事，黑天鹅是unknown unknown，是经验归纳外的新样本，未曾体验过的情况。"
+    }
+  ],
+  "inspirations": [],
+  "outlineSource": "toc"
+}
