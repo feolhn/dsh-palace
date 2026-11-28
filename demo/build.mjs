@@ -2,7 +2,7 @@
 import { build } from 'esbuild'
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -65,9 +65,18 @@ const { snapshot } = await import(pathToFileURL(snap).href)
 rmSync(snap)
 const data = resolve(here, 'data')
 mkdirSync(resolve(out, 'assets/demo'), { recursive: true })
-writeFileSync(resolve(out, 'assets/demo/data.json'), JSON.stringify(snapshot(data)))
-// 卡片原图、原文（只放能公开的：公版书、自己写的东西）
-for (const d of ['images', 'files']) if (existsSync(resolve(data, d))) cpSync(resolve(data, d), resolve(out, 'assets/demo', d), { recursive: true })
+const snapped = snapshot(data)
+writeFileSync(resolve(out, 'assets/demo/data.json'), JSON.stringify(snapped))
+// 原文和卡片原图：只复制数据里引用到的（目录里多放的文件不会被发布出去）。原文只放能公开的：公版书、自己写的东西
+const used = { files: new Set(), images: new Set() }
+for (const item of Object.values(snapped.items)) {
+  if (item.source !== null && item.source.type !== 'video') used.files.add(basename(item.source.path))
+  for (const card of item.cards) if (card.image) used.images.add(basename(card.image))
+}
+for (const [d, names] of Object.entries(used)) for (const name of names) {
+  const from = resolve(data, d, name)
+  if (existsSync(from)) cpSync(from, resolve(out, 'assets/demo', d, name))
+}
 console.log('built demo/dist')
 
 if (process.argv.includes('--serve')) {
