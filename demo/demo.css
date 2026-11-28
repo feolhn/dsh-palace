@@ -6,8 +6,9 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-canvas { position: absolute; inset: 0; pointer-events: none; } /* 只看不操作：点画面就是暂停 / 继续；inert 挡住键盘 */
 /* 底栏和光球照常显示：观众看完能在插件里认出同一套入口（画布 inert，点不到）。演示的进度条让到左下，「安装」放右上 */
 
-.dm-caption { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); padding: 10px 22px; font: 400 26px var(--mp-serif, serif); letter-spacing: .12em;
-  background: var(--mp-panel, #e0e9e8cc); border: 1px solid var(--mp-edge, #fffffbbf); pointer-events: none; animation: dm-in .6s ease both; }
+/* 定位文案：无框无底，纯白居中；淡淡的阴影保证浅色背景上也看得清 */
+.dm-caption { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 15; white-space: nowrap; font: 400 clamp(22px, 4.2vw, 34px) var(--mp-serif, serif); letter-spacing: .14em;
+  color: #fff; text-shadow: 0 1px 12px #29496066, 0 0 2px #29496040; pointer-events: none; animation: dm-in .6s ease both; }
 .dm-chat { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); width: min(340px, 42vw); display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
 .dm-line { margin: 0; padding: 10px 14px; font-size: 14px; line-height: 1.7; background: var(--mp-panel, #e0e9e8e6); border: 1px solid var(--mp-edge, #fffffbbf); animation: dm-in .4s ease both; }
 .dm-user { align-self: flex-end; max-width: 85%; background: var(--mp-fill, #ffffffb3); }
@@ -29,8 +30,14 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-howto a { color: inherit; }
 .dm-howto code { padding: 1px 6px; background: var(--mp-fill, #ffffffb3); }
 .dm-copy { margin-left: 6px; padding: 0 8px; font: inherit; font-size: 12px; color: inherit; background: none; border: 1px solid currentColor; cursor: pointer; }
-.dm-soon { margin: 12px 0 0; font-size: 12px; opacity: .65; }
+.dm-host + .dm-host { border-top: 1px solid var(--mp-edge, #fffffbbf); }
+.dm-host-name { display: flex; justify-content: space-between; align-items: baseline; width: 100%; padding: 9px 0; font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+.dm-host-name:disabled { cursor: default; opacity: .55; }
+.dm-host-tag { font-size: 12px; opacity: .7; }
+.dm-host ol { margin: 0 0 10px; }
 
 @keyframes dm-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .dm-caption, .dm-line { animation: none; } }
 .dm-close { display: block; margin: 10px 0 0; }
+/* 窄窗口：底栏占满右边，进度条挪到它上面一行 */
+@media (max-width: 760px) { .dm-bar { right: 28px; bottom: 76px; } }

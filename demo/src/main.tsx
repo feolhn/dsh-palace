@@ -127,21 +127,37 @@ function Demo() {
   )
 }
 
-/** 安装步骤，和 README「安装」一节保持一致 */
+/** 安装：三个宿主并列（让人知道以后都能用），现在只有 DeepSeek Harness 能点开看步骤，和 README「安装」一节保持一致 */
+const HOSTS = [
+  { id: 'dsh', name: 'DeepSeek Harness', ready: true },
+  { id: 'claude', name: 'Claude', ready: false },
+  { id: 'chatgpt', name: 'ChatGPT', ready: false },
+]
+
 function HowTo({ onClose }: { onClose: () => void }) {
+  const [open, setOpen] = useState<string>()
   const [copied, setCopied] = useState(false)
   const copy = () => { void navigator.clipboard?.writeText('dsh-palace').then(() => setCopied(true)) }
   return (
-    <section className="dm-howto" aria-label="安装步骤">
-      <h2>在 DeepSeek Harness 里安装</h2>
-      <ol>
-        <li>还没有 Harness 的话，先到<a href="https://www.deepseek.com/harness/" target="_blank" rel="noreferrer">官网</a>下载桌面版并安装。</li>
-        <li>打开 Harness，进入插件安装界面。</li>
-        <li>输入 <code>dsh-palace</code><button type="button" className="dm-copy" onClick={copy}>{copied ? '已复制' : '复制'}</button>，点安装。</li>
-        <li>完全退出 Harness，再重新打开。</li>
-        <li>左侧导航出现「Memory Palace」，就装好了。</li>
-      </ol>
-      <p className="dm-soon">Claude、ChatGPT 即将支持。</p>
+    <section className="dm-howto" aria-label="安装">
+      <h2>装到哪里</h2>
+      {HOSTS.map(h => (
+        <div key={h.id} className="dm-host">
+          <button type="button" className="dm-host-name" disabled={!h.ready} aria-expanded={h.ready ? open === h.id : undefined}
+            onClick={() => setOpen(o => o === h.id ? undefined : h.id)}>
+            {h.name}<span className="dm-host-tag">{h.ready ? (open === h.id ? '收起' : '查看步骤') : '即将支持'}</span>
+          </button>
+          {h.id === 'dsh' && open === 'dsh' && (
+            <ol>
+              <li>还没有 Harness 的话，先到<a href="https://www.deepseek.com/harness/" target="_blank" rel="noreferrer">官网</a>下载桌面版并安装。</li>
+              <li>打开 Harness，进入插件安装界面。</li>
+              <li>输入 <code>dsh-palace</code><button type="button" className="dm-copy" onClick={copy}>{copied ? '已复制' : '复制'}</button>，点安装。</li>
+              <li>完全退出 Harness，再重新打开。</li>
+              <li>左侧导航出现「Memory Palace」，就装好了。</li>
+            </ol>
+          )}
+        </div>
+      ))}
       <button type="button" className="dm-copy dm-close" onClick={onClose}>关闭</button>
     </section>
   )
