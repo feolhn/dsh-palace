@@ -15,7 +15,9 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-line { margin: 0; padding: 10px 14px; font-size: 14px; line-height: 1.7; background: var(--mp-panel, #e0e9e8e6); border: 1px solid var(--mp-edge, #fffffbbf); animation: dm-in .4s ease both; }
 .dm-user { align-self: flex-end; max-width: 85%; background: var(--mp-fill, #ffffffb3); }
 .dm-ai { align-self: flex-start; max-width: 92%; }
-.dm-paused { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); font-size: 12px; opacity: .7; pointer-events: none; }
+/* 暂停提示放在画面正中稍下（正中留给定位文案），手机上也一眼看到，不挨着标题 */
+.dm-paused { position: absolute; z-index: 17; left: 50%; top: calc(50% + 56px); transform: translate(-50%, -50%); white-space: nowrap; padding: 8px 18px; font-size: 14px;
+  background: var(--mp-panel, #e0e9e8e6); border: 1px solid var(--mp-edge, #fffffbbf); pointer-events: none; animation: dm-in .25s ease both; }
 
 .dm-bar { position: absolute; z-index: 20; left: 28px; right: 400px; bottom: 22px; /* 右下是插件自己的底栏 */ display: flex; gap: 6px; }
 .dm-seg { position: relative; flex-basis: 0; min-width: 60px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; text-align: left; }
