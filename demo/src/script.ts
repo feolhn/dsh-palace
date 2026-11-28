@@ -54,7 +54,8 @@ function cellOf(c: NewCell): { cell: Cell; item: Item } {
   const kind = c.kind ?? 'note'
   const cell: Cell = { id: c.id, kind, parentId: null, col: c.col, row: c.row, title: c.title, createdAt: CREATED,
     ...(c.subtitle !== undefined ? { subtitle: c.subtitle } : {}), ...(c.icon !== undefined ? { icon: c.icon } : {}) }
-  const item = emptyItem(c.id, kind === 'book' ? { type: 'epub', path: '' } : null)
+  // 书先不挂原文：演示站没有书文件，挂了点图标会去读一个不存在的 EPUB。「边读边聊」那一幕再配示意书页
+  const item = emptyItem(c.id, null)
   if (c.progress !== undefined) {
     // 十节，按进度勾上前几节，格子上就有进度环
     const done = Math.round(c.progress * 10)

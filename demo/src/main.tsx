@@ -31,6 +31,7 @@ function Demo() {
   const [scene, setScene] = useState(0)
   const [elapsed, setElapsed] = useState(0) // 这一幕播了多少毫秒（暂停不计），进度条按它连续前进
   const [howto, setHowto] = useState(false)
+  const pausedBeforeHowto = useRef(false) // 关掉安装面板后回到打开前的播放状态
   const [ended, setEnded] = useState(false) // 播完了：解开画布，观众可以自己逛
   const canvas = useRef<HTMLDivElement>(null)
   useEffect(() => { canvas.current?.toggleAttribute('inert', !ended) }, [ended])
@@ -43,6 +44,8 @@ function Demo() {
   endedRef.current = ended
   const stage = useRef<HTMLDivElement>(null)
   const skin = themeRoot(useThemeId())
+
+  const closeHowto = () => { setHowto(false); setPaused(pausedBeforeHowto.current) }
 
   /** 视图切换用插件自己的按钮，动画就是产品里真实的样子 */
   const toggleView = (iso: boolean) => {
@@ -130,8 +133,8 @@ function Demo() {
         })}
       </nav>
       {/* 安装：打开时暂停，看完关掉接着播 */}
-      <button type="button" className="dm-install" aria-expanded={howto} onClick={() => { setHowto(h => !h); setPaused(true) }}>安装</button>
-      {howto && <HowTo onClose={() => setHowto(false)} />}
+      <button type="button" className="dm-install" aria-expanded={howto} onClick={() => { if (howto) closeHowto(); else { pausedBeforeHowto.current = pausedRef.current; setHowto(true); setPaused(true) } }}>安装</button>
+      {howto && <HowTo onClose={closeHowto} />}
     </div>
   )
 }
