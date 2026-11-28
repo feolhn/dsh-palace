@@ -1,7 +1,10 @@
 {
   "schema": 2,
   "id": "c_a0186b35c7",
-  "source": null,
+  "source": {
+    "type": "epub",
+    "path": "stories-of-your-life-title-page.epub"
+  },
   "chapters": [
     {
       "id": "ch_b77ac4d5d1",

@@ -1,7 +1,10 @@
 {
   "schema": 2,
   "id": "c_ce187ab20e",
-  "source": null,
+  "source": {
+    "type": "epub",
+    "path": "fat-tails-title-page.epub"
+  },
   "chapters": [],
   "cards": [
     {

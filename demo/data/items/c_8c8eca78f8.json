@@ -1,7 +1,10 @@
 {
   "schema": 2,
   "id": "c_8c8eca78f8",
-  "source": null,
+  "source": {
+    "type": "epub",
+    "path": "invention-of-nature-title-page.epub"
+  },
   "chapters": [
     {
       "id": "ch_201d288f76",

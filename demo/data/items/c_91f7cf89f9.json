@@ -1,7 +1,10 @@
 {
   "schema": 2,
   "id": "c_91f7cf89f9",
-  "source": null,
+  "source": {
+    "type": "epub",
+    "path": "antifragile-title-page.epub"
+  },
   "chapters": [
     {
       "id": "ch_970eb685aa",

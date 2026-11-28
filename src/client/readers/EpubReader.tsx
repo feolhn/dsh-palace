@@ -78,6 +78,8 @@ export function EpubReader({ item, title, subtitle, onClose, embedded }: { item:
       if (destroyed) return
       const h = await mountEpub(el, {
         data,
+        demoTitlePage: (globalThis as { __PALACE_STATIC_ASSETS__?: string }).__PALACE_STATIC_ASSETS__ !== undefined &&
+          item.source?.type === 'epub' && item.source.path.endsWith('-title-page.epub'),
         initialLoc: item.position?.loc,
         highlights: item.cards.filter(k => k.type === 'excerpt' && k.loc?.startsWith('epubcfi(')).map(k => k.loc as string),
         fontSize,

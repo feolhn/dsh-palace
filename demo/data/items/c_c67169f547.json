@@ -1,7 +1,10 @@
 {
   "schema": 2,
   "id": "c_c67169f547",
-  "source": null,
+  "source": {
+    "type": "epub",
+    "path": "surrender-experiment-title-page.epub"
+  },
   "chapters": [
     {
       "id": "ch_8f744e91af",

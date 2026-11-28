@@ -1,7 +1,10 @@
 {
   "schema": 2,
   "id": "c_4ea93ef7a2",
-  "source": null,
+  "source": {
+    "type": "epub",
+    "path": "why-fish-dont-exist-title-page.epub"
+  },
   "chapters": [],
   "cards": [
     {
