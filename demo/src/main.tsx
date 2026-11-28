@@ -1,9 +1,9 @@
 /**
  * 演示站入口（#107）：一座只读的宫殿，访客自己逛。
  * 宫殿、阅览室是插件的真实组件，数据来自 demo/data/（构建时算成 assets/demo/data.json）。
- * 对话面板里是素材包里的聊天记录；点输入框提示装插件，打开安装面板。
+ * 对话面板里是素材包里的聊天记录；访客可以试发一句，下面提示装插件。挪格子、换图标在内存里生效，刷新复原。
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import notebookCss from '../../src/client/notebook/notebook.css?raw'
 import palaceCss from '../../src/client/palace/palace.css?raw'
@@ -25,20 +25,63 @@ document.head.appendChild(style)
 // 第一次来默认轴测视图：电弧只在轴测里画，一眼能看见格子连在一起
 if (localStorage.getItem('dsh-palace:view') === null) localStorage.setItem('dsh-palace:view', 'iso')
 
-/** 对话面板里点输入框 → 打开安装面板（两处不在同一棵组件树里，用事件传） */
+/** 打开安装面板：对话里的「安装」、底栏「ⓘ」都发这个事件（不在同一棵组件树里，fakeApi.ts 里也用这个名字） */
 const ASK_INSTALL = 'dm-ask-install'
 
-function DemoChat({ lines }: { lines: ChatLine[] | undefined }) {
+/** 访客在演示里试发的话：只留在这个页面里（关掉面板再打开还在，刷新就没了） */
+const tried = new Map<string, string[]>()
+
+function DemoChat({ scope, lines }: { scope: string; lines: ChatLine[] | undefined }) {
+  const [mine, setMine] = useState(() => tried.get(scope) ?? [])
+  const [draft, setDraft] = useState('')
+  const end = useRef<HTMLDivElement>(null)
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [mine.length])
+  const send = () => {
+    const text = draft.trim()
+    if (text === '') return
+    const next = [...mine, text]
+    tried.set(scope, next); setMine(next); setDraft('')
+  }
+  const empty = (lines === undefined || lines.length === 0) && mine.length === 0
   return (
     <div className="dm-chat-log">
-      {lines === undefined || lines.length === 0
+      {empty
         ? <p className="mp-chat-note">这里还没有聊过。</p>
-        : <div className="dm-lines">{lines.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}</div>}
-      <button type="button" className="dm-composer" onClick={() => dispatchEvent(new Event(ASK_INSTALL))}>
-        想到什么，说一句…<span className="dm-send">↑</span>
-      </button>
+        : (
+          <div className="dm-lines">
+            {(lines ?? []).map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
+            {/* 试发的话照常显示；下面接一行系统提示，不冒充 AI 回答 */}
+            {mine.map((t, i) => (
+              <div key={`t${i}`} className="dm-tried">
+                <p className="dm-line dm-user">{t}</p>
+                <p className="dm-system">这是演示，AI 不会回复。装上插件就能真的聊。
+                  <button type="button" className="dm-copy" onClick={() => dispatchEvent(new Event(ASK_INSTALL))}>安装</button></p>
+              </div>
+            ))}
+            <div ref={end} />
+          </div>
+        )}
+      <form className="dm-composer" onSubmit={(e) => { e.preventDefault(); send() }}>
+        <textarea value={draft} rows={1} placeholder="想到什么，说一句…" aria-label="说一句"
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() } }} />
+        <button type="submit" className="dm-send" aria-label="发送" disabled={draft.trim() === ''}>↑</button>
+      </form>
     </div>
   )
+}
+
+/** 「ⓘ」：打开「关于 Palace」分组。用插件自己的交互：轴测视图里分组是摊开的，先切回平面，再在分组格子上点一下 */
+const ABOUT = 'c_ffffff0000' // 「关于 Palace」分组的 id（demo/data/palace.json）：访客能改分组名，不能按标题找
+async function openAbout(): Promise<void> {
+    const flat = document.querySelector<HTMLButtonElement>('.mp-view-toggle[title^="切换到平面"]')
+  if (flat !== null) { flat.click(); await new Promise(r => setTimeout(r, 900)) }
+  const el = document.querySelector(`.mp-cell[data-cell-id="${ABOUT}"]`)
+  if (el === null) return
+  const r = el.getBoundingClientRect(), at = { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0, pointerId: 99, bubbles: true }
+  el.dispatchEvent(new PointerEvent('pointerdown', at))
+  await new Promise(r => setTimeout(r, 50)) // 等宫殿记下这次按下，再抬起
+  el.dispatchEvent(new PointerEvent('pointerup', at))
 }
 
 function Demo() {
@@ -47,11 +90,13 @@ function Demo() {
   // 轻引导：一句话，点开第一个格子后就收起
   const [hint, setHint] = useState(true)
   useEffect(() => {
-    const ask = () => setHowto({ lead: '装上插件后，就能和它聊。' })
+    const ask = () => setHowto({})
     const down = (e: PointerEvent) => { if ((e.target as Element | null)?.closest?.('.mp-cell')) setHint(false) }
+    const about = () => { setHint(false); void openAbout() }
     addEventListener(ASK_INSTALL, ask)
+    addEventListener('dm-about', about)
     addEventListener('pointerdown', down, true)
-    return () => { removeEventListener(ASK_INSTALL, ask); removeEventListener('pointerdown', down, true) }
+    return () => { removeEventListener(ASK_INSTALL, ask); removeEventListener('dm-about', about); removeEventListener('pointerdown', down, true) }
   }, [])
 
   return (
@@ -106,6 +151,6 @@ function HowTo({ lead, onClose }: { lead?: string; onClose: () => void }) {
 
 
 void loadDemo().then((d: Snapshot) => {
-  setDemoChat(scope => <DemoChat lines={d.chats[scope]} />)
+  setDemoChat(scope => <DemoChat key={scope} scope={scope} lines={d.chats[scope]} />)
   createRoot(document.getElementById('app')!).render(<Demo />)
 })

@@ -356,6 +356,71 @@ export function Palace() {
     return () => el.removeEventListener('wheel', onWheel)
   }, [])
 
+  // 手机双指缩放：两根手指同时在画布上就是缩放加平移，两指中点下的内容始终跟着中点走；
+  // 第二指一按下就取消单指的拖格 / 平移。手势分两段：pinching（两指都在）→ releasing（还剩一指，等它抬起），
+  // 两段里画布的点击和拖动都不算；手指全抬起后再吞掉随后浏览器合成的那次点击（比如从书的图标上起手）。
+  // 桌面触控板的捏合走上面的 wheel，不经过这里
+  const touches = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ phase: 'pinching'; dist: number; x: number; y: number } | { phase: 'releasing' }>()
+  useEffect(() => {
+    const el = rootRef.current
+    if (el === null) return
+    let swallowUntil = 0
+    const at = (e: PointerEvent) => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top } }
+    const pair = () => {
+      const [a, b] = [...touches.current.values()]
+      return { phase: 'pinching' as const, dist: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    }
+    const down = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch' || (e.target as HTMLElement).closest('.mp-room, .mp-dialog, .mp-chat')) return
+      touches.current.set(e.pointerId, at(e))
+      if (touches.current.size === 2 && live.current.proj.open <= 0.001) { pinch.current = pair(); setGesture(undefined) }
+    }
+    const move = (e: PointerEvent) => {
+      if (!touches.current.has(e.pointerId)) return
+      touches.current.set(e.pointerId, at(e))
+      const last = pinch.current
+      if (last?.phase !== 'pinching' || touches.current.size < 2) return
+      const now = pair()
+      const factor = last.dist > 0 ? now.dist / last.dist : 1
+      // 一次更新：先把旧中点下的内容平移到新中点，再以新中点缩放（顺序反过来，内容会偏离手指）
+      setCam((c) => {
+        if (c === undefined) return c
+        const { m, size } = live.current
+        const d = delta(m, now.x - last.x, now.y - last.y)
+        const moved = { ...c, x: c.x + d.x, y: c.y + d.y }
+        const p = unproject(m, now.x, now.y, size.w, size.h)
+        const scale = clamp(moved.scale * factor, MIN_SCALE, MAX_SCALE)
+        const r = scale / moved.scale
+        return { scale, x: p.x - (p.x - moved.x) * r, y: p.y - (p.y - moved.y) * r }
+      })
+      pinch.current = now
+    }
+    const up = (e: PointerEvent) => {
+      if (!touches.current.delete(e.pointerId)) return
+      if (pinch.current === undefined) return
+      if (touches.current.size > 0) { pinch.current = { phase: 'releasing' }; return }
+      pinch.current = undefined
+      swallowUntil = performance.now() + 500
+    }
+    // 键盘触发的点击 detail 是 0，不吞
+    const click = (e: MouseEvent) => {
+      if (e.detail > 0 && (pinch.current !== undefined || performance.now() < swallowUntil)) { e.preventDefault(); e.stopPropagation() }
+    }
+    el.addEventListener('pointerdown', down, true)
+    el.addEventListener('pointermove', move, true)
+    el.addEventListener('pointerup', up, true)
+    el.addEventListener('pointercancel', up, true)
+    el.addEventListener('click', click, true)
+    return () => {
+      el.removeEventListener('pointerdown', down, true)
+      el.removeEventListener('pointermove', move, true)
+      el.removeEventListener('pointerup', up, true)
+      el.removeEventListener('pointercancel', up, true)
+      el.removeEventListener('click', click, true)
+    }
+  }, [])
+
   // ---------- 拖动 ----------
 
   const local = (e: { clientX: number; clientY: number }) => {
@@ -364,6 +429,7 @@ export function Palace() {
   }
 
   const onBackgroundDown = (e: RPointerEvent) => {
+    if (pinch.current !== undefined) return
     if (e.button !== 0 || cam === undefined) return
     // 阅览室开着：点外面 = 关上；阅读时点书外面先回到笔记（原型「阅读器外短点击回到卡片」）
     if (selected !== undefined) {
@@ -379,6 +445,7 @@ export function Palace() {
   }
 
   const onCellDown = (e: RPointerEvent, cell: Cell) => {
+    if (pinch.current !== undefined) return
     if (e.button !== 0) return
     e.stopPropagation()
     const p = local(e)
@@ -387,6 +454,7 @@ export function Palace() {
   }
 
   const onMove = (e: RPointerEvent) => {
+    if (pinch.current !== undefined) return
     if (gesture === undefined || e.pointerId !== gesture.id) return
     const p = local(e)
     const moved = gesture.moved || Math.hypot(p.x - gesture.sx, p.y - gesture.sy) > DRAG_THRESHOLD
@@ -400,6 +468,7 @@ export function Palace() {
   }
 
   const onUp = (e: RPointerEvent) => {
+    if (pinch.current !== undefined) return
     if (gesture === undefined || e.pointerId !== gesture.id) return
     setGesture(undefined)
     // 用松手的位置再判断一次（移动事件来得太快、还没重新渲染时，gesture 里的状态可能是旧的）

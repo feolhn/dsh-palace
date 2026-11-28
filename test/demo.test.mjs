@@ -24,3 +24,8 @@ test('chats.json 写错格子 id 时构建直接失败', () => {
   writeFileSync(join(dir, 'chats.json'), JSON.stringify({ c_ffffffffff: [{ who: 'user', text: '哪一格？' }] }))
   assert.throws(() => snapshot(dir), /找不到格子/)
 })
+
+test('「ⓘ」打开的「关于 Palace」分组还在（demo/src/main.tsx 按 id 找）', () => {
+  const g = snapshot(DATA).palace.cells.find(c => c.id === 'c_ffffff0000')
+  assert.equal(g?.kind, 'group')
+})

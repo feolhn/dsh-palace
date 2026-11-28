@@ -11,6 +11,9 @@ import {
 } from '../shared/palace.ts'
 import { assertCellId, newId, nowIso, ShelfError, type PalaceStore, type Tx } from './store.ts'
 
+/** ops 只用 store 的 mutate：演示站的内存 store（demo/src/memStore.ts）只实现这一个，类型上就能挡住多用别的方法 */
+export type Store = Pick<PalaceStore, 'mutate'>
+
 // ---------- 参数检查 ----------
 
 function text(value: unknown, what: string): string {
@@ -126,7 +129,7 @@ export const WELCOME_URL = 'https://dsh-palace.pages.dev'
  * 第一次创建数据目录时放进的一格「什么是 Memory Palace」：点开在浏览器打开演示网页。
  * 只在新数据目录里调用一次，用户删掉后不会再出现。不在 HTTP 白名单里。
  */
-export async function seedWelcome(store: PalaceStore): Promise<Cell> {
+export async function seedWelcome(store: Store): Promise<Cell> {
   // 一次写入完整的格子，不会留下没有网址的半成品
   return store.mutate((tx) => {
     // 副标题「什么是」+ 主标题「Memory Palace ↗」：主标题最多两行，全写在主标题里会被截断；↗ 提示点开去浏览器
@@ -137,7 +140,7 @@ export async function seedWelcome(store: PalaceStore): Promise<Cell> {
   })
 }
 
-export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Cell> {
+export async function addCell(store: Store, args: AddCellArgs): Promise<Cell> {
   const kind = args.kind
   if (kind !== 'book' && kind !== 'note' && kind !== 'group') throw new ShelfError('格子类型应为 book / note / group')
   const title = text(args.title, '标题')
@@ -168,7 +171,7 @@ export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Ce
   })
 }
 
-export async function updateCell(store: PalaceStore, args: { id: unknown; title?: unknown; subtitle?: unknown; icon?: unknown }): Promise<Cell> {
+export async function updateCell(store: Store, args: { id: unknown; title?: unknown; subtitle?: unknown; icon?: unknown }): Promise<Cell> {
   const title = args.title === undefined ? undefined : text(args.title, '标题')
   const subtitle = optionalText(args.subtitle, '备注')
   const icon = optionalText(args.icon, '图标')
@@ -186,7 +189,7 @@ export async function updateCell(store: PalaceStore, args: { id: unknown; title?
  * 移动格子。目标位置有别的格子时两者互换：对方移到这个格子原来的位置（可能跨层），一次写入完成。
  * 不给 col / row：放到目标层的第一个空位（比如拖进分组）。
  */
-export async function moveCell(store: PalaceStore, args: { id: unknown; parentId?: unknown; col?: unknown; row?: unknown }): Promise<Cell> {
+export async function moveCell(store: Store, args: { id: unknown; parentId?: unknown; col?: unknown; row?: unknown }): Promise<Cell> {
   const auto = args.col === undefined && args.row === undefined
   let col = auto ? 0 : int(args.col, '列')
   let row = auto ? 0 : int(args.row, '行')
@@ -220,7 +223,7 @@ export async function moveCell(store: PalaceStore, args: { id: unknown; parentId
  * 拖成组（#40）：把格子 id 拖到最外层的另一个格子 ontoId 上，就在 ontoId 的位置新建一个分组，两格放进去（ontoId 在前）。
  * 两格都不能是分组；一次写入完成。返回新分组，之后由界面弹出命名框。
  */
-export async function groupCells(store: PalaceStore, args: { id: unknown; ontoId: unknown; title?: unknown }): Promise<Cell> {
+export async function groupCells(store: Store, args: { id: unknown; ontoId: unknown; title?: unknown }): Promise<Cell> {
   const title = args.title === undefined ? '新分组' : text(args.title, '标题')
   return store.mutate((tx) => {
     const cell = cellOf(tx.palace, args.id)
@@ -239,7 +242,7 @@ export async function groupCells(store: PalaceStore, args: { id: unknown; ontoId
 }
 
 /** 删除格子。非空的分组不能删；书 / 笔记连同内容和卡片原图一起删，不删 PDF 等原文件。 */
-export async function deleteCell(store: PalaceStore, args: { id: unknown }): Promise<void> {
+export async function deleteCell(store: Store, args: { id: unknown }): Promise<void> {
   return store.mutate((tx) => {
     const cell = cellOf(tx.palace, args.id)
     if (cell.kind === 'group') {
@@ -255,7 +258,7 @@ export async function deleteCell(store: PalaceStore, args: { id: unknown }): Pro
 
 // ---------- 格子内容：日期、位置 ----------
 
-export async function updateItem(store: PalaceStore, args: { id: unknown; targetDate?: unknown; finishedAt?: unknown }): Promise<Item> {
+export async function updateItem(store: Store, args: { id: unknown; targetDate?: unknown; finishedAt?: unknown }): Promise<Item> {
   const targetDate = optionalDate(args.targetDate, '目标日期')
   const finishedAt = optionalDate(args.finishedAt, '读完日期')
   return store.mutate((tx) => {
@@ -267,7 +270,7 @@ export async function updateItem(store: PalaceStore, args: { id: unknown; target
 }
 
 /** 阅读器回报的位置。percent 为 0–1，和「读完」无关。 */
-export async function setPosition(store: PalaceStore, args: { id: unknown; loc: unknown; percent: unknown }): Promise<void> {
+export async function setPosition(store: Store, args: { id: unknown; loc: unknown; percent: unknown }): Promise<void> {
   const loc = text(args.loc, '位置')
   const percent = args.percent
   if (typeof percent !== 'number' || !(percent >= 0 && percent <= 1)) throw new ShelfError('percent 应为 0–1 的小数')
@@ -312,7 +315,7 @@ export function buildChapters(input: readonly OutlineInput[], previous: readonly
     })
 }
 
-export async function setOutline(store: PalaceStore, args: { id: unknown; chapters: unknown; source?: Item['outlineSource'] }): Promise<Item> {
+export async function setOutline(store: Store, args: { id: unknown; chapters: unknown; source?: Item['outlineSource'] }): Promise<Item> {
   if (!Array.isArray(args.chapters) || args.chapters.length === 0) throw new ShelfError('目录不能为空')
   const input = args.chapters as OutlineInput[]
   return store.mutate((tx) => {
@@ -337,7 +340,7 @@ export async function setOutline(store: PalaceStore, args: { id: unknown; chapte
   })
 }
 
-export async function setSectionDone(store: PalaceStore, args: { id: unknown; sectionId: unknown; done: unknown }): Promise<void> {
+export async function setSectionDone(store: Store, args: { id: unknown; sectionId: unknown; done: unknown }): Promise<void> {
   return store.mutate((tx) => {
     const found = findSection(itemOf(tx, args.id), args.sectionId as string)
     if (found === undefined) throw new ShelfError('节不存在')
@@ -348,7 +351,7 @@ export async function setSectionDone(store: PalaceStore, args: { id: unknown; se
 }
 
 /** 「学到这里」：这一节及之前全部完成，之后的全部未完成。 */
-export async function markUpTo(store: PalaceStore, args: { id: unknown; sectionId: unknown }): Promise<void> {
+export async function markUpTo(store: Store, args: { id: unknown; sectionId: unknown }): Promise<void> {
   return store.mutate((tx) => {
     const item = itemOf(tx, args.id)
     if (findSection(item, args.sectionId as string) === undefined) throw new ShelfError('节不存在')
@@ -364,7 +367,7 @@ export async function markUpTo(store: PalaceStore, args: { id: unknown; sectionI
   })
 }
 
-export async function resetProgress(store: PalaceStore, args: { id: unknown }): Promise<void> {
+export async function resetProgress(store: Store, args: { id: unknown }): Promise<void> {
   return store.mutate((tx) => {
     for (const c of itemOf(tx, args.id).chapters) for (const s of c.sections) { s.done = false; delete s.doneAt }
   })
@@ -419,7 +422,7 @@ function cardFields(item: Item, input: CardInput, card: Partial<Card>): void {
   }
 }
 
-export async function addCard(store: PalaceStore, args: CardInput & { id: unknown }): Promise<Card> {
+export async function addCard(store: Store, args: CardInput & { id: unknown }): Promise<Card> {
   const type = args.type as CardType
   if (!CARD_TYPES.has(type)) throw new ShelfError('卡片类型应为 excerpt / thought / mistake')
   return store.mutate((tx) => {
@@ -434,7 +437,7 @@ export async function addCard(store: PalaceStore, args: CardInput & { id: unknow
   })
 }
 
-export async function updateCard(store: PalaceStore, args: CardInput & { id: unknown; cardId: unknown }): Promise<Card> {
+export async function updateCard(store: Store, args: CardInput & { id: unknown; cardId: unknown }): Promise<Card> {
   return store.mutate((tx) => {
     const item = itemOf(tx, args.id)
     const card = item.cards.find(k => k.id === args.cardId)
@@ -449,7 +452,7 @@ export async function updateCard(store: PalaceStore, args: CardInput & { id: unk
   })
 }
 
-export async function deleteCard(store: PalaceStore, args: { id: unknown; cardId: unknown }): Promise<void> {
+export async function deleteCard(store: Store, args: { id: unknown; cardId: unknown }): Promise<void> {
   return store.mutate((tx) => {
     const item = itemOf(tx, args.id)
     const card = item.cards.find(k => k.id === args.cardId)
@@ -462,7 +465,7 @@ export async function deleteCard(store: PalaceStore, args: { id: unknown; cardId
 
 // ---------- 灵感 ----------
 
-export async function addInspiration(store: PalaceStore, args: { id: unknown; title: unknown; body: unknown; sessionId?: unknown; cardIds?: unknown }): Promise<Inspiration> {
+export async function addInspiration(store: Store, args: { id: unknown; title: unknown; body: unknown; sessionId?: unknown; cardIds?: unknown }): Promise<Inspiration> {
   const title = text(args.title, '灵感标题')
   const body = text(args.body, '灵感正文')
   const sessionId = optionalText(args.sessionId, 'sessionId')
@@ -475,7 +478,7 @@ export async function addInspiration(store: PalaceStore, args: { id: unknown; ti
   })
 }
 
-export async function updateInspiration(store: PalaceStore, args: { id: unknown; inspirationId: unknown; title?: unknown; body?: unknown }): Promise<Inspiration> {
+export async function updateInspiration(store: Store, args: { id: unknown; inspirationId: unknown; title?: unknown; body?: unknown }): Promise<Inspiration> {
   const title = args.title === undefined ? undefined : text(args.title, '灵感标题')
   const body = args.body === undefined ? undefined : text(args.body, '灵感正文')
   return store.mutate((tx) => {
@@ -487,7 +490,7 @@ export async function updateInspiration(store: PalaceStore, args: { id: unknown;
   })
 }
 
-export async function deleteInspiration(store: PalaceStore, args: { id: unknown; inspirationId: unknown }): Promise<void> {
+export async function deleteInspiration(store: Store, args: { id: unknown; inspirationId: unknown }): Promise<void> {
   return store.mutate((tx) => {
     const item = itemOf(tx, args.id)
     if (!item.inspirations.some(i => i.id === args.inspirationId)) throw new ShelfError('灵感不存在')

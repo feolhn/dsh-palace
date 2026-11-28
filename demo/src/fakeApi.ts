@@ -1,15 +1,23 @@
 /**
  * 假的插件接口：拦截 /api/dsh-palace/ 下的请求，返回构建时算好的演示数据（assets/demo/data.json，见 demo/snapshot.ts）。
  * 宫殿画布、阅览室用的是插件的真实组件，它们照常请求接口，不知道自己在演示站里。
- * 只读：改数据的请求一律拒绝；「用浏览器打开」（视频、带网址的格子）照常打开。
+ * 基本只读：挪格子、拖成组、改名、换图标用 Core 自己的 ops 在内存里改（刷新就复原），别的修改一律拒绝；
+ * 「用浏览器打开」（视频、带网址的格子）照常打开。
  */
+import { groupCells, moveCell, updateCell, type Store } from '../../src/core/ops.ts'
 import type { Snapshot } from '../snapshot.ts'
+import { memStore } from './memStore.ts'
 
 let data: Snapshot | undefined
-const rev = 1
+let store: Store | undefined
+let rev = 1
+
+/** 访客可以试的修改：只动布局和格子外观，规则和插件完全一样 */
+const TRY_OPS: Record<string, (store: Store, args: never) => Promise<unknown>> = { moveCell, groupCells, updateCell }
 
 export async function loadDemo(): Promise<Snapshot> {
   data = await (await fetch('assets/demo/data.json')).json() as Snapshot
+  store = memStore(data)
   return data
 }
 
@@ -26,7 +34,9 @@ async function open(d: Snapshot, init: RequestInit | undefined): Promise<Respons
   const loc = source?.type === 'video'
     ? d.items[body.id!]?.chapters.flatMap(ch => ch.sections).find(s => s.id === body.sectionId)?.loc
     : undefined
-  const url = body.target === 'welcome' ? location.href : web(cell?.href) ?? web(loc) ?? (source?.type === 'video' ? web(source.url) : undefined)
+  // 底栏「ⓘ」在插件里打开演示站；人已经在演示站里，就打开「关于 Palace」分组，不再开一个新页面（main.tsx 处理）
+  if (body.target === 'welcome') { dispatchEvent(new Event('dm-about')); return json({ ok: true }) }
+  const url = web(cell?.href) ?? web(loc) ?? (source?.type === 'video' ? web(source.url) : undefined)
   if (url === undefined) return fail('演示站里打不开本地文件。装上插件后，会用你电脑上的程序打开')
   window.open(url, '_blank', 'noopener')
   return json({ ok: true })
@@ -48,6 +58,15 @@ function handle(path: string, url: URL, init: RequestInit | undefined, real: typ
     }
     case 'image': return real(`assets/demo/images/${encodeURIComponent((url.searchParams.get('name') ?? '').split('/').pop()!)}`)
     case 'open': return open(d, init)
+    case 'op': {
+      const { op, args } = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as { op?: string; args?: unknown }
+      const run = op === undefined ? undefined : TRY_OPS[op]
+      if (run === undefined || store === undefined) return fail(READ_ONLY)
+      return run(store, (args ?? {}) as never).then(
+        (result) => { rev += 1; return json({ ok: true, rev, result: result ?? null }) },
+        (e: Error) => fail(e.message),
+      )
+    }
     // 打开对话时上报当前格子：演示里没人听，回个成功就行
     case 'active': return json({ ok: true })
     default: return fail(READ_ONLY)
