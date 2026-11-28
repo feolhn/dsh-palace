@@ -88,12 +88,12 @@ book 和 note 格子各有一个；group 没有。
 |---|---|---|
 | `pdf` | `path`, `pageCount` | 只引用路径，不复制 |
 | `epub` | `path` | 只引用路径，不复制 |
-| `video` | `url` | B 站等视频课 |
+| `video` | `url` | 视频（课、剧、综艺）的作品链接。B 站由插件读接口带出分集；其他平台只存链接，分集由 AI 查好后用 `palace_set_outline` 写入 |
 
 `loc`（位置）是一个字符串，**只有对应的 source 和 reader 认识它**，core 不解析：
 - pdf：页码，如 `"12"`
 - epub：CFI 或章节 href
-- video：这一集的链接
+- video：这一集的链接（http / https）；没有时打开作品链接
 
 ### 进度
 - 每章至少一节（没有分节的章自动生成同名节），进度按节计数。
@@ -246,9 +246,9 @@ function mountEpub(el: HTMLElement, opts: {
 | 工具 | 作用 |
 |---|---|
 | `palace_overview` | 列出宫殿里的格子和进度；传 `item_id` 时返回完整目录和卡片 |
-| `palace_add` | 新建分组、书（pdf / epub / 视频）、笔记格子 |
+| `palace_add` | 新建分组、书（pdf / epub / 视频）、笔记格子。视频按平台处理的清单写在工具说明里：B 站读接口；其他平台 `title` 必填，再由 AI 上网查分集 |
 | `palace_read` | 读 PDF 指定页的文字，并说明哪些读不出（扫描页） |
-| `palace_set_outline` | 写入两级目录 |
+| `palace_set_outline` | 写入两级目录。节可带 `page`（PDF 页序号）或 `url`（视频这一集的链接，只收 http / https） |
 | `palace_set_target_dates` | 批量设置目标日期 |
 | `palace_add_card` | 记一张卡片（摘录 / 想法 / 错题）。格子默认取当前对话打开的那个，节默认取当前节；`image` 填图片路径或 `sha256:` 附件 id |
 | `palace_add_inspiration` | 把这次对话总结成一条灵感，存到当前格子 |
@@ -265,6 +265,7 @@ function mountEpub(el: HTMLElement, opts: {
 - 做法照 Harness 自带的 subagent 侧栏：`main` slot 声明 session 作用域的子 slot `dsh-palace.chat` → 面板拿到 `SessionProvider` / `renderSlot` → `sessions.retain(id)` 包住子 slot → 子 slot 渲染 `conversation.content`（`variant: 'embedded'`，不显示首页大标题）。代码在 `src/client/chat/`。
 - 会话：宫殿一个、每个书 / 笔记格子各一个，映射记在本机 localStorage（`dsh-palace:chat-sessions`）；会话被删或归档后自动新建；「新对话」换一个新的，旧的留在会话列表里。新建时用 `workspaces.create({ path: 数据目录 })` 登记工作区再 `sessions.create({ workspaceId })`，不切换主界面。
 - 打开对话时上报 `active`，AI 记卡片、存灵感默认记到这本书。
+- 「＋」写的内容会打开「与宫殿对话」，以 `放进宫殿：…` 替用户发出去，由 AI 建格子；聊天不可用时直接报「未连接 AI」。选本地 PDF / EPUB 不经过 AI，直接走 `addBook`。
 - 都是 Harness 的非公开接口：拿不到时面板显示提示，宫殿其他功能不受影响。同一个会话不要同时在两处挂输入框（每个会话只有一个编辑器）。
 
 ## 8. 记忆与电弧（#8）

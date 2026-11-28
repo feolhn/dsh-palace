@@ -119,6 +119,9 @@ export function Palace() {
   const [orbChat, setOrbChat] = useState<Rect>()
   /** 阅读器划词「问问 AI」：放进「与书对话」输入框的原文 */
   const [seed, setSeed] = useState<{ text: string; n: number }>()
+  /** 「＋」里写的内容：打开宫殿对话后替用户发出去（#123） */
+  const [ask, setAsk] = useState<{ text: string; n: number }>()
+  const addAt = useRef<Rect>()
   const [orbNoRoom, setOrbNoRoom] = useState(false)
   const [openGroup, setOpenGroup] = useState<string>()
   /** 分组展开程度 0–1（进出分组时镜头推近 / 拉远，约 650ms，原型 groupProgress）。 */
@@ -460,8 +463,8 @@ export function Palace() {
 
   // 阅览室展开时，它右边和下面的网格整体让开（原型 axisCoord）：第 i 条线的世界坐标
   const roomCell = (selected ?? lastRoom.current) !== undefined && proj.open > 0.001 ? cells.find(c => c.id === (selected ?? lastRoom.current)) : undefined
-  // 对话收起或换了书，没用上的划词原文就作废，下次打开不再填
-  useEffect(() => { if (orbChat === undefined) setSeed(undefined) }, [orbChat, roomCell?.id])
+  // 对话收起或换了书，没用上的划词原文、「＋」的消息就作废，下次打开不再填、不再发
+  useEffect(() => { if (orbChat === undefined) { setSeed(undefined); setAsk(undefined) } }, [orbChat, roomCell?.id])
   const roomAt = roomCell !== undefined ? worldCell(roomCell) : undefined
   const rsize = roomSize(size, chatOpen, roomMode)
   const ax = (i: number, axis: 'col' | 'row'): number => {
@@ -614,7 +617,7 @@ export function Palace() {
       {(error ?? opError) && <div className="mp-toast">{opError ?? `加载失败：${error}`}</div>}
 
       <footer className="mp-footer" hidden={proj.open > 0.001} onPointerDown={e => e.stopPropagation()}>
-        <button type="button" className="mp-round" title="添加" onClick={() => setAdding(true)}>＋</button>
+        <button type="button" className="mp-round" title="放进宫殿" onClick={e => { const r = e.currentTarget.getBoundingClientRect(), b = rootRef.current!.getBoundingClientRect(); addAt.current = { x: r.left - b.left, y: Math.max(95, size.h - ORB_CHAT.h - 90), w: r.width, h: 0 }; setAdding(true) }}>＋</button>
         {/* 视图和皮肤两个按钮只放图标，说明写在悬停提示里 */}
         <button type="button" className="mp-view-toggle mp-icon-only" aria-pressed={iso} aria-keyshortcuts="I" aria-label={iso ? '切换到平面视图' : '切换到立体视图'} title={iso ? '切换到平面视图（I）' : '切换到立体视图（I）：看分组和书之间的电弧'} onClick={toggleIso}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 6-10 6L2 9Z M2 13l10 6 10-6 M2 17l10 6 10-6" /></svg>
@@ -675,13 +678,14 @@ export function Palace() {
         return reader && roomCell !== undefined
           ? <PalaceChat key={`orb-${roomCell.id}`} scope={roomCell.id} itemId={roomCell.id} dock={dock} heading="与书对话" context={`《${roomCell.title}》`} prompts={BOOK_PROMPTS} seed={seed}
               onSession={id => setRoomSession(id === undefined ? undefined : { cellId: roomCell.id, sessionId: id })} onClose={() => setOrbChat(undefined)} />
-          : <PalaceChat key="orb-palace" scope="palace" dock={dock} heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" prompts={PALACE_PROMPTS} onClose={() => setOrbChat(undefined)} />
+          : <PalaceChat key="orb-palace" scope="palace" dock={dock} heading="与宫殿对话" context="把读过的书，与此刻的想法放在一起。" prompts={PALACE_PROMPTS} send={ask} onClose={() => setOrbChat(undefined)} />
       })()}
       {reading !== undefined && palace?.cells.some(c => c.id === reading) && (() => {
         const c = palace.cells.find(x => x.id === reading) as Cell
         return <ReadBook key={c.id} id={c.id} title={c.title} subtitle={c.subtitle} onClose={() => setReading(undefined)} onError={setOpError} />
       })()}
-      {adding && <AddDialog parentId={group?.id} onClose={() => setAdding(false)} />}
+      {adding && <AddDialog parentId={group?.id} parentTitle={group?.title} onClose={() => setAdding(false)}
+        onAsk={text => { setAsk(v => ({ text, n: (v?.n ?? 0) + 1 })); setOrbChat(o => o ?? addAt.current ?? { x: size.w - 200, y: Math.max(95, size.h - ORB_CHAT.h - 90), w: 0, h: 0 }) }} />}
       {naming !== undefined && <GroupNameDialog group={naming} onClose={() => setNaming(undefined)} />}
     </div>
   )

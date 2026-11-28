@@ -56,6 +56,22 @@ test('写目录、设目标日期、新建分组和笔记', async () => {
   assert.match(await call('palace_set_target_dates', { items: [{ item_id: b.id, target_date: '2099-01-01' }] }), /《B》→ 2099-01-01/)
 })
 
+test('非 B 站视频链接：只记链接、标题必填，AI 查到的分集链接写进目录（#123）', async (t) => {
+  const { store, call } = setup()
+  const realFetch = globalThis.fetch
+  globalThis.fetch = async () => { throw new Error('不该请求网络') }
+  t.after(() => { globalThis.fetch = realFetch })
+  assert.match(await call('palace_add', { kind: 'book', url: 'https://www.mgtv.com/b/123.html' }), /要填作品名/)
+  assert.match(await call('palace_add', { kind: 'book', url: 'mgtv.com/b/1', title: '剧' }), /http/)
+  assert.match(await call('palace_add', { kind: 'book', url: 'https://www.mgtv.com/b/123.html', title: '某综艺' }), /还没有分集目录/)
+  const c = store.getPalace().cells[0]
+  assert.deepEqual(store.getItem(c.id).source, { type: 'video', url: 'https://www.mgtv.com/b/123.html' })
+  await call('palace_set_outline', { item_id: c.id, chapters: [{ title: '第一季', sections: [{ title: '第 1 期', url: 'https://www.mgtv.com/b/123/1.html' }, { title: '第 2 期', url: 'javascript:alert(1)' }] }] })
+  const [s1, s2] = store.getItem(c.id).chapters[0].sections
+  assert.equal(s1.loc, 'https://www.mgtv.com/b/123/1.html')
+  assert.equal(s2.loc, undefined)
+})
+
 test('删除格子：书连同卡片一起删，非空分组不能删', async () => {
   const { store, call } = setup()
   const g = await core.addCell(store, { kind: 'group', title: 'G' })

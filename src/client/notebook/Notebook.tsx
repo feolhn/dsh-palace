@@ -131,6 +131,7 @@ function ProgressTab({ item, title, subtitle, onPick, onRead, onError }: { item:
           <div className="nb-empty">
             <p>还没有目录。</p>
             {item.source?.type === 'epub' && <p className="nb-small nb-muted">第一次打开阅读时，会自动读出书里的目录。</p>}
+            {video && <p className="nb-small nb-muted">可以让 AI 上网查分集，写成目录。</p>}
             {item.source?.type === 'pdf' && (
               <>
                 <p className="nb-small nb-muted">这本 PDF 没有书签。勾选目录所在的页面，AI 会读出章节结构。</p>

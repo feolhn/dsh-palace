@@ -11,6 +11,11 @@ export interface VideoCourse { title: string; url: string; chapters: VideoChapte
 
 export class VideoError extends Error {}
 
+/** 能用 B 站接口读出分集的链接：带 BV 号，或 b23.tv 短链。 */
+export function isBilibili(input: string): boolean {
+  return /BV[0-9A-Za-z]{10}/.test(input) || /https?:\/\/b23\.tv\//.test(input)
+}
+
 /** 从文本里找出 B 站链接或 BV 号。支持 b23.tv 短链。 */
 export async function resolveBvid(input: string, signal?: AbortSignal): Promise<string> {
   const direct = input.match(/BV[0-9A-Za-z]{10}/)
