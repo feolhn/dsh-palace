@@ -253,6 +253,8 @@ export function createRoutes(store: PalaceStore, active: ActiveItems, memory = n
 
     // 只打开格子里登记过的东西，不接受任意路径
     route('POST', 'open', ({ body }) => {
+      // 底栏「ⓘ」：打开演示网页（和「什么是 Memory Palace」那一格同一个地址，#107）
+      if (body.target === 'welcome') { openExternal(core.WELCOME_URL); return json({ ok: true }) }
       if (body.target === 'dataDir') {
         openExternal(store.dir)
         return json({ ok: true })

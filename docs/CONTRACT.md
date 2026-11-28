@@ -232,7 +232,7 @@ function mountEpub(el: HTMLElement, opts: {
 | GET | `page-text?id=&pages=1,2` | `{ pages: [{page,text}], scanned: [页码] }`，PDF 选目录页用 |
 | GET | `asset?f=` | 前端需要的静态资源：`reader/epub.min.js`、`reader/jszip.min.js`（白名单），pdf.js 的 CMap 等，界面字体 `fonts/*.woff2`，皮肤的图片和字体 `themes/<id>/[子目录/]<名字>`（webp、png、svg、ttf、woff2；`theme.json` 打包在前端里，不从这里读） |
 | POST | `pick-file` | macOS 弹出文件选择框 |
-| POST | `open` | 用系统程序打开原文或数据目录；格子带 `href` 时打开这个网址 |
+| POST | `open` | 用系统程序打开原文或数据目录；格子带 `href` 时打开这个网址；`{ target: "welcome" }` 打开演示网页（底栏「ⓘ」） |
 | POST | `active` | `{ sessionId, itemId \| null }`：某个对话当前打开的格子 |
 | GET | `arcs` | `{ rev, arcs }`：电弧，`[{ from, to, strands, why, lastAt, links }]`，按股数排序（见 §8） |
 | POST | `cut-arc` | `{ from, to }`：用户剪断两格之间的电弧 |

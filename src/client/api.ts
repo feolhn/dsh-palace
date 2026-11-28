@@ -34,6 +34,11 @@ export async function openSource(id: string, sectionId?: string): Promise<void> 
   await post('open', { id, sectionId })
 }
 
+/** 打开演示网页（底栏「ⓘ」，#107） */
+export async function openWelcome(): Promise<void> {
+  await post('open', { target: 'welcome' })
+}
+
 export async function openDataDir(): Promise<void> {
   await post('open', { target: 'dataDir' })
 }

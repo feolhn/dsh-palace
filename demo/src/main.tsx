@@ -81,7 +81,12 @@ function Demo() {
 
   useEffect(() => { void seek(0) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (e.key === ' ') { e.preventDefault(); setPaused(p => !p) } }
+    // 空格暂停 / 继续；焦点在按钮、链接上时留给它们（比如用键盘选进度条上的某一幕）
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== ' ' || (e.target as Element | null)?.closest?.('button, a, input, textarea, select')) return
+      e.preventDefault()
+      setPaused(p => !p)
+    }
     addEventListener('keydown', key)
     return () => removeEventListener('keydown', key)
   }, [])
