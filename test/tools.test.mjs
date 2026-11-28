@@ -63,8 +63,10 @@ test('非 B 站视频链接：只记链接、标题必填，AI 查到的分集�
   t.after(() => { globalThis.fetch = realFetch })
   assert.match(await call('palace_add', { kind: 'book', url: 'https://www.mgtv.com/b/123.html' }), /要填作品名/)
   assert.match(await call('palace_add', { kind: 'book', url: 'mgtv.com/b/1', title: '剧' }), /http/)
+  // 别的网站路径里碰巧有 BV 字样，也不当 B 站
+  assert.match(await call('palace_add', { kind: 'book', url: 'https://example.com/BV1234567890', title: '别的' }), /还没有分集目录/)
   assert.match(await call('palace_add', { kind: 'book', url: 'https://www.mgtv.com/b/123.html', title: '某综艺' }), /还没有分集目录/)
-  const c = store.getPalace().cells[0]
+  const c = store.getPalace().cells.find(x => x.title === '某综艺')
   assert.deepEqual(store.getItem(c.id).source, { type: 'video', url: 'https://www.mgtv.com/b/123.html' })
   await call('palace_set_outline', { item_id: c.id, chapters: [{ title: '第一季', sections: [{ title: '第 1 期', url: 'https://www.mgtv.com/b/123/1.html' }, { title: '第 2 期', url: 'javascript:alert(1)' }] }] })
   const [s1, s2] = store.getItem(c.id).chapters[0].sections

@@ -190,7 +190,7 @@ function SectionRow({ item, section: s, current, indent = false, onError }: { it
       {/* 「学到这里」：鼠标移到哪一节，就在那一节旁边出现一个白色向下三角（#40） */}
       <span className="nb-sec-actions">
         <button type="button" className="nb-upto" title="学到这里：这一节及之前都标记为已读" aria-label={`学到这里：${s.title}`} onClick={() => void run('markUpTo', { id: item.id, sectionId: s.id })}><i /></button>
-        {video && s.loc && <button type="button" className="nb-link" onClick={() => void openSource(item.id, s.id).catch((e: Error) => onError(e.message))}>播放</button>}
+        {video && <button type="button" className="nb-link nb-play" onClick={() => void openSource(item.id, s.id).catch((e: Error) => onError(e.message))}>播放</button>}
       </span>
       <span className="nb-spacer" />
       {item.source?.type === 'pdf' && s.loc && <small className="nb-muted">p{s.loc}</small>}
