@@ -1,19 +1,19 @@
 /**
- * 演示站入口（#107）：过场动画式的产品演示，观众只看不操作。
- * 宫殿画布是插件的真实组件；字幕、对话、进度条由演示自己画。
+ * 演示站入口（#107）：一座只读的宫殿，访客自己逛。
+ * 宫殿、阅览室是插件的真实组件，数据来自 demo/data/（构建时算成 assets/demo/data.json）。
+ * 对话面板里是素材包里的聊天记录；点输入框提示装插件，打开安装面板。
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import notebookCss from '../../src/client/notebook/notebook.css?raw'
 import palaceCss from '../../src/client/palace/palace.css?raw'
 import readerCss from '../../src/client/readers/reader.css?raw'
 import fontsCss from '../../vendor/fonts/fonts.css?raw'
+import { setDemoChat } from '../../src/client/chat/host.tsx'
 import { Palace } from '../../src/client/palace/Palace.tsx'
-import { refreshPalace } from '../../src/client/palace/data.ts'
 import { themeRoot, useThemeId } from '../../src/client/palace/theme.ts'
-import { installFakeApi, setDemoData } from './fakeApi.ts'
-import { apply, durationOf, enterScene, SEND_PAUSE, sceneLength, startState, stateAt, TYPE_MS, type Action, type DemoState } from './script.ts'
-import { SCENES, START, START_ISO } from './scenes/index.ts'
+import type { ChatLine, Snapshot } from '../snapshot.ts'
+import { installFakeApi, loadDemo } from './fakeApi.ts'
 
 // 皮肤图片和字体指向静态文件（构建时复制到 assets/）
 ;(globalThis as { __PALACE_STATIC_ASSETS__?: string }).__PALACE_STATIC_ASSETS__ = 'assets/'
@@ -22,208 +22,44 @@ const style = document.createElement('style')
 style.textContent = [fontsCss.replace(/url\(fonts\//g, 'url(assets/fonts/'), notebookCss, palaceCss, readerCss].join('\n')
 document.head.appendChild(style)
 
-const START_STATE = startState(START, START_ISO)
-const VIEW_KEY = 'dsh-palace:view'
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
-const TICK = 50
+// 第一次来默认轴测视图：电弧只在轴测里画，一眼能看见格子连在一起
+if (localStorage.getItem('dsh-palace:view') === null) localStorage.setItem('dsh-palace:view', 'iso')
 
-const FADE_MS = 900
-const PULSE_MS = 900
-const NO_LINES: DemoState['chat'] = []
+/** 对话面板里点输入框 → 打开安装面板（两处不在同一棵组件树里，用事件传） */
+const ASK_INSTALL = 'dm-ask-install'
 
-/** 值变「空」时，把旧值再留 FADE_MS（这段时间 leaving = true，界面淡出）；变成新值则立刻换上 */
-function useLinger<T>(value: T, empty: T): [T, boolean] {
-  const isEmpty = (v: T) => v === empty || (Array.isArray(v) && v.length === 0)
-  const [kept, setKept] = useState(value)
-  useEffect(() => {
-    if (!isEmpty(value)) { setKept(value); return }
-    const t = setTimeout(() => setKept(empty), FADE_MS)
-    return () => clearTimeout(t)
-  }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
-  return [isEmpty(value) ? kept : value, isEmpty(value) && !isEmpty(kept)]
+function DemoChat({ lines }: { lines: ChatLine[] | undefined }) {
+  return (
+    <div className="dm-chat-log">
+      {lines === undefined || lines.length === 0
+        ? <p className="mp-chat-note">这里还没有聊过。</p>
+        : <div className="dm-lines">{lines.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}</div>}
+      <button type="button" className="dm-composer" onClick={() => dispatchEvent(new Event(ASK_INSTALL))}>
+        想到什么，说一句…<span className="dm-send">↑</span>
+      </button>
+    </div>
+  )
 }
 
 function Demo() {
-  const [shown, setShown] = useState<DemoState>(() => stateAt(START_STATE, SCENES, 0))
-  const [scene, setScene] = useState(0)
-  const [elapsed, setElapsed] = useState(0) // 这一幕播了多少毫秒（暂停不计），进度条按它连续前进
-  const [howto, setHowto] = useState(false)
-  const pausedBeforeHowto = useRef(false) // 关掉安装面板后回到打开前的播放状态
-  const [ended, setEnded] = useState(false) // 播完了：解开画布，观众可以自己逛
-  const canvas = useRef<HTMLDivElement>(null)
-  useEffect(() => { canvas.current?.toggleAttribute('inert', !ended) }, [ended])
-  const [paused, setPaused] = useState(false)
-  const [mount, setMount] = useState(0) // 换了它就重新挂载宫殿（跳转时用）
-  const run = useRef(0) // 每次跳转加一，旧的播放循环看到就停
-  const pausedRef = useRef(false)
-  pausedRef.current = paused
-  const endedRef = useRef(false)
-  endedRef.current = ended
-  const stage = useRef<HTMLDivElement>(null)
   const skin = themeRoot(useThemeId())
-  // 字幕和对话收起时先淡出再拿掉，不突然消失
-  const [caption, captionOut] = useLinger(shown.caption, undefined)
-  const [chat, chatOut] = useLinger(shown.chat, NO_LINES)
-  const [panel, panelOut] = useLinger(shown.panel, undefined)
-  const [draft, setDraft] = useState('') // 对话面板输入框里正在打的字
-
-  const closeHowto = () => { setHowto(false); setPaused(pausedBeforeHowto.current) }
-
-  /** 视图切换用插件自己的按钮，动画就是产品里真实的样子 */
-  const toggleView = (iso: boolean) => {
-    const btn = stage.current?.querySelector<HTMLButtonElement>('.mp-view-toggle:not(.mp-theme-toggle)')
-    if (btn !== null && btn !== undefined && (btn.getAttribute('aria-pressed') === 'true') !== iso) btn.click()
-  }
-
-  const q = <T extends Element>(sel: string) => stage.current?.querySelector<T>(sel) ?? null
-
-  /** 进阅览室：点那本书的图标，和用户在插件里做的一样 */
-  const openBook = (id: string) => q<HTMLButtonElement>(`.mp-cell[data-cell-id="${id}"] .mp-moon`)?.click()
-
-  /** 台本动作在真实宫殿上的反应（数据由假接口给，这里只按插件自己的按钮） */
-  const react = async (a: Action, hold: (ms: number) => Promise<boolean>): Promise<number> => {
-    if (a.do === 'view') toggleView(a.iso)
-    if (a.do === 'read') openBook(a.id)
-    if (a.do === 'leave') {
-      // 阅读 → 笔记 → 宫殿：插件里左上角返回按钮要点两次
-      q<HTMLButtonElement>('.mp-back')?.click()
-      if (!await hold(700)) return 700 // 中途跳转了：不再点，免得关掉新一幕的阅览室
-      q<HTMLButtonElement>('.mp-back')?.click()
-      return 700
-    }
-    return 0
-  }
-
-  /** 跳到第 index 幕的开头：瞬间重放前面的动作，重新挂载宫殿，然后从这里播 */
-  const seek = async (index: number) => {
-    const id = ++run.current
-    setEnded(false); setDraft('')
-    /** 等 ms 毫秒，暂停时不计时；跳转了就提前返回 false */
-    const hold = async (ms: number) => {
-      // 按真实流逝的时间扣：标签页在后台时浏览器会把定时器拖到一秒一次，按次数扣会慢几十倍
-      let last = performance.now()
-      for (let left = ms; left > 0;) {
-        await sleep(TICK)
-        if (run.current !== id) return false
-        const now = performance.now(), dt = Math.min(now - last, left)
-        last = now
-        if (!pausedRef.current) { left -= dt; setElapsed(e => e + dt) }
-      }
-      return run.current === id
-    }
-    const s = stateAt(START_STATE, SCENES, index)
-    localStorage.setItem(VIEW_KEY, s.iso ? 'iso' : 'flat')
-    setDemoData(s)
-    await refreshPalace()
-    setShown(s); setScene(index); setElapsed(0); setMount(n => n + 1)
-    await sleep(600)
-    if (s.reading !== undefined) openBook(s.reading)
-    let state = s
-    for (let i = index; i < SCENES.length; i++) {
-      if (i !== index) { state = enterScene(state); setShown(state); setScene(i); setElapsed(0) }
-      let done = 0 // 已播完的动作时长之和：每个动作结束时对齐一次，免得计时累计误差
-      for (const a of SCENES[i].actions) {
-        if (run.current !== id) return
-        while (pausedRef.current) { if (!await hold(TICK)) return }
-        let spent = 0
-        if (a.do === 'chat' && a.open) {
-          // 先让光球（读书时是阅览室里的 AI 入口）闪一下、停一会儿，再打开面板：观众看得出对话从哪里开始
-          const orb = q<HTMLElement>('.mp-orb:not([hidden]), .mp-ai-orb, .mp-room-ai')
-          orb?.classList.add('dm-pulse')
-          const ok = await hold(PULSE_MS)
-          orb?.classList.remove('dm-pulse')
-          if (!ok) return
-          spent = PULSE_MS
-        }
-        if (a.do === 'say' && a.who === 'user' && state.panel !== undefined) {
-          // 在输入框里打字，打完停一下再发出去
-          const chars = [...a.text]
-          for (let n = 1; n <= chars.length; n++) { setDraft(chars.slice(0, n).join('')); if (!await hold(TYPE_MS)) return }
-          if (!await hold(SEND_PAUSE)) return
-          setDraft('')
-          spent = TYPE_MS * chars.length + SEND_PAUSE
-        }
-        state = apply(state, a)
-        setDemoData(state)
-        if (a.do !== 'view') void refreshPalace()
-        setShown(state)
-        spent += await react(a, hold)
-        if (run.current !== id) return
-        if (!await hold(durationOf(a) - spent)) return
-        done += durationOf(a)
-        setElapsed(done)
-      }
-    }
-    // 播完：收起字幕和对话，把画布让给观众
-    if (run.current === id) { setShown(enterScene(state)); setEnded(true) }
-  }
-
-  /** 跳过：直接到播完的样子，进入自由浏览 */
-  const skip = async () => {
-    ++run.current // 停掉正在播的循环
-    setDraft('')
-    const s = stateAt(START_STATE, SCENES, SCENES.length)
-    localStorage.setItem(VIEW_KEY, s.iso ? 'iso' : 'flat')
-    setDemoData(s)
-    await refreshPalace()
-    const last = SCENES.length - 1
-    setShown(s); setScene(last); setElapsed(sceneLength(SCENES[last])); setMount(n => n + 1); setPaused(false); setEnded(true)
-  }
-
-  useEffect(() => { void seek(0) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const [howto, setHowto] = useState<{ lead?: string }>()
+  // 轻引导：一句话，点开第一个格子后就收起
+  const [hint, setHint] = useState(true)
   useEffect(() => {
-    // 空格暂停 / 继续；焦点在按钮、链接上时留给它们（比如用键盘选进度条上的某一幕）
-    const key = (e: KeyboardEvent) => {
-      if (e.key !== ' ' || endedRef.current || (e.target as Element | null)?.closest?.('button, a, input, textarea, select')) return
-      e.preventDefault()
-      setPaused(p => !p)
-    }
-    addEventListener('keydown', key)
-    return () => removeEventListener('keydown', key)
+    const ask = () => setHowto({ lead: '装上插件后，就能和它聊。' })
+    const down = (e: PointerEvent) => { if ((e.target as Element | null)?.closest?.('.mp-cell')) setHint(false) }
+    addEventListener(ASK_INSTALL, ask)
+    addEventListener('pointerdown', down, true)
+    return () => { removeEventListener(ASK_INSTALL, ask); removeEventListener('pointerdown', down, true) }
   }, [])
 
   return (
-    <div className={`dm-root ${ended ? 'dm-done' : ''} ${skin.className}`} style={skin.style}>
-      <div ref={stage} className={`dm-stage ${ended ? 'dm-ended' : ''}`} data-mp-host onClick={(e) => { if (e.isTrusted && !ended) setPaused(p => !p) }}>
-        <div className="dm-canvas" ref={canvas}>
-          <Palace key={mount} />
-        </div>
-      </div>
-      {caption !== undefined && <div key={caption} className={`dm-caption ${captionOut ? 'dm-out' : ''}`}>{caption}</div>}
-      {panel !== undefined
-        ? (
-          // 仿插件的对话面板：外框用插件自己的样式（跟着皮肤变），里面的消息和输入框是演示画的（官方控件离开 Harness 跑不起来）
-          <aside className={`mp-chat mp-chat-dock dm-panel ${panelOut ? 'dm-out' : ''}`} aria-label={panel}>
-            <header className="mp-chat-head"><div><span className="mp-eyebrow">A CONVERSATION</span><h2>{panel}</h2></div></header>
-            <div className="dm-lines">{chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}</div>
-            <div className={`dm-composer ${draft !== '' ? 'dm-typing' : ''}`}>{draft !== '' ? draft : '想到什么，说一句…'}<span className="dm-send">↑</span></div>
-          </aside>
-        )
-        : chat.length > 0 && (
-          <div className={`dm-chat ${chatOut ? 'dm-out' : ''}`}>
-            {chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
-          </div>
-        )}
-      {/* 同一个位置：播放时「跳过」直接进自由浏览，播完变「重播」 */}
-      {ended
-        ? <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>
-        : <button type="button" className="dm-replay" onClick={() => void skip()}>跳过</button>}
-      {paused && !ended && <div className="dm-paused">已暂停 · 点画面继续</div>}
-      <nav className="dm-bar" aria-label="演示进度">
-        {SCENES.map((sc, i) => {
-          const fill = i < scene ? 1 : i > scene ? 0 : Math.min(1, elapsed / sceneLength(sc))
-          return (
-            <button key={sc.id} type="button" className={`dm-seg ${i === scene ? 'dm-on' : ''}`} style={{ flexGrow: sceneLength(sc) }}
-              onClick={() => { setPaused(false); void seek(i) }}>
-              <span className="dm-fill" style={{ transform: `scaleX(${fill})` }} />
-              <span className="dm-name">{sc.title}</span>
-            </button>
-          )
-        })}
-      </nav>
-      {/* 安装：打开时暂停，看完关掉接着播 */}
-      <button type="button" className="dm-install" aria-expanded={howto} onClick={() => { if (howto) closeHowto(); else { pausedBeforeHowto.current = pausedRef.current; setHowto(true); setPaused(true) } }}>安装</button>
-      {howto && <HowTo onClose={closeHowto} />}
+    <div className={`dm-root ${skin.className}`} style={skin.style}>
+      <div className="dm-stage" data-mp-host><Palace /></div>
+      {hint && <div className="dm-hint">点开任意格子看看</div>}
+      <button type="button" className="dm-install" aria-expanded={howto !== undefined} onClick={() => setHowto(h => h === undefined ? {} : undefined)}>安装</button>
+      {howto !== undefined && <HowTo lead={howto.lead} onClose={() => setHowto(undefined)} />}
     </div>
   )
 }
@@ -235,12 +71,13 @@ const HOSTS = [
   { id: 'chatgpt', name: 'ChatGPT', ready: false },
 ]
 
-function HowTo({ onClose }: { onClose: () => void }) {
+function HowTo({ lead, onClose }: { lead?: string; onClose: () => void }) {
   const [open, setOpen] = useState<string>()
   const [copied, setCopied] = useState(false)
   const copy = () => { void navigator.clipboard?.writeText('dsh-palace').then(() => setCopied(true)) }
   return (
     <section className="dm-howto" aria-label="安装">
+      {lead !== undefined && <p className="dm-lead">{lead}</p>}
       <h2>装到哪里</h2>
       {HOSTS.map(h => (
         <div key={h.id} className="dm-host">
@@ -267,4 +104,8 @@ function HowTo({ onClose }: { onClose: () => void }) {
   )
 }
 
-createRoot(document.getElementById('app')!).render(<Demo />)
+
+void loadDemo().then((d: Snapshot) => {
+  setDemoChat(scope => <DemoChat lines={d.chats[scope]} />)
+  createRoot(document.getElementById('app')!).render(<Demo />)
+})
