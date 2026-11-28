@@ -7,7 +7,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from 'react'
 import type { Cell, CellSummary } from '../../shared/palace.ts'
-import { openSource } from '../api.ts'
+import { openSource, openWelcome } from '../api.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { Room, RoomTabs } from './Room.tsx'
 import { Orb } from './Orb.tsx'
@@ -634,6 +634,11 @@ export function Palace() {
           onClick={() => { const ids = Object.keys(THEMES); setTheme(ids[(ids.indexOf(themeId) + 1) % ids.length]) }}>
           {/* 调色盘 */}
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-.8 2-1.8 0-1.4-1.4-1.9-1.4-3.2 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3Z" /><circle cx="7.5" cy="11" r="1.2" /><circle cx="10" cy="7" r="1.2" /><circle cx="15" cy="7" r="1.2" /></svg>
+        </button>
+        {/* 重看介绍（#107）：删掉了「什么是 Memory Palace」那一格、或者格子多了找不到，也能从这里打开 */}
+        <button type="button" className="mp-view-toggle mp-icon-only" aria-label="查看教程（在浏览器打开）" title="查看教程"
+          onClick={() => openWelcome().catch((e: Error) => setOpError(e.message))}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6 M12 7.5v.5" /></svg>
         </button>
         <div className="mp-zoom">
           <button type="button" onClick={() => zoomAt(1 / 1.2, size.w / 2, size.h / 2)} disabled={(cam?.scale ?? 1) <= MIN_SCALE + 0.001}>−</button>

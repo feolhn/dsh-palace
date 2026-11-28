@@ -37,7 +37,8 @@
     "prepublishOnly": "node scripts/build.mjs && node scripts/check-privacy.mjs --publish",
     "typecheck": "tsc --noEmit",
     "test": "node --import ./test/stubs/register.mjs --test test/*.test.mjs",
-    "verify": "tsc --noEmit && pnpm test && node scripts/check-privacy.mjs && node scripts/build.mjs",
+    "verify": "tsc --noEmit && pnpm test && node scripts/check-privacy.mjs && node scripts/build.mjs && npm --prefix demo install --no-audit --no-fund --silent && node demo/build.mjs",
+    "demo": "npm --prefix demo install --no-audit --no-fund --silent && node demo/build.mjs --serve",
     "check-privacy": "node scripts/check-privacy.mjs",
     "setup": "git config core.hooksPath .githooks"
   },
@@ -62,6 +63,7 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.7",
     "esbuild": "^0.28.2",
     "typescript": "^5.9.0"
   },

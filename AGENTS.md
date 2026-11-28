@@ -68,7 +68,7 @@ src/shared   前后端共用的数据类型
 ```
 
 - **数据目录**默认在 `~/Documents/dsh-palace-data/`，包含 `palace.json`、`items/`、`images/`、`memory/`（me.md 和格子页）、`links.jsonl`（联想）。详见 `docs/CONTRACT.md`。
-- **宿主**：现在只有 DeepSeek Harness。以后会加 MCP（Claude 和 ChatGPT 桌面端）、localhost 网页，以及演示站（`demo/`：Core 跑在浏览器里，配上剧本和演示数据）。
+- **宿主**：现在只有 DeepSeek Harness。以后会加 MCP（Claude 和 ChatGPT 桌面端）、localhost 网页，以及演示站（`demo/`：过场动画式的产品演示，宫殿画布用插件的真实组件，接口换成内存里的演示数据；台本在 `demo/src/scenes/`，#107）。
 
 ## 地图
 

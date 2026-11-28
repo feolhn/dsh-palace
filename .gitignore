@@ -12,3 +12,5 @@ design/screenshots.local/
 
 # 本地预览配置
 .claude/
+/demo/dist/
+/demo/node_modules/

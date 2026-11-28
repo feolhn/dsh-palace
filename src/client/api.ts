@@ -3,6 +3,9 @@
  * 宫殿数据的读取和刷新在 palace/data.ts。
  */
 export function apiUrl(path: string, query?: Record<string, string>): string {
+  // 演示站（demo/）是静态网页：皮肤图片、字体直接指向静态文件。插件里不会设置这个变量
+  const assets = (globalThis as { __PALACE_STATIC_ASSETS__?: string }).__PALACE_STATIC_ASSETS__
+  if (assets !== undefined && path === 'asset' && query?.f !== undefined) return new URL(assets + query.f, document.baseURI).href
   const url = new URL(`api/dsh-palace/${path}`, document.baseURI)
   if (query) for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v)
   return url.href
@@ -29,6 +32,11 @@ export async function pickBook(): Promise<string | null | undefined> {
 /** 用系统程序打开原文；视频传 sectionId 跳到那一集。 */
 export async function openSource(id: string, sectionId?: string): Promise<void> {
   await post('open', { id, sectionId })
+}
+
+/** 打开演示网页（底栏「ⓘ」，#107） */
+export async function openWelcome(): Promise<void> {
+  await post('open', { target: 'welcome' })
 }
 
 export async function openDataDir(): Promise<void> {
