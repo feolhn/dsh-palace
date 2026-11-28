@@ -119,6 +119,23 @@ export interface AddCellArgs {
   outlineSource?: Item['outlineSource']
 }
 
+/** 演示网页（#107）。站还没做好时，这个地址先跳转到 README。 */
+export const WELCOME_URL = 'https://dsh-palace.pages.dev'
+
+/**
+ * 第一次创建数据目录时放进的一格「什么是 Memory Palace」：点开在浏览器打开演示网页。
+ * 只在新数据目录里调用一次，用户删掉后不会再出现。不在 HTTP 白名单里。
+ */
+export async function seedWelcome(store: PalaceStore): Promise<Cell> {
+  // 一次写入完整的格子，不会留下没有网址的半成品
+  return store.mutate((tx) => {
+    const cell: Cell = { id: newId('c'), kind: 'note', parentId: null, ...firstEmptySlot(tx.palace, null), title: '什么是 Memory Palace', subtitle: '点开看看 ↗', icon: 'open-book', href: WELCOME_URL, createdAt: nowIso() }
+    tx.palace.cells.push(cell)
+    tx.createItem(emptyItem(cell.id, null))
+    return cell
+  })
+}
+
 export async function addCell(store: PalaceStore, args: AddCellArgs): Promise<Cell> {
   const kind = args.kind
   if (kind !== 'book' && kind !== 'note' && kind !== 'group') throw new ShelfError('格子类型应为 book / note / group')

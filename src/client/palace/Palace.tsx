@@ -7,6 +7,7 @@
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from 'react'
 import type { Cell, CellSummary } from '../../shared/palace.ts'
+import { openSource } from '../api.ts'
 import { AddDialog } from './AddDialog.tsx'
 import { Room, RoomTabs } from './Room.tsx'
 import { Orb } from './Orb.tsx'
@@ -281,6 +282,9 @@ export function Palace() {
     setTimeout(finish, 220)
   }
 
+  /** 带网址的格子（「什么是 Memory Palace」）：用浏览器打开，不进阅览室 */
+  const openLink = (id: string) => { openSource(id).catch((e: Error) => setOpError(e.message)) }
+
   const toggleIso = () => {
     if (palace === undefined || cam === undefined) return
     const next = !iso
@@ -413,6 +417,7 @@ export function Palace() {
     const { cell } = gesture
     if (!gesture.moved) {
       // 轴测视图里分组本来就是展开的
+      if (cell.href !== undefined) { openLink(cell.id); return }
       if (cell.kind === 'group') { if (!spreading && openGroup !== cell.id) enterGroup(cell) } else { setOrbChat(undefined); setSelected(cell.id) } // 首页的光球对话先收起，不和「与书对话」同时出现（#66）
       return
     }
@@ -529,7 +534,7 @@ export function Palace() {
         style={{ ...rect(x, y, B, B), opacity: (spreading && c.parentId !== null ? proj.spread : 1) * outside * fade, pointerEvents: proj.open > 0.001 || fade < 1 ? 'none' : undefined }}
         onPointerEnter={() => setHover(c.id)} onPointerLeave={() => setHover(h => (h === c.id ? undefined : h))}
         onPointerDown={e => onCellDown(e, c)}>
-        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => read(c.id)} />
+        <CellFace cell={c} summary={summaries[c.id]} count={childCount.get(c.id) ?? 0} groupPercent={groupPercent.get(c.id)} onRead={() => (c.href !== undefined ? openLink(c.id) : read(c.id))} />
       </div>
     )
   }
@@ -732,7 +737,8 @@ function dropTarget(cells: Cell[], openGroup: string | undefined, tile: { col: n
  * 左下角大字标题最多两行，上面一行小字（备注：作者、中文名……用户想填什么都行）；右边竖排阅读起止时间。
  */
 function CellFace({ cell, summary, count, groupPercent, onRead }: { cell: Cell; summary?: CellSummary; count: number; groupPercent?: number; onRead: () => void }) {
-  const readable = summary?.source !== undefined
+  // 带网址的格子：图标按钮（含键盘 Enter / 空格）也打开网页
+  const readable = summary?.source !== undefined || cell.href !== undefined
   const percent = cell.kind === 'group' ? groupPercent : summary?.percent
   // 右边竖排：阅读起止月份，如 2026.11-now、2026.11-2026.12（原型 formatPeriod）
   const p = summary?.period
@@ -740,7 +746,7 @@ function CellFace({ cell, summary, count, groupPercent, onRead }: { cell: Cell; 
   return (
     <>
       <Moon icon={iconOf(cell)} percent={percent}
-        label={readable ? `阅读《${cell.title}》${percent !== undefined ? ` · 已读 ${percentText(percent)}` : ''}` : cell.title}
+        label={cell.href !== undefined ? `${cell.title}（在浏览器打开）` : readable ? `阅读《${cell.title}》${percent !== undefined ? ` · 已读 ${percentText(percent)}` : ''}` : cell.title}
         onOpen={readable ? onRead : undefined} />
       {cell.kind === 'group' && <span className="mp-group-count">{count} 项</span>}
       <span className="mp-cell-title">

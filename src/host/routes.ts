@@ -257,6 +257,9 @@ export function createRoutes(store: PalaceStore, active: ActiveItems, memory = n
         openExternal(store.dir)
         return json({ ok: true })
       }
+      // 带网址的格子（「什么是 Memory Palace」）：只打开它自己登记的网址
+      const linked = store.getPalace().cells.find(c => c.id === body.id)?.href
+      if (linked !== undefined && /^https?:\/\//.test(linked)) { openExternal(linked); return json({ ok: true }) }
       const item = itemOf(store, body.id)
       const section = findSection(item, typeof body.sectionId === 'string' ? body.sectionId : undefined)?.section
       const source = item.source

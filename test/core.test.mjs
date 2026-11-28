@@ -333,3 +333,12 @@ test('图标名可以带数字（gta6），不能有大写或别的符号', asyn
   await assert.rejects(ops.updateCell(store, { id: n.id, icon: 'GTA6' }), /图标名无效/)
   await assert.rejects(ops.updateCell(store, { id: n.id, icon: '../x' }), /图标名无效/)
 })
+
+test('首次打开放一格「什么是 Memory Palace」：带网址、在原点，删掉就没了（#107）', async () => {
+  const store = fresh()
+  const c = await ops.seedWelcome(store)
+  assert.deepEqual([c.title, c.col, c.row, c.href], ['什么是 Memory Palace', 0, 0, ops.WELCOME_URL])
+  assert.equal(store.getPalace().cells.length, 1)
+  await ops.deleteCell(store, { id: c.id })
+  assert.equal(store.getPalace().cells.length, 0)
+})
