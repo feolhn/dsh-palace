@@ -26,6 +26,21 @@ const VIEW_KEY = 'dsh-palace:view'
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const TICK = 50
 
+const FADE_MS = 900
+const NO_LINES: DemoState['chat'] = []
+
+/** 值变「空」时，把旧值再留 FADE_MS（这段时间 leaving = true，界面淡出）；变成新值则立刻换上 */
+function useLinger<T>(value: T, empty: T): [T, boolean] {
+  const isEmpty = (v: T) => v === empty || (Array.isArray(v) && v.length === 0)
+  const [kept, setKept] = useState(value)
+  useEffect(() => {
+    if (!isEmpty(value)) { setKept(value); return }
+    const t = setTimeout(() => setKept(empty), FADE_MS)
+    return () => clearTimeout(t)
+  }, [value]) // eslint-disable-line react-hooks/exhaustive-deps
+  return [isEmpty(value) ? kept : value, isEmpty(value) && !isEmpty(kept)]
+}
+
 function Demo() {
   const [shown, setShown] = useState<DemoState>(() => stateAt(START_STATE, SCENES, 0))
   const [scene, setScene] = useState(0)
@@ -44,6 +59,9 @@ function Demo() {
   endedRef.current = ended
   const stage = useRef<HTMLDivElement>(null)
   const skin = themeRoot(useThemeId())
+  // 字幕和对话收起时先淡出再拿掉，不突然消失
+  const [caption, captionOut] = useLinger(shown.caption, undefined)
+  const [chat, chatOut] = useLinger(shown.chat, NO_LINES)
 
   const closeHowto = () => { setHowto(false); setPaused(pausedBeforeHowto.current) }
 
@@ -116,10 +134,10 @@ function Demo() {
           <Palace key={mount} />
         </div>
       </div>
-      {shown.caption !== undefined && <div key={shown.caption} className="dm-caption">{shown.caption}</div>}
-      {shown.chat.length > 0 && (
-        <div className="dm-chat">
-          {shown.chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
+      {caption !== undefined && <div key={caption} className={`dm-caption ${captionOut ? 'dm-out' : ''}`}>{caption}</div>}
+      {chat.length > 0 && (
+        <div className={`dm-chat ${chatOut ? 'dm-out' : ''}`}>
+          {chat.map((l, i) => <p key={i} className={`dm-line dm-${l.who}`}>{l.text}</p>)}
         </div>
       )}
       {ended && <button type="button" className="dm-replay" onClick={() => { setPaused(false); void seek(0) }}>↺ 重播</button>}

@@ -39,8 +39,10 @@ body { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system
 .dm-host-tag { font-size: 12px; opacity: .7; }
 .dm-host ol { margin: 0 0 10px; }
 
+.dm-caption.dm-out, .dm-chat.dm-out { animation: dm-out .9s ease forwards; }
+@keyframes dm-out { to { opacity: 0; } }
 @keyframes dm-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
-@media (prefers-reduced-motion: reduce) { .dm-caption, .dm-line { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .dm-caption, .dm-line, .dm-chat.dm-out { animation: none; } }
 .dm-close { display: block; margin: 10px 0 0; }
 /* 窄窗口：底栏占满右边，进度条挪到它上面一行 */
 @media (max-width: 760px) { .dm-bar { right: 28px; bottom: 76px; } }
